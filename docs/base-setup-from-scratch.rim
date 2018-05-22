@@ -1,0 +1,155 @@
+# base-setup-from-scratch
+' LeonardPauli/js-module-base
+	Created by Leonard Pauli, 21 may 2018
+	partly based on lp-vue-base, 17 apr 2018
+
+prerequisites:
+	- git, node (with npm), docker (optional)
+	- lpdocs=~/projects/own/docs
+		- see: vimx, package-json-script-add
+	// cd $lpdocs/files
+	- name="lp-js-module-base"
+	- subname="module"
+	- project="$(pwd)/$name"
+	- imagename="leonardpauli/docs-app-node-module-base"
+
+	subname.init: // perform later, see under module
+		- mkdir $subname && cd $_
+		- npm init -y
+	subname.add-git-hook-runner-inner:
+		- cp $lpdocs/app/misc/git-hook-runner-inner.sh ./$subname/
+		- npm i -D yorkie // aka. fixed husky // TODO: CHECK that it's the right one
+		- vi package.json
+			"gitHooks": { "pre-commit": "lint-staged" },
+			"lint-staged": { "*.js": ["lint"] },
+	container.dev-adjustments:
+		- package-json-script-add '"dev": "npm run install-if-needed && node index.js"'
+
+	subname.babel.add: TODO ...
+	dev.local_url: '""'
+
+- init:
+	- mkdir "$project" && cd $_
+	- git init
+	- mkdir docs && vi docs/base-setup-from-scratch.rim // this document
+	- gaa && gc -m "docs: added base-setup-from-scratch.rim starting-point"
+	// - git add . && git commit -m "docs: added base-setup.rim + instantiate.sh"
+
+- fix branch
+	- git branch -m master "$name"'-master' // rename branch so it will ba able to co-exist in other repos with lp-vue-base as custom origin
+	- git push --set-upstream "$name"'-master'
+	- in github: change default branch to "$name"'-master'
+	- git push origin :master // delete master from origin
+
+- misc:
+	- add readme
+		- cp $lpdocs/app/misc/README.md ./
+		- vi README.md // ...
+	- fix editor config
+		- cp $lpdocs/app/misc/my-app.sublime-project $name.sublime-project
+			// TODO: rename my-app to my-project, both inside and file-name
+			// edit: change web to module, etc
+		- cp $lpdocs/app/misc/.editorconfig ./
+	- fix .gitignore
+		- cp $lpdocs/app/misc/.gitignore ./
+	- git add . && git commit -m "misc: added .gitignore, .editorconfig, *.sublime-project, and README.md"
+
+- module "$subname"
+	- init:
+		- subname.init
+		- for f in $subname/package*.json; sed -e 's/  /'$'\t''/g' -i "" $f
+		- git add . && git commit -m "$subname: added"
+	- fix .gitignore
+		- cp $lpdocs/app/misc/.gitignore ./$subname/
+	- fix git hooks:
+		- cp $lpdocs/app/misc/git-hook-runner.sh ./
+		- ./git-hook-runner.sh install pre-commit // used by vue-service
+		- ./git-hook-runner.sh install -noop all // prevent npm install to add faulty ones
+		- subname.add-git-hook-runner-inner
+		- git add . && git commit -m "fixed git hooks"
+
+	- cd "$subname"
+	- subname.babel.add
+	- adjust babel:
+		- npm i -D @babel/plugin-proposal-pipeline-operator @babel/plugin-proposal-decorators @babel/plugin-proposal-function-bind
+		- { vimx '/]\na,\n'"$(cat <&3)"'\e' .babelrc; } 3<<'EOF'
+				"plugins": [
+					"@babel/plugin-proposal-function-bind",
+					"@babel/plugin-proposal-pipeline-operator",
+					["@babel/plugin-proposal-decorators", {
+						"legacy": true
+					}],
+					["@babel/plugin-proposal-class-properties", {
+						"loose": true
+					}]
+				]
+			EOF
+		- gaa && gc -m "babel: installed proposals: function-bind, pipeline-operator, decorators, class-properties"
+	- eslint:
+		- see $lpdocs/app/misc/".eslintrc.js".install
+		- npm run lint:compile
+		- vimx '/.eslintrc\niweb/\e' ../*.sublime-project
+		- git add . && git commit -m "added updated .eslintrc.js"
+		- npm run lint
+		- git add . && git commit -m "lint fix"
+		- npm i -D onchange
+		- package-json-script-add '"lint:watch": "onchange '"'"'{{src}/**,.}/*.{vue,js}'"'"' -d 200 -w -- npm run --silent lint {{changed}}"'
+		- gaa && gc -m "$subname: added npm run lint:watch"
+
+
+- add container
+	- cd "$project"
+	- rm -rf $lpdocs/app/node/using-container/example/container/data/node_modules
+	- cp -r $lpdocs/app/node/using-container/example/container $subname/container
+	- fix env:
+		- cp -v $lpdocs/app/node/using-container/example/.env* ./
+		- ln -sf ../../.env $subname/container/.env
+		- for f in .env*; vimx '/image_name=\nf=lc$'"$imagename"'\e' $f
+	- adjust for dev:
+		- echo '**/node_modules' >> .dockerignore
+		- echo '**/data' >> .dockerignore
+		- cd $subname
+		- vimx '/context:\nf:la../\e' container/docker-compose.yml
+		- vimx '/dockerfile:\nf:la'"$subname"'/\e' container/docker-compose.yml
+		- attach directly to npm dev:
+			// to honor colors and formatting
+			- vimx '/app:\no    entrypoint: ["tail", "-f", "/dev/null"]\e' container/docker-compose.dev.yml
+			- vimx '/.dev.yml\n$a -d\n\ei\tdocker-compose exec app npm run dev\e' container/start
+		- vimx '/.dev.yml\n$a -d\n\ei\tdocker-compose exec app npm run dev\e' container/start
+		
+		- package-json-script-add '"install-if-needed": "(([ ! -d node_modules ] || (git show --name-status | grep package-lock.json)) && npm --prefer-offline i || echo already-installed)"'
+			// to ensure dependencies match package.json (eg. when other collaborator has changed)
+		- container.dev-adjustments
+
+		test:
+			- (cd container && ./start)
+		' TODO: docker in OSX uses linux VM (docker in linux does not), thereby causing performance loss (maybe ~60% slower)
+			for dev in OSX; installing node etc on host directly and running npm i && npm run dev directly on host might be preferred
+				// for proxies, eg. ssl, use docker.for.mac.localhost
+		- git add . && git commit -m "container: added (from lpdocs/node/using-container), adjusted for env=dev"
+
+	// - adjust for prod // specific for instantiation
+	// - adjust for test // TODO
+	// - adjust for CI // TODO
+
+
+- add in start window automation
+	// see terminal/osascript.applescript
+	- cd "$project"
+	- cp $lpdocs/app/misc/dev ./dev && chmod u+x dev
+	- vi dev // add helpers
+		local_url=\(dev.local_url)
+		local_reg_startable () {
+			(echo "$npm_config_registry" | grep localhost \
+			&& [ -f "$lpdocs/app/node/registry/local/isUp.sh" ] \
+			&& ! $lpdocs/app/node/registry/local/isUp.sh) > /dev/null
+		}
+	- vi dev // change workspace setup
+		{type: "sublime", h: p's h, w: p's w / $([ -z "$local_url" ] && echo 1 || echo 2)}
+		{type: "chrome", x: p's w / 2, h: p's h, w: p's w / 2, url: "$local_url", condition: $([ -z "$local_url" ] && echo false || echo true)}
+		{type: "iterm", in_new: "tab", condition: $(local_reg_startable && echo true || echo false), cmd: "cd $lpdocs/app/node/registry/local && ./start && docker-compose logs -f --tail=10"}
+		{type: "iterm", in_new: "tab"}
+		{type: "iterm", in_new: "v_panel", cmd: "cd $subname/container && ./start", m_down: 9}
+		{type: "iterm", in_new: "h_panel", cmd: "cd $subname && npm run lint:watch", m_left: 9, condition: ${dev_on_host:-false}}
+	- add dev script note to docs.setup.instantiate
+	- git add . && git commit -m "added ./dev dev env setup (incl. window automation)"

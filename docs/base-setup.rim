@@ -1,0 +1,86 @@
+# setup
+' LeonardPauli/js-module-base
+	Created by Leonard Pauli, 21 may 2018
+	partly based on lp-vue-base, 17 apr 2018
+
+prerequisites:
+	- see ./base-setup-from-scratch
+
+get running:
+	prerequisites:
+		- see instantiate or git clone project that's used instantiate
+		- cd project
+		- name="$(pwd)"; name="${name##*/}"
+		- subname="$(echo */package.json | head -n 1)"; subname="${subname%%/*}" // not necessarily, usually "web" or "module"
+		- get lpdocs (optional)
+			- lpdocs=$"(cd ~/some/path && git clone git@github.com:LeonardPauli/docs.git lpdocs && cd $_ && pwd)"
+				// see $lpdocs/app/node/registry/local
+			- echo "$lpdocs" | pbcopy // put in .env
+		- base_location="$lpdocs/app/vue/base"
+	fix git hooks: // see base-setup-from-scratch."fix git hooks"
+		- ./git-hook-runner.sh install pre-commit
+		- ./git-hook-runner.sh install -noop all
+	fix env:
+		- cp .env.example .env
+		- ln -sf ../../.env web/container/.env // make it accessible for container
+		- sed -e 's/my-app/'"$name"'/g' -i '' .env
+		- echo "COMPOSE_PROJECT_NAME=$name" >> .env
+		- vi .env // add/mod relevant parameter
+			// eg. set image_name=...
+			// env=dev, dev_on_host=true, lpdocs=/User/..., dev_window_setup, npm_config_registry, ...
+	start dev:
+		- ./dev (includes window automation, etc) or just ./$subname/container/start
+
+
+instantiate:
+	- cd parent-dir
+	- "$base_location"/docs/instantiate.sh my-app
+	- instantiate.sh:
+		#!/usr/bin/env sh
+		base_name="lp-vue-base"
+		subname="web"
+
+		base_location="$(script_dir)/.."
+		name="$1"
+		if [ -z "$name" ]; then echo "no name provided"; sleep 3; exit; fi
+
+		base_location_remote="$(cd "$base_location" && git remote get-url origin)"
+		git clone "$base_location" "$name" && cd "$name"
+		git remote remove origin
+		git remote add "$base_name"'-remote' "$base_location_remote"
+		git remote add "$base_name"'-local' "$base_location"
+		git checkout -b master
+
+		ca_dir="$subname/container/data/ca"
+		if [ -d "$base_location/$ca_dir" ]; then
+			mkdir -p "$ca_dir"
+			ln "$base_location/$ca_dir"/* "$ca_dir"/
+		fi
+
+		# copying of node_modules might not work well because of links?
+		mv "$base_name".sublime-project "$name".sublime-project
+		sed -e 's/"name": "base-'"$subname"'"/"name": "'"$name"'-'"$subname"'"/' -i '' $subname/package.json
+		echo "see $base_location/docs/setup.instantiate for next steps"; sleep 3
+		open $base_location/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
+
+	- see $lpdocs/admin/{licencing,readme}
+	- package.json fixes
+		add eg. "author": "Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)",
+		add licence, etc, see $lpdocs/app/node/registry/npm."package.json"
+			// TODO: add dual licence by default? + default readme + licence in package.json
+			// eg. "licence": "AGPL-3.0-or-later", ...
+	- git add . && git commit -m "instantiated from $base_name"
+	- see "get running"
+
+
+' - npm.publish: // TODO: see / add to $lpdocs/node/registry.npm.publish
+	vi package.json // change private: true to false + consider scope?
+	...
+
+
+' TODO:
+	- Use registry/local for for dev_on_host as well (just set npm_config_registry in ~/.zshrc?)
+		remember to put back (or use --registry flag) to publish to main though
+
+' Notes:
+	see https://github.com/BretFisher/node-docker-good-defaults
