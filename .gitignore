@@ -1,0 +1,38 @@
+# meta
+.DS_Store
+
+# dependencies
+**/node_modules/
+
+
+# testing
+/tests/e2e/videos/
+/tests/e2e/screenshots/
+
+# output
+/dist
+
+
+# local env files
+.env
+.env.local
+.env.*.local
+
+# local data
+/data
+/files
+
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sublime-workspace

@@ -12,6 +12,9 @@ prerequisites:
 	- subname="module"
 	- project="$(pwd)/$name"
 	- imagename="leonardpauli/docs-app-node-module-base"
+	- project_title="$name"
+	- description_shorter="starting-point for my js/node modules, see LeonardPauli/docs/app/node/module"
+	// - copyright_holder, copyright_year, licence_short, licence_note
 
 	subname.init: // perform later, see under module
 		- mkdir $subname && cd $_
@@ -37,6 +40,7 @@ prerequisites:
 
 - fix branch
 	- git branch -m master "$name"'-master' // rename branch so it will ba able to co-exist in other repos with lp-vue-base as custom origin
+	// alt: if create github repo here and push (though to "$name"'-master' instead of master), it replaces the following steps
 	- git push --set-upstream "$name"'-master'
 	- in github: change default branch to "$name"'-master'
 	- git push origin :master // delete master from origin
@@ -44,7 +48,9 @@ prerequisites:
 - misc:
 	- add readme
 		- cp $lpdocs/app/misc/README.md ./
-		- vi README.md // ...
+
+		- . $lpdocs/terminal/lib.sh
+		- eval_template < README.md | sponge README.md
 	- fix editor config
 		- cp $lpdocs/app/misc/my-app.sublime-project $name.sublime-project
 			// TODO: rename my-app to my-project, both inside and file-name

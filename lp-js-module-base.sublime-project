@@ -1,0 +1,46 @@
+{
+	"folders": [
+		{ "path": "module", "name": "module",
+			"folder_exclude_patterns": ["node_modules", "src"],
+			"file_exclude_patterns": ["package-lock.json"],
+		},
+		{ "path": "module/src", "name": "module-src" },
+		{
+			"path": "/",
+			"folder_exclude_patterns": ["module"],
+			"follow_symlinks": true
+		}
+	],
+	"settings": {
+		"tab_size": 2,
+		"default_line_ending": "unix",
+		"index_exclude_patterns": [
+			"*.log",
+			"**/node_modules/**",
+			"**/dist/**",
+			"**/data/**"
+		]
+	},
+	"build_systems": [{
+		"name": "List",
+		"shell_cmd": "ls -a"
+	}],
+	"syntax_override": {
+		"# \\.js$": ["JSX", "JSX"]
+	},
+	"SublimeLinter": {
+		"chdir": "${project}",
+		"lint_mode": "background",
+		"linters": {
+			"eslint": {
+				"@disable": true,
+				"args": [
+					"-c", "${project}/../.eslintrc.js",
+				],
+			},
+			"flow": {
+				"@disable": true
+			}
+		}
+	}
+}
