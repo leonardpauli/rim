@@ -3,7 +3,8 @@
 # Created by Leonard Pauli, 24 apr 2018
 # <script> install all; <script> install pre-commit commit-msg;
 # <script> install -noop all
-inner_runner_parents="web" # or "subdir1 subdir2/path app/vue/base/web" for multiple
+inner_runner_parents_default="$(for f in */package.json; do echo "${f%/*}"; done)"
+inner_runner_parents="${inner_runner_parents:-$inner_runner_parents_default}" # or "subdir1 subdir2/path app/vue/base/web" for multiple
 # todo: get inner_runner_parents from .env or similar to avoid changing this file
 
 script_dir () { (a="/$0"; a=${a%/*}; a=${a:-.}; a=${a#/}; echo "$a"); }

@@ -12,6 +12,7 @@
 	"private": true,
 	"license": "AGPL-3.0-or-later",
 	"devDependencies": {
+		"lint-staged": "^7.0.4",
 		"yorkie": "^1.0.3"
 	},
 	"lint-staged": {
