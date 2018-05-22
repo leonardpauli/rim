@@ -64,11 +64,14 @@ instantiate:
 		open $base_location/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
 
 	- see $lpdocs/admin/{licencing,readme}
+		- . $lpdocs/terminal/lib.sh
+		- eval_template < README.md | sponge README.md
 	- package.json fixes
-		add eg. "author": "Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)",
-		add licence, etc, see $lpdocs/app/node/registry/npm."package.json"
-			// TODO: add dual licence by default? + default readme + licence in package.json
-			// eg. "licence": "AGPL-3.0-or-later", ...
+		- package-json-set-val author "$author_line"
+		- package-json-set-val name "$name"
+		- package-json-set-val description "$description_shorter"
+		- package-json-set-val license "$licence_spdx"
+		- echo "false" | package-json-set-val private -
 	- git add . && git commit -m "instantiated from $base_name"
 	- see "get running"
 

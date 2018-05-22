@@ -6,7 +6,7 @@
 prerequisites:
 	- git, node (with npm), docker (optional)
 	- lpdocs=~/projects/own/docs
-		- see: vimx, package-json-script-add
+		- see: vimx, package-json-script-add, package-json-set-val
 	// cd $lpdocs/files
 	- name="lp-js-module-base"
 	- subname="module"
@@ -14,17 +14,27 @@ prerequisites:
 	- imagename="leonardpauli/docs-app-node-module-base"
 	- project_title="$name"
 	- description_shorter="starting-point for my js/node modules, see LeonardPauli/docs/app/node/module"
-	// - copyright_holder, copyright_year, licence_short, licence_note
+	- licence_spdx="AGPL-3.0-or-later"
+		// add licence, etc, see $lpdocs/app/node/registry/npm."package.json"
+				// TODO: add dual licence by default? + default readme + licence in package.json
+				// eg. "licence": "AGPL-3.0-or-later", ...
+	- licence_short="GNU Affero General Public License v3.0 or later"
+	- licence_note="For commersial / closed-source / custom licencing needs, please contact us."
+	- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
+	- copyright_holder="" // Leonard Pauli
+	- copyright_year="2018"
 
 	subname.init: // perform later, see under module
 		- mkdir $subname && cd $_
 		- npm init -y
 	subname.add-git-hook-runner-inner:
-		- cp $lpdocs/app/misc/git-hook-runner-inner.sh ./$subname/
+		- cd $subname
+		- cp $lpdocs/app/misc/git-hook-runner-inner.sh ./
 		- npm i -D yorkie // aka. fixed husky // TODO: CHECK that it's the right one
-		- vi package.json
-			"gitHooks": { "pre-commit": "lint-staged" },
-			"lint-staged": { "*.js": ["lint"] },
+		- echo '{ "pre-commit": "lint-staged" }' | package-json-set-val gitHooks -
+		- echo '{ "*.js": ["lint"] }' | package-json-set-val lint-staged -
+		- package-json-script-add '"lint": "echo todo lint && exit 0"'
+		- cd ..
 	container.dev-adjustments:
 		- package-json-script-add '"dev": "npm run install-if-needed && node index.js"'
 
@@ -47,14 +57,10 @@ prerequisites:
 
 - misc:
 	- add readme
-		- cp $lpdocs/app/misc/README.md ./
-
-		- . $lpdocs/terminal/lib.sh
-		- eval_template < README.md | sponge README.md
+		- cp $lpdocs/admin/README.md ./
 	- fix editor config
-		- cp $lpdocs/app/misc/my-app.sublime-project $name.sublime-project
-			// TODO: rename my-app to my-project, both inside and file-name
-			// edit: change web to module, etc
+		- cp $lpdocs/app/misc/my-project.sublime-project $name.sublime-project
+		- sed -e 's/subname/'"$subname"'/g' -i '' $name.sublime-project
 		- cp $lpdocs/app/misc/.editorconfig ./
 	- fix .gitignore
 		- cp $lpdocs/app/misc/.gitignore ./
@@ -63,13 +69,19 @@ prerequisites:
 - module "$subname"
 	- init:
 		- subname.init
-		- for f in $subname/package*.json; sed -e 's/  /'$'\t''/g' -i "" $f
+		- cd "$project/$subname"
+		- indentation.use tabs: for f in package*.json; sed -e 's/  /'$'\t''/g' -i "" $f
+		- package-json-set-val name "$name"
+		- package-json-set-val version "0.1.0"
+		- package-json-set-val license "$licence_spdx"
+		- echo "true" | package-json-set-val private -
 		- git add . && git commit -m "$subname: added"
+		- cd "$project"
 	- fix .gitignore
-		- cp $lpdocs/app/misc/.gitignore ./$subname/
+		- cp $lpdocs/app/misc/.gitignore ./"$subname"/
 	- fix git hooks:
 		- cp $lpdocs/app/misc/git-hook-runner.sh ./
-		- ./git-hook-runner.sh install pre-commit // used by vue-service
+		- ./git-hook-runner.sh install pre-commit // used by eg. vue-service for linting etc
 		- ./git-hook-runner.sh install -noop all // prevent npm install to add faulty ones
 		- subname.add-git-hook-runner-inner
 		- git add . && git commit -m "fixed git hooks"
@@ -159,3 +171,9 @@ prerequisites:
 		{type: "iterm", in_new: "h_panel", cmd: "cd $subname && npm run lint:watch", m_left: 9, condition: ${dev_on_host:-false}}
 	- add dev script note to docs.setup.instantiate
 	- git add . && git commit -m "added ./dev dev env setup (incl. window automation)"
+
+
+' Notes:
+	preset
+		TODO: with dual licensing (AGPL + commersial) + contributor agreement
+		no name
