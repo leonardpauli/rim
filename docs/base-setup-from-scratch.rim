@@ -8,7 +8,7 @@ prerequisites:
 	- lpdocs=~/projects/own/docs
 		- see: vimx, package-json-script-add, package-json-set-val
 	// cd $lpdocs/files
-	- name="lp-js-module-base"
+	- name="lp-node-module-base"
 	- subname="module"
 	- project="$(pwd)/$name"
 	- imagename="leonardpauli/docs-app-node-module-base"
@@ -30,15 +30,51 @@ prerequisites:
 	subname.add-git-hook-runner-inner:
 		- cd $subname
 		- cp $lpdocs/app/misc/git-hook-runner-inner.sh ./
-		- npm i -D yorkie // aka. fixed husky // TODO: CHECK that it's the right one
+		- npm i -D yorkie lint-staged // aka. fixed husky // TODO: CHECK that it's the right one
+			// https://github.com/okonet/lint-staged
+			// https://github.com/yyx990803/yorkie/commits/master
 		- echo '{ "pre-commit": "lint-staged" }' | package-json-set-val gitHooks -
-		- echo '{ "*.js": ["lint"] }' | package-json-set-val lint-staged -
-		- package-json-script-add '"lint": "echo todo lint && exit 0"'
+		- echo '{ "{src,examples}/**/*.js": ["npm run lint --", "git add"] }' | package-json-set-val lint-staged -
+			// lint modifies file, git add adds back the change to stage
+		- package-json-script-add '"lint": "f () { echo todo lint: \"$*\" && exit 0; }; f"'
+		// - npm i + vi to reformat package.json
 		- cd ..
 	container.dev-adjustments:
 		- package-json-script-add '"dev": "npm run install-if-needed && node index.js"'
 
-	subname.babel.add: TODO ...
+	subname.src.add:
+		- mkdir src
+		- { cat > src/index.js } <<EOF
+			const name = "$name"; 
+			export default r=> (\`Hello from \${name}, \${r}\` |> console.log)
+			EOF
+	subname.babel.add:
+		// https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/user-handbook.md
+		- npm i -D @babel/cli@7.0.0-beta.44 @babel/core@7.0.0-beta.44 @vue/babel-preset-app
+		// https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/babel-preset-app
+		- { cat > .babelrc } <<EOF
+			{
+				"presets": [
+					["@vue/app", { targets: { node: "current" }, modules: "commonjs" }]
+				]
+			}
+			EOF
+		- echo '[ "> 1%", "last 2 versions", "not ie <= 8" ]' | package-json-set-val browserslist
+			// used by @vue/babel-preset-app to set target for transpilation
+			// see https://github.com/babel/babel/tree/master/packages/babel-preset-env#targets
+		- package-json-script-add '"build": "([ -d lib] && rm -rf lib); babel src -d lib"'
+		// dev:
+		- package-json-script-add '"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles"'
+		- package-json-script-add '"serve:watch": "nodemon -w lib lib/dev.js"'
+			// "debug": "nodemon to-classes/example/test0.js --exec babel-node --inspect",
+		- npm i -D nodemon
+			// https://github.com/kmagiera/babel-watch
+		- mkdir examples
+		- { cat > examples/dev.js } <<EOF
+			import lib from '../lib'
+			lib(Math.random())
+			EOF
+		test: npm run build:watch, npm run build:serve, change examples/dev.js or src/index.js
 	dev.local_url: '""'
 
 - init:
@@ -87,22 +123,19 @@ prerequisites:
 		- git add . && git commit -m "fixed git hooks"
 
 	- cd "$subname"
+	- subname.src.add
 	- subname.babel.add
 	- adjust babel:
-		- npm i -D @babel/plugin-proposal-pipeline-operator @babel/plugin-proposal-decorators @babel/plugin-proposal-function-bind
+		- npm i -D @babel/plugin-proposal-pipeline-operator@7.0.0-beta.44 @babel/plugin-proposal-decorators@7.0.0-beta.44 @babel/plugin-proposal-function-bind@7.0.0-beta.44
 		- { vimx '/]\na,\n'"$(cat <&3)"'\e' .babelrc; } 3<<'EOF'
 				"plugins": [
 					"@babel/plugin-proposal-function-bind",
 					"@babel/plugin-proposal-pipeline-operator",
-					["@babel/plugin-proposal-decorators", {
-						"legacy": true
-					}],
-					["@babel/plugin-proposal-class-properties", {
-						"loose": true
-					}]
+					["@babel/plugin-proposal-decorators", { "legacy": true }],
+					["@babel/plugin-proposal-class-properties", { "loose": true }]
 				]
 			EOF
-		- gaa && gc -m "babel: installed proposals: function-bind, pipeline-operator, decorators, class-properties"
+		- gaa && gc -m "babel: added + installed proposals: function-bind, pipeline-operator, decorators, class-properties"
 	- eslint:
 		- see $lpdocs/app/misc/".eslintrc.js".install
 		- npm run lint:compile
@@ -146,9 +179,14 @@ prerequisites:
 				// for proxies, eg. ssl, use docker.for.mac.localhost
 		- git add . && git commit -m "container: added (from lpdocs/node/using-container), adjusted for env=dev"
 
-	// - adjust for prod // specific for instantiation
-	// - adjust for test // TODO
-	// - adjust for CI // TODO
+	' - adjust for prod // specific for instantiation
+	' - adjust for test // TODO
+		- npm i -D jest
+		- mkdir tests
+		- package-json-script-add '"test": "jest --watch"'
+		- package-json-script-add '"test:coverage": "jest --coverage"'
+		- echo '{ "verbose": true }' | package-json-set-val jest -
+	' - adjust for CI // TODO
 
 
 - add in start window automation

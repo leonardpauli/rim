@@ -1,10 +1,13 @@
 {
-	"name": "lp-js-module-base",
+	"name": "lp-node-module-base",
 	"version": "0.1.0",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"lint": "echo todo lint && exit 0",
+		"serve:watch": "nodemon -w lib lib/dev.js",
+		"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles",
+		"build": "([ -d lib] && rm -rf lib); babel src -d lib",
+		"lint": "f () { echo todo lint: \"$*\" && exit 0; }; f",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],
@@ -12,15 +15,24 @@
 	"private": true,
 	"license": "AGPL-3.0-or-later",
 	"devDependencies": {
+		"@babel/cli": "7.0.0-beta.44",
+		"@babel/core": "7.0.0-beta.44",
+		"@babel/plugin-proposal-decorators": "7.0.0-beta.44",
+		"@babel/plugin-proposal-function-bind": "7.0.0-beta.44",
+		"@babel/plugin-proposal-pipeline-operator": "7.0.0-beta.44",
+		"@leonardpauli/babel-watch": "^2.0.7-babel7-2",
+		"@vue/babel-preset-app": "^3.0.0-beta.6",
 		"lint-staged": "^7.0.4",
+		"nodemon": "^1.17.1",
 		"yorkie": "^1.0.3"
 	},
 	"lint-staged": {
-		"*.js": [
-			"lint"
+		"{src,examples}/**/*.js": [
+			"npm run lint --"
 		]
 	},
 	"gitHooks": {
 		"pre-commit": "lint-staged"
-	}
+	},
+	"dependencies": {}
 }
