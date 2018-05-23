@@ -1,2 +1,2 @@
-const name = "lp-js-module-base"; 
-export default r => (`Hello from ${name}, ${r}` |> console.log)
+const name = 'lp-node-module-base'
+export default r=> `Hello from ${name}, ${r}` |> console.log

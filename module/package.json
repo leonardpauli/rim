@@ -4,10 +4,11 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"lint": "eslint --fix '{src,examples}/**/*.js'",
+		"lint:watch": "onchange '{src,examples}/**/*.js' -d 200 -w -- npm run --silent lint {{changed}}",
 		"serve:watch": "nodemon -w lib lib/dev.js",
 		"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles",
 		"build": "([ -d lib] && rm -rf lib); babel src -d lib",
-		"lint": "f () { echo todo lint: \"$*\" && exit 0; }; f",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [],
@@ -22,8 +23,12 @@
 		"@babel/plugin-proposal-pipeline-operator": "7.0.0-beta.44",
 		"@leonardpauli/babel-watch": "^2.0.7-babel7-2",
 		"@vue/babel-preset-app": "^3.0.0-beta.6",
+		"babel-eslint": "^8.2.3",
+		"eslint": "^4.19.1",
+		"eslint-plugin-vue": "^4.4.0",
 		"lint-staged": "^7.0.4",
 		"nodemon": "^1.17.1",
+		"onchange": "^3.3.0",
 		"yorkie": "^1.0.3"
 	},
 	"lint-staged": {
