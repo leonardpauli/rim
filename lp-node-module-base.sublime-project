@@ -35,7 +35,7 @@
 			"eslint": {
 				"@disable": true,
 				"args": [
-					"-c", "${project}/../.eslintrc.js",
+					"-c", "${project}/../module/.eslintrc",
 				],
 			},
 			"flow": {

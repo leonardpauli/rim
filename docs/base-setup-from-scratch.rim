@@ -1,5 +1,5 @@
 # base-setup-from-scratch
-' LeonardPauli/js-module-base
+' LeonardPauli/lp-node-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
@@ -23,6 +23,7 @@ prerequisites:
 	- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
 	- copyright_holder="" // Leonard Pauli
 	- copyright_year="2018"
+	- lint_glob='{src,examples}/**/*.js'
 
 	subname.init: // perform later, see under module
 		- mkdir $subname && cd $_
@@ -34,7 +35,7 @@ prerequisites:
 			// https://github.com/okonet/lint-staged
 			// https://github.com/yyx990803/yorkie/commits/master
 		- echo '{ "pre-commit": "lint-staged" }' | package-json-set-val gitHooks -
-		- echo '{ "{src,examples}/**/*.js": ["npm run lint --", "git add"] }' | package-json-set-val lint-staged -
+		- echo '{ "'"$lint_glob"'": ["npm run lint --", "git add"] }' | package-json-set-val lint-staged -
 			// lint modifies file, git add adds back the change to stage
 		- package-json-script-add '"lint": "f () { echo todo lint: \"$*\" && exit 0; }; f"'
 		// - npm i + vi to reformat package.json
@@ -62,6 +63,7 @@ prerequisites:
 		- echo '[ "> 1%", "last 2 versions", "not ie <= 8" ]' | package-json-set-val browserslist
 			// used by @vue/babel-preset-app to set target for transpilation
 			// see https://github.com/babel/babel/tree/master/packages/babel-preset-env#targets
+		- echo '/lib' >> .gitignore
 		- package-json-script-add '"build": "([ -d lib] && rm -rf lib); babel src -d lib"'
 		// dev:
 		- package-json-script-add '"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles"'
@@ -137,15 +139,9 @@ prerequisites:
 			EOF
 		- gaa && gc -m "babel: added + installed proposals: function-bind, pipeline-operator, decorators, class-properties"
 	- eslint:
-		- see $lpdocs/app/misc/".eslintrc.js".install
-		- npm run lint:compile
-		- vimx '/.eslintrc\niweb/\e' ../*.sublime-project
-		- git add . && git commit -m "added updated .eslintrc.js"
-		- npm run lint
-		- git add . && git commit -m "lint fix"
-		- npm i -D onchange
-		- package-json-script-add '"lint:watch": "onchange '"'"'{{src}/**,.}/*.{vue,js}'"'"' -d 200 -w -- npm run --silent lint {{changed}}"'
-		- gaa && gc -m "$subname: added npm run lint:watch"
+		// - vimx '/"lint":\ndd' package.json
+		- see $lpdocs/app/node/linting.install.(it, watch script, and eslint)
+		- git add . && git commit -m "eslint: added"
 
 
 - add container

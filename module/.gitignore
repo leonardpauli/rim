@@ -11,6 +11,7 @@
 
 # output
 /dist
+/lib
 
 
 # local env files

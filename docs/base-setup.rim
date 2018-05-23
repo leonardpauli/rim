@@ -1,5 +1,5 @@
 # setup
-' LeonardPauli/js-module-base
+' LeonardPauli/lp-node-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
@@ -64,9 +64,10 @@ instantiate:
 		open $base_location/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
 
 	- see $lpdocs/admin/{licencing,readme}
-		- . $lpdocs/terminal/lib.sh
-		- eval_template < README.md | sponge README.md
-	- package.json fixes
+		- update readme
+			- . $lpdocs/terminal/lib.sh
+			- eval_template < README.md | sponge README.md
+	- update package.json
 		- package-json-set-val author "$author_line"
 		- package-json-set-val name "$name"
 		- package-json-set-val description "$description_shorter"
