@@ -5,6 +5,11 @@
 
 prerequisites:
 	- see ./base-setup-from-scratch
+	- get lpdocs (optional)
+		- lpdocs=$"(cd ~/some/path && git clone git@github.com:LeonardPauli/docs.git lpdocs && cd $_ && pwd)"
+			// see $lpdocs/app/node/registry/local
+		- echo "$lpdocs" | pbcopy // put in .env
+	- base_location="$lpdocs/app/vue/base"
 
 get running:
 	prerequisites:
@@ -12,24 +17,27 @@ get running:
 		- cd project
 		- name="$(pwd)"; name="${name##*/}"
 		- subname="$(echo */package.json | head -n 1)"; subname="${subname%%/*}" // not necessarily, usually "web" or "module"
-		- get lpdocs (optional)
-			- lpdocs=$"(cd ~/some/path && git clone git@github.com:LeonardPauli/docs.git lpdocs && cd $_ && pwd)"
-				// see $lpdocs/app/node/registry/local
-			- echo "$lpdocs" | pbcopy // put in .env
-		- base_location="$lpdocs/app/vue/base"
 	fix git hooks: // see base-setup-from-scratch."fix git hooks"
 		- ./git-hook-runner.sh install pre-commit
 		- ./git-hook-runner.sh install -noop all
-	fix env:
-		- cp .env.example .env
-		- ln -sf ../../.env web/container/.env // make it accessible for container
-		- sed -e 's/my-app/'"$name"'/g' -i '' .env
-		- echo "COMPOSE_PROJECT_NAME=$name" >> .env
-		- vi .env // add/mod relevant parameter
-			// eg. set image_name=...
-			// env=dev, dev_on_host=true, lpdocs=/User/..., dev_window_setup, npm_config_registry, ...
-	start dev:
-		- ./dev (includes window automation, etc) or just ./$subname/container/start
+
+	' TODO
+		fix env:
+			- cp .env.example .env
+			- ln -sf ../../.env web/container/.env // make it accessible for container
+			- sed -e 's/my-app/'"$name"'/g' -i '' .env
+			- echo "COMPOSE_PROJECT_NAME=$name" >> .env
+			- vi .env // add/mod relevant parameter
+				// eg. set image_name=...
+				// env=dev, dev_on_host=true, lpdocs=/User/..., dev_window_setup, npm_config_registry, ...
+		start dev:
+			- ./dev (includes window automation, etc) or just ./$subname/container/start
+	start dev.manual:
+		- cd "$subname"
+		- npm i
+		// - npm run build:watch
+		- npm run lint:watch
+		- npm run test:watch
 
 
 instantiate:
