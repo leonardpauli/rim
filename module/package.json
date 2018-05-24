@@ -7,16 +7,20 @@
 		"test:coverage": "jest --coverage",
 		"test:watch": "jest --changedFilesWithAncestor --watch",
 		"test": "jest",
-		"lint": "eslint --fix '{src,examples}/**/*.js'",
-		"lint:watch": "onchange '{src,examples}/**/*.js' -d 200 -w -- npm run --silent lint {{changed}}",
-		"serve:watch": "nodemon -w lib lib/dev.js",
-		"build:watch": "([ -d lib ] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles",
-		"build": "([ -d lib ] && rm -rf lib); babel src -d lib"
+		"lint": "eslint --fix '{src,__tests__}/**/*.js'",
+		"lint:watch": "onchange '{src,__tests__}/**/*.js' -d 200 -w -- npm run --silent lint {{changed}}",
+		"build:watch": "npm run build -- --watch",
+		"build": "f () { ([ -d lib ] && rm -rf lib); babel src -d lib --copy-files --include-dotfiles --source-maps ${1:---retain-lines --minified}; }; f"
 	},
 	"keywords": [],
 	"author": "",
 	"private": true,
 	"license": "AGPL-3.0-or-later",
+	"files": [
+		"lib/",
+		"index.js",
+		"__tests__/"
+	],
 	"devDependencies": {
 		"@babel/cli": "7.0.0-beta.44",
 		"@babel/core": "7.0.0-beta.44",
@@ -48,5 +52,10 @@
 	"jest": {
 		"verbose": true
 	},
+	"browserslist": [
+		"> 1%",
+		"last 2 versions",
+		"not ie <= 8"
+	],
 	"dependencies": {}
 }

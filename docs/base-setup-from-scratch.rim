@@ -23,7 +23,7 @@ prerequisites:
 	- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
 	- copyright_holder="" // Leonard Pauli
 	- copyright_year="2018"
-	- lint_glob='{src,examples}/**/*.js'
+	- lint_glob='{src,__tests__}/**/*.js'
 
 	subname.init: // perform later, see under module
 		- mkdir $subname && cd $_
@@ -50,33 +50,7 @@ prerequisites:
 			export default r=> (\`Hello from \${name}, \${r}\` |> console.log)
 			EOF
 	subname.babel.add:
-		// https://github.com/jamiebuilds/babel-handbook/blob/master/translations/en/user-handbook.md
-		- npm i -D @babel/cli@7.0.0-beta.44 @babel/core@7.0.0-beta.44 @vue/babel-preset-app
-		// https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/babel-preset-app
-		- { cat > .babelrc } <<EOF
-			{
-				"presets": [
-					["@vue/app", { targets: { node: "current" }, modules: "commonjs" }]
-				]
-			}
-			EOF
-		- echo '[ "> 1%", "last 2 versions", "not ie <= 8" ]' | package-json-set-val browserslist
-			// used by @vue/babel-preset-app to set target for transpilation
-			// see https://github.com/babel/babel/tree/master/packages/babel-preset-env#targets
-		- echo '/lib' >> .gitignore
-		- package-json-script-add '"build": "([ -d lib ] && rm -rf lib); babel src -d lib"'
-		// dev:
-		- package-json-script-add '"build:watch": "([ -d lib ] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles"'
-		- package-json-script-add '"serve:watch": "nodemon -w lib lib/dev.js"'
-			// "debug": "nodemon to-classes/example/test0.js --exec babel-node --inspect",
-		- npm i -D nodemon
-			// https://github.com/kmagiera/babel-watch
-		- mkdir examples
-		- { cat > examples/dev.js } <<EOF
-			import lib from '../lib'
-			lib(Math.random())
-			EOF
-		test: npm run build:watch, npm run build:serve, change examples/dev.js or src/index.js
+		- do $lpdocs/app/node/transpiling.babel.install
 	dev.local_url: '""'
 
 - init:
@@ -110,7 +84,9 @@ prerequisites:
 	- init:
 		- subname.init
 		- cd "$project/$subname"
-		// TODO: possibly ln -s README.md and LICENSE from ../ ? will it be included in npm package then?
+		' TODO: include readme and license in npm package
+			- ln -s ../README.md README.md and LICENSE
+				- npm doesn't resolve the links and still exludes them from the package
 		- indentation.use tabs: for f in package*.json; sed -e 's/  /'$'\t''/g' -i "" $f
 		- package-json-set-val name "$name"
 		- package-json-set-val version "0.1.0"
@@ -130,17 +106,8 @@ prerequisites:
 	- cd "$subname"
 	- subname.src.add
 	- subname.babel.add
-	- adjust babel:
-		- npm i -D @babel/plugin-proposal-pipeline-operator@7.0.0-beta.44 @babel/plugin-proposal-decorators@7.0.0-beta.44 @babel/plugin-proposal-function-bind@7.0.0-beta.44
-		- { vimx '/]\na,\n'"$(cat <&3)"'\e' .babelrc; } 3<<'EOF'
-				"plugins": [
-					"@babel/plugin-proposal-function-bind",
-					"@babel/plugin-proposal-pipeline-operator",
-					["@babel/plugin-proposal-decorators", { "legacy": true }],
-					["@babel/plugin-proposal-class-properties", { "loose": true }]
-				]
-			EOF
-		- gaa && gc -m "babel: added + installed proposals: function-bind, pipeline-operator, decorators, class-properties"
+	- do $lpdocs/app/node/transpiling.babel.install.extras
+	- gaa && gc -m "babel: added"
 	- eslint:
 		// - vimx '/"lint":\ndd' package.json
 		- see $lpdocs/app/node/linting.install.(module, watch script, and eslint)
@@ -148,7 +115,11 @@ prerequisites:
 
 
 - testing.unit.setup
-	- do $lpdocs/app/node/testing.jest.install
+	- do $lpdocs/app/node/testing.jest.(install, example.create)
+
+- npm.publish.prepare // select which files to include
+	- echo "module.exports = require('./lib')" > index.js
+	- echo '[ "lib/", "index.js", "__tests__/" ]' | package-json-set-val files -
 
 TODO:
 - testing.coverage.setup
@@ -217,8 +188,8 @@ TODO:
 
 - add instantiate.sh:
 	- echo '#!/usr/bin/env sh' > docs/instantiate.sh
-	- echo 'base_name="'"$name"'"' > docs/instantiate.sh
-	- echo 'subname="'"$subname"'"' > docs/instantiate.sh
+	- echo 'base_name="'"$name"'"' >> docs/instantiate.sh
+	- echo 'subname="'"$subname"'"' >> docs/instantiate.sh
 	- { cat >> docs/instantiate.sh; } <<'EOF'
 
 		base_location="$(script_dir)/.."
