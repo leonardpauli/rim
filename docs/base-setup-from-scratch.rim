@@ -64,9 +64,9 @@ prerequisites:
 			// used by @vue/babel-preset-app to set target for transpilation
 			// see https://github.com/babel/babel/tree/master/packages/babel-preset-env#targets
 		- echo '/lib' >> .gitignore
-		- package-json-script-add '"build": "([ -d lib] && rm -rf lib); babel src -d lib"'
+		- package-json-script-add '"build": "([ -d lib ] && rm -rf lib); babel src -d lib"'
 		// dev:
-		- package-json-script-add '"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles"'
+		- package-json-script-add '"build:watch": "([ -d lib ] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles"'
 		- package-json-script-add '"serve:watch": "nodemon -w lib lib/dev.js"'
 			// "debug": "nodemon to-classes/example/test0.js --exec babel-node --inspect",
 		- npm i -D nodemon
@@ -102,12 +102,15 @@ prerequisites:
 		- cp $lpdocs/app/misc/.editorconfig ./
 	- fix .gitignore
 		- cp $lpdocs/app/misc/.gitignore ./
+	- add licence
+		- cp $lpdocs/admin/licensing/texts/"$licence_spdx" LICENSE
 	- git add . && git commit -m "misc: added .gitignore, .editorconfig, *.sublime-project, and README.md"
 
 - module "$subname"
 	- init:
 		- subname.init
 		- cd "$project/$subname"
+		// TODO: possibly ln -s README.md and LICENSE from ../ ? will it be included in npm package then?
 		- indentation.use tabs: for f in package*.json; sed -e 's/  /'$'\t''/g' -i "" $f
 		- package-json-set-val name "$name"
 		- package-json-set-val version "0.1.0"
@@ -140,10 +143,19 @@ prerequisites:
 		- gaa && gc -m "babel: added + installed proposals: function-bind, pipeline-operator, decorators, class-properties"
 	- eslint:
 		// - vimx '/"lint":\ndd' package.json
-		- see $lpdocs/app/node/linting.install.(it, watch script, and eslint)
+		- see $lpdocs/app/node/linting.install.(module, watch script, and eslint)
 		- git add . && git commit -m "eslint: added"
 
 
+- testing.unit.setup
+	- do $lpdocs/app/node/testing.jest.install
+
+TODO:
+- testing.coverage.setup
+	- see $lpdocs/app/node/testing.coverage
+
+
+TODO:
 - add container
 	- cd "$project"
 	- rm -rf $lpdocs/app/node/using-container/example/container/data/node_modules
@@ -177,14 +189,10 @@ prerequisites:
 
 	' - adjust for prod // specific for instantiation
 	' - adjust for test // TODO
-		- npm i -D jest
-		- mkdir tests
-		- package-json-script-add '"test": "jest --watch"'
-		- package-json-script-add '"test:coverage": "jest --coverage"'
-		- echo '{ "verbose": true }' | package-json-set-val jest -
 	' - adjust for CI // TODO
 
 
+TODO:
 - add in start window automation
 	// see terminal/osascript.applescript
 	- cd "$project"
@@ -205,6 +213,43 @@ prerequisites:
 		{type: "iterm", in_new: "h_panel", cmd: "cd $subname && npm run lint:watch", m_left: 9, condition: ${dev_on_host:-false}}
 	- add dev script note to docs.setup.instantiate
 	- git add . && git commit -m "added ./dev dev env setup (incl. window automation)"
+
+
+- add instantiate.sh:
+	- echo '#!/usr/bin/env sh' > docs/instantiate.sh
+	- echo 'base_name="'"$name"'"' > docs/instantiate.sh
+	- echo 'subname="'"$subname"'"' > docs/instantiate.sh
+	- { cat >> docs/instantiate.sh; } <<'EOF'
+
+		base_location="$(script_dir)/.."
+		name="$1"
+		if [ -z "$name" ]; then echo "no name provided"; sleep 3; exit; fi
+
+		# setup repo
+		base_location_remote="$(cd "$base_location" && git remote get-url origin)"
+		git clone "$base_location" "$name" && cd "$name"
+		git remote remove origin
+		git remote add "$base_name"'-remote' "$base_location_remote"
+		git remote add "$base_name"'-local' "$base_location"
+		git checkout -b master
+
+		# copy data
+		ca_dir="$subname/container/data/ca"
+		if [ -d "$base_location/$ca_dir" ]; then
+			mkdir -p "$ca_dir"
+			ln "$base_location/$ca_dir"/* "$ca_dir"/
+		fi
+		# copying of node_modules might not work well because of links?
+
+		# rename
+		mv "$base_name".sublime-project "$name".sublime-project
+		sed -e 's/"name": "base-'"$subname"'"/"name": "'"$name"'-'"$subname"'"/' -i '' $subname/package.json
+
+		# next
+		echo "see $base_location/docs/setup.instantiate for next steps"; sleep 3
+		open "$base_location"/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
+		EOF
+	- chmod u+x docs/instantiate.sh
 
 
 ' Notes:

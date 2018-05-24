@@ -1,5 +1,8 @@
 # meta
 .DS_Store
+*.swp
+*~
+.eslintcache
 
 # dependencies
 **/node_modules/
@@ -8,6 +11,7 @@
 # testing
 /tests/e2e/videos/
 /tests/e2e/screenshots/
+/coverage
 
 # output
 /dist

@@ -35,44 +35,20 @@ get running:
 instantiate:
 	- cd parent-dir
 	- "$base_location"/docs/instantiate.sh my-app
-	- instantiate.sh:
-		#!/usr/bin/env sh
-		base_name="lp-vue-base"
-		subname="web"
-
-		base_location="$(script_dir)/.."
-		name="$1"
-		if [ -z "$name" ]; then echo "no name provided"; sleep 3; exit; fi
-
-		base_location_remote="$(cd "$base_location" && git remote get-url origin)"
-		git clone "$base_location" "$name" && cd "$name"
-		git remote remove origin
-		git remote add "$base_name"'-remote' "$base_location_remote"
-		git remote add "$base_name"'-local' "$base_location"
-		git checkout -b master
-
-		ca_dir="$subname/container/data/ca"
-		if [ -d "$base_location/$ca_dir" ]; then
-			mkdir -p "$ca_dir"
-			ln "$base_location/$ca_dir"/* "$ca_dir"/
-		fi
-
-		# copying of node_modules might not work well because of links?
-		mv "$base_name".sublime-project "$name".sublime-project
-		sed -e 's/"name": "base-'"$subname"'"/"name": "'"$name"'-'"$subname"'"/' -i '' $subname/package.json
-		echo "see $base_location/docs/setup.instantiate for next steps"; sleep 3
-		open $base_location/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
-
 	- see $lpdocs/admin/{licencing,readme}
 		- update readme
 			- . $lpdocs/terminal/lib.sh
 			- eval_template < README.md | sponge README.md
+		- add licence
+			- cp $lpdocs/admin/licensing/texts/"$licence_spdx" LICENSE
 	- update package.json
+		- cd "$subname"
 		- package-json-set-val author "$author_line"
 		- package-json-set-val name "$name"
 		- package-json-set-val description "$description_shorter"
 		- package-json-set-val license "$licence_spdx"
 		- echo "false" | package-json-set-val private -
+		- cd ..
 	- git add . && git commit -m "instantiated from $base_name"
 	- see "get running"
 

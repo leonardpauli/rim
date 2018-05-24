@@ -4,12 +4,14 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"test:coverage": "jest --coverage",
+		"test:watch": "jest --changedFilesWithAncestor --watch",
+		"test": "jest",
 		"lint": "eslint --fix '{src,examples}/**/*.js'",
 		"lint:watch": "onchange '{src,examples}/**/*.js' -d 200 -w -- npm run --silent lint {{changed}}",
 		"serve:watch": "nodemon -w lib lib/dev.js",
-		"build:watch": "([ -d lib] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles",
-		"build": "([ -d lib] && rm -rf lib); babel src -d lib",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"build:watch": "([ -d lib ] && rm -rf lib); babel examples src -w -d lib -s true --copy-files --include-dotfiles",
+		"build": "([ -d lib ] && rm -rf lib); babel src -d lib"
 	},
 	"keywords": [],
 	"author": "",
@@ -21,11 +23,15 @@
 		"@babel/plugin-proposal-decorators": "7.0.0-beta.44",
 		"@babel/plugin-proposal-function-bind": "7.0.0-beta.44",
 		"@babel/plugin-proposal-pipeline-operator": "7.0.0-beta.44",
-		"@leonardpauli/eslint-config": "^0.1.0",
+		"@leonardpauli/eslint-config": "^0.1.2",
 		"@vue/babel-preset-app": "^3.0.0-beta.6",
+		"babel-core": "^7.0.0-bridge.0",
 		"babel-eslint": "^8.2.3",
+		"babel-jest": "^22.4.3",
 		"eslint": "^4.19.1",
+		"eslint-plugin-jest": "^21.15.2",
 		"eslint-plugin-vue": "^4.4.0",
+		"jest": "^22.4.3",
 		"lint-staged": "^7.0.4",
 		"nodemon": "^1.17.1",
 		"onchange": "^3.3.0",
@@ -38,6 +44,9 @@
 	},
 	"gitHooks": {
 		"pre-commit": "lint-staged"
+	},
+	"jest": {
+		"verbose": true
 	},
 	"dependencies": {}
 }

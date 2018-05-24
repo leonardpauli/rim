@@ -1,1 +1,0 @@
-{"version":3,"sources":["../examples/dev.js"],"names":["Math","random"],"mappings":";;;;AAAA;;AACA;AACA,kBAAIA,KAAKC,MAAL,KAAc,EAAlB","sourcesContent":["import src from '../lib'\n// const src = console.log\nsrc(Math.random()+22) \n"],"file":"dev.js"}
