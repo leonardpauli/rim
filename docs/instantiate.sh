@@ -1,9 +1,12 @@
 #!/usr/bin/env sh
 base_name="lp-node-module-base"
-subname="module"
+export subname="module"
+
+script_dir () { (a="/$0"; a=${a%/*}; a=${a:-.}; a=${a#/}; echo "$a"); }
 
 base_location="$(script_dir)/.."
-name="$1"
+export name="$1"
+export project="$(pwd)/$name"
 if [ -z "$name" ]; then echo "no name provided"; sleep 3; exit; fi
 
 # setup repo
@@ -28,4 +31,4 @@ sed -e 's/"name": "base-'"$subname"'"/"name": "'"$name"'-'"$subname"'"/' -i '' $
 
 # next
 echo "see $base_location/docs/setup.instantiate for next steps"; sleep 3
-open "$base_location"/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
+open "$base_location"/docs; exit # TODO: open vue-base-setup + base-setup as well?

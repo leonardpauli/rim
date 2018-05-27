@@ -41,8 +41,15 @@ get running:
 
 
 instantiate:
-	- cd parent-dir
-	- "$base_location"/docs/instantiate.sh my-app
+	prerequisites:
+		- cd parent-dir
+		- name="my-module"
+		// - imagename="username/..."
+		- project_title="$name"
+		- description_shorter="..."
+		- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
+		- copyright_holder="" // Leonard Pauli
+	- "$base_location"/docs/instantiate.sh $name && cd $_
 	- see $lpdocs/admin/{licencing,readme}
 		- update readme
 			- . $lpdocs/terminal/lib.sh

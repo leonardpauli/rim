@@ -1,0 +1,13 @@
+# setup
+
+Self is ./base-setup
+	get running:
+		see ./base-setup."get running"
+	instantiate:
+		see ./base-setup.instantiate
+
+' TODO:
+	...
+
+' Notes:
+	...

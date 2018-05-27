@@ -22,7 +22,6 @@ prerequisites:
 	- licence_note="For commersial / closed-source / custom licencing needs, please contact us."
 	- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
 	- copyright_holder="" // Leonard Pauli
-	- copyright_year="2018"
 	- lint_glob='{src,__tests__}/**/*.js'
 
 	subname.init: // perform later, see under module
@@ -189,11 +188,14 @@ TODO:
 - add instantiate.sh:
 	- echo '#!/usr/bin/env sh' > docs/instantiate.sh
 	- echo 'base_name="'"$name"'"' >> docs/instantiate.sh
-	- echo 'subname="'"$subname"'"' >> docs/instantiate.sh
+	- echo 'export subname="'"$subname"'"' >> docs/instantiate.sh
 	- { cat >> docs/instantiate.sh; } <<'EOF'
 
+		script_dir () { (a="/$0"; a=${a%/*}; a=${a:-.}; a=${a#/}; echo "$a"); }
+
 		base_location="$(script_dir)/.."
-		name="$1"
+		export name="$1"
+		export project="$(pwd)/$name"
 		if [ -z "$name" ]; then echo "no name provided"; sleep 3; exit; fi
 
 		# setup repo
@@ -218,7 +220,7 @@ TODO:
 
 		# next
 		echo "see $base_location/docs/setup.instantiate for next steps"; sleep 3
-		open "$base_location"/docs/setup.rim; exit # TODO: open vue-base-setup + base-setup as well?
+		open "$base_location"/docs; exit # TODO: open vue-base-setup + base-setup as well?
 		EOF
 	- chmod u+x docs/instantiate.sh
 
