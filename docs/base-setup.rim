@@ -1,5 +1,5 @@
 # setup
-' LeonardPauli/lp-node-module-base
+' LeonardPauli/lp-js-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
@@ -9,7 +9,7 @@ prerequisites:
 		- lpdocs=$"(cd ~/some/path && git clone git@github.com:LeonardPauli/docs.git lpdocs && cd $_ && pwd)"
 			// see $lpdocs/app/node/registry/local
 		- echo "$lpdocs" | pbcopy // put in .env
-	- base_location="$lpdocs/app/node/module/base"
+	- base_location="$lpdocs/app/js/module/base"
 
 get running:
 	prerequisites:

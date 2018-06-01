@@ -1,5 +1,5 @@
 # base-setup-from-scratch
-' LeonardPauli/lp-node-module-base
+' LeonardPauli/lp-js-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
@@ -8,14 +8,14 @@ prerequisites:
 	- lpdocs=~/projects/own/docs
 		- see: vimx, package-json-script-add, package-json-set-val
 	// cd $lpdocs/files
-	- name="lp-node-module-base"
+	- name="lp-js-module-base"
 	- subname="module"
 	- project="$(pwd)/$name"
-	- imagename="leonardpauli/docs-app-node-module-base"
+	- imagename="leonardpauli/docs-app-js-module-base"
 	- project_title="$name"
-	- description_shorter="starting-point for my js/node modules, see LeonardPauli/docs/app/node/module"
+	- description_shorter="starting-point for my js/node modules, see LeonardPauli/docs/app/js/module"
 	- licence_spdx="AGPL-3.0-or-later"
-		// add licence, etc, see $lpdocs/app/node/registry/npm."package.json"
+		// add licence, etc, see $lpdocs/app/js/registry/npm."package.json"
 				// TODO: add dual licence by default? + default readme + licence in package.json
 				// eg. "licence": "AGPL-3.0-or-later", ...
 	- licence_short="GNU Affero General Public License v3.0 or later"
