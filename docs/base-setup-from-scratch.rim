@@ -1,5 +1,5 @@
 # base-setup-from-scratch
-' LeonardPauli/lp-js-module-base
+' LeonardPauli/js-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
@@ -8,7 +8,7 @@ prerequisites:
 	- lpdocs=~/projects/own/docs
 		- see: vimx, package-json-script-add, package-json-set-val
 	// cd $lpdocs/files
-	- name="lp-js-module-base"
+	- name="js-module-base"
 	- subname="module"
 	- project="$(pwd)/$name"
 	- imagename="leonardpauli/docs-app-js-module-base"

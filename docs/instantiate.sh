@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-base_name="lp-js-module-base"
+base_name="js-module-base"
 export subname="module"
 
 script_dir () { (a="/$0"; a=${a%/*}; a=${a:-.}; a=${a#/}; echo "$a"); }

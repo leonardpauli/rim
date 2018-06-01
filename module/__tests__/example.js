@@ -1,4 +1,4 @@
-import lib from 'lp-js-module-base/src' // see note in /Users/leonardpauli/projects/own/docs/app/node/testing
+import lib from 'js-module-base/src' // see note in /Users/leonardpauli/projects/own/docs/app/node/testing
 
 describe('simple', ()=> {
 	it('adds', ()=> {
