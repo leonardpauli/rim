@@ -18,8 +18,8 @@ get running:
 		- name="$(pwd)"; name="${name##*/}"
 		- subname="$(echo */package.json | head -n 1)"; subname="${subname%%/*}" // not necessarily, usually "web" or "module"
 	fix git hooks: // see base-setup-from-scratch."fix git hooks"
-		- ./git-hook-runner.sh install pre-commit
-		- ./git-hook-runner.sh install -noop all
+		- $lpdocs/app/repo/git-hook-runner.sh install pre-commit
+		- $lpdocs/app/repo/git-hook-runner.sh install -noop all
 
 	' TODO
 		fix env:
