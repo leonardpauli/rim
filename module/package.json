@@ -22,13 +22,13 @@
 		"__tests__/"
 	],
 	"devDependencies": {
-		"@babel/cli": "7.0.0-beta.44",
-		"@babel/core": "7.0.0-beta.44",
-		"@babel/plugin-proposal-decorators": "7.0.0-beta.44",
-		"@babel/plugin-proposal-function-bind": "7.0.0-beta.44",
-		"@babel/plugin-proposal-pipeline-operator": "7.0.0-beta.44",
+		"@babel/cli": "^7.0.0-beta.52",
+		"@babel/core": "^7.0.0-beta.52",
+		"@babel/preset-env": "^7.0.0-beta.52",
+		"@babel/preset-stage-2": "^7.0.0-beta.52",
+		"babel-preset-minify": "^0.3.0",
+		"@leonardpauli/babel-preset": "^0.1.0",
 		"@leonardpauli/eslint-config": "^0.1.2",
-		"@vue/babel-preset-app": "^3.0.0-beta.6",
 		"babel-core": "^7.0.0-bridge.0",
 		"babel-eslint": "^8.2.3",
 		"babel-jest": "^22.4.3",
@@ -37,7 +37,6 @@
 		"eslint-plugin-vue": "^4.4.0",
 		"jest": "^22.4.3",
 		"lint-staged": "^7.0.4",
-		"nodemon": "^1.17.1",
 		"onchange": "^3.3.0",
 		"yorkie": "^1.0.3"
 	},

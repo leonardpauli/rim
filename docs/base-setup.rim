@@ -52,7 +52,7 @@ instantiate:
 	- "$base_location"/docs/instantiate.sh $name && cd $_
 	- see $lpdocs/admin/{licencing,readme}
 		- update readme
-			- . $lpdocs/terminal/lib.sh
+			- . $lpdocs/os/terminal/lib.sh
 			- eval_template < README.md | sponge README.md
 		- add licence
 			- cp $lpdocs/admin/licensing/texts/"$licence_spdx" LICENSE
