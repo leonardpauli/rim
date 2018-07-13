@@ -1,0 +1,227 @@
+%YAML 1.2
+---
+# Created by Leonard Pauli, jan 2017
+# http://www.sublimetext.com/docs/3/syntax.html
+name: rim
+file_extensions:
+  - rim
+first_line_match: ^(#!/.*\b(rim)|')$\n?
+scope: source.rim
+variables:
+  identifier: '[_$[:alpha:]][_$[:alnum:]-]*'
+
+contexts:
+  main:
+    - match: \b(iterate|initially|yield|done)\b
+      scope: keyword.control.flow.rim
+    - match: \b(if|else|for|with|at|from|iteration|not|doesn't|isn't|do|disable|enable|be|after|not|in|to|is|as|returns|return|takes|and)\b
+      push: keyword
+    - match: \b(block|self|super|it)\b
+      captures:
+        1: variable.language.this
+    - match: ^\t*(- ?\d+)
+      scope: punctuation.definition.block.sequence.item
+    - match: (-\d+)
+      scope: punctuation.definition.block.sequence.item
+    - match: "(\b|.)(-{{identifier}})"
+      scope: punctuation.definition.block.sequence.item
+    - match: ^(\t*)"
+      push: string-block
+    - match: ^(\t*)'"
+      push: string-block-single
+    - match: '^(\t*)(- )?({{identifier}}: ?)?"'
+      captures:
+        2: punctuation.definition.block.sequence.item
+        3: entity.name.tag.yaml
+      push: string-block
+    - match: '"'
+      push: string
+    - match: '//'
+      push: comment
+    # - match: "^(\t*)' " #(?!")
+    #   scope: text.html.markdown punctuation.definition
+    #   push: comment-single-quote
+    - match: ^# # ^\t*#
+      #scope: markup.quote punctuation.definition.blockquote.markdown
+      push: comment-mark
+    # - match: '^\t*([_$[:alnum:]\.]+)\b:?'
+    #   captures:
+    #     1: comment.rim
+    - match: \(
+      scope: punctuation.definition.group.rim
+      push: brackets
+    - match: \)
+      scope: invalid.illegal.stray-bracket-end
+    - match: \{
+      scope: keyword.control.rim
+      push: brackets-curly
+    - match: \}
+      scope: invalid.illegal.curly-bracket-end
+    - match: \[
+      scope: punctuation.definition.group.rim
+      push: brackets-square
+    - match: \]
+      scope: invalid.illegal.square-bracket-end
+    - match: '\d*\.?\d+'
+      scope: constant.numeric.rim
+    # - match: '[+\-*/=]'
+    #   scope: keyword.operator.arithmetic.rim
+    - match: '\b(true|yeah|yes|false|nope|no)\b'
+      scope: constant.numeric.rim
+    - match: ':'
+      scope: punctuation.separator.key-value.rim
+    - match: ','
+      scope: punctuation.separator.parameter.rim
+    - match: '\b(of|in|one|many|on|none)\b'
+      scope: punctuation.separator.parameter.rim
+    - match: "{{identifier}}('s)"
+      captures:
+        1: punctuation.separator.parameter.rim
+    - match: '{{identifier}}(\.)'
+      scope: entity.name.tag.yaml
+      captures:
+        1: punctuation.definition.group.rim
+    - match: ' \.\.\.'
+      scope: punctuation.separator.parameter.rim
+    - match: '\.\.'
+      scope: support.class.builtin.rim
+    - match: '\b[A-Z][_$[:alnum:]]*\b'
+      scope: support.class.rim
+    - match: '\b(Node|reference|primitive|same)\b'
+      scope: support.class.builtin.rim
+    - match: '\^'
+      scope: support.class.builtin.rim
+    - include: binary-operators
+    - match: \b({{identifier}})\b
+      scope: entity.name.tag.yaml
+    - match: "^(\t*)' " #(?!")
+      push: comment-single-quote
+    - match: "^(\t*)' ?$"
+      push: comment-single-quote
+
+
+  brackets:
+    - match: \)
+      scope: punctuation.definition.group.rim
+      pop: true
+    - include: main
+
+  brackets-curly:
+    - match: \}
+      scope: keyword.control.rim
+      pop: true
+    - include: main
+
+  brackets-square:
+    - match: \]
+      scope: punctuation.definition.group.rim
+      pop: true
+    - include: main
+
+  keyword:
+    - meta_scope: keyword.control.rim
+    - match: \b
+      pop: true
+
+  string:
+    - meta_scope: comment.rim
+    - meta_content_scope: string.quoted.double.rim
+    - match: \\.
+      scope: constant.character.escape.rim
+    - match: '"'
+      pop: true
+    - match: '$'
+      pop: true
+
+  string-block:
+    - meta_scope: comment.rim
+    - meta_content_scope: string.quoted.double.rim
+    - match: \\.
+      scope: constant.character.escape.rim
+    - match: '"'
+      pop: true
+    - match: '^(?!\1\t)'
+      pop: true
+
+  string-block-single:
+    - meta_scope: comment.rim
+    - meta_content_scope: string.quoted.double.rim
+    - match: \\.
+      scope: constant.character.escape.rim
+    - match: '^(?!\1\t)'
+      pop: true
+
+  comment:
+    - meta_scope: comment.rim
+    - match: $
+      pop: true
+
+  comment-single-quote:
+    - meta_scope: variable.language.fenced.markdown
+    - match: '^(?!\1\t)'
+      pop: true
+
+  comment-mark:
+    - meta_scope: meta.separator
+    - match: ^
+      pop: true
+
+  binary-operators:
+    - match: '&&|\|\|'
+      scope: keyword.operator.logical.js
+      #push: after-operator
+    - match: '=(?![=>])'
+      scope: keyword.operator.assignment.js
+      #push: after-operator
+    - match: |-
+        (?x)
+        %=   | # assignment      right-to-left   both
+        &=   | # assignment      right-to-left   both
+        \*=  | # assignment      right-to-left   both
+        \+=  | # assignment      right-to-left   both
+        -=   | # assignment      right-to-left   both
+        /=   | # assignment      right-to-left   both
+        \^=  | # assignment      right-to-left   both
+        \|=  | # assignment      right-to-left   both
+        <<=  | # assignment      right-to-left   both
+        >>=  | # assignment      right-to-left   both
+        >>>=   # assignment      right-to-left   both
+      scope: keyword.operator.assignment.augmented.js
+      #push: after-operator
+    - match: |-
+        (?x)
+        <<   | # bitwise-shift   left-to-right   both
+        >>>  | # bitwise-shift   left-to-right   both
+        >>   | # bitwise-shift   left-to-right   both
+        &    | # bitwise-and     left-to-right   both
+        \|     # bitwise-or      left-to-right   both
+      scope: keyword.operator.bitwise.js
+      #push: after-operator
+    - match: |-
+        (?x)
+        <=   | # relational      left-to-right   both
+        >=   | # relational      left-to-right   both
+        <    | # relational      left-to-right   both
+        >      # relational      left-to-right   both
+      scope: keyword.operator.relational.js
+      #push: after-operator
+    - match: |-
+        (?x)
+        ===  | # equality        left-to-right   both
+        !==  | # equality        left-to-right   both
+        ==   | # equality        left-to-right   both
+        !=     # equality        left-to-right   both
+      scope: keyword.operator.comparison.js
+      ##push: after-operator
+    - match: |-
+        (?x)
+        /    | # division        left-to-right   both
+        %    | # modulus         left-to-right   both
+        \*   | # multiplication  left-to-right   both
+        \+   | # addition        left-to-right   both
+        -      # subtraction     left-to-right   both
+      scope: keyword.operator.arithmetic.js
+      #push: after-operator
+    # - match: '\?|:'
+    #   scope: keyword.operator.ternary.js
+    #   #push: after-operator

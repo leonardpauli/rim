@@ -1,0 +1,8 @@
+{
+	"scope": "entity.name.tag.jade",
+	"completions":
+	[
+		"address" // list words?
+	]
+}
+
