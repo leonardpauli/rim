@@ -8,8 +8,8 @@
 
 import sfo, {log, custom} from 'string-from-object'
 
-import {objectMapRecursive} from '../object'
-import {expectDeepSubsetMatch} from '../testUtils'
+import {objectMapRecursive} from '@leonardpauli/utils/lib/object'
+import {expectDeepSubsetMatch} from '@leonardpauli/utils/lib/testUtils'
 
 import {lexemSimplifyForView, lexemAstValueToPlain} from './lexemUtils'
 import {tokenizeNext} from './tokenizer'

@@ -5,7 +5,7 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve} from '../../object'
+import {stupidIterativeObjectDependencyResolve} from '@leonardpauli/utils/lib/object'
 
 import {flags, expand} from '../lexemUtils'
 const {optional, repeat, usingOr} = flags

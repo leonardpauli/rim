@@ -13,6 +13,7 @@
 		"build": "f () { ([ -d lib ] && rm -rf lib); babel src -d lib --copy-files --include-dotfiles --ignore '**/*.test.js' --source-maps ${1:---retain-lines --minified}; }; f"
 	},
 	"keywords": [],
+	"repository": "github:leonardpauli/rim",
 	"author": "Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.com)",
 	"private": false,
 	"license": "AGPL-3.0-or-later",
@@ -56,5 +57,8 @@
 		"last 2 versions",
 		"not ie <= 8"
 	],
-	"dependencies": {}
+	"dependencies": {
+		"@leonardpauli/utils": "^0.1.0",
+		"string-from-object": "^1.1.2"
+	}
 }

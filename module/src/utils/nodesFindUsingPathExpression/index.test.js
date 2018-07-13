@@ -5,8 +5,8 @@
 // copyright © Leonard Pauli 2018
 
 import sfo, {log} from 'string-from-object'
-import {testTokenizeStr, testManyGet} from '../parser/testUtils'
-import {expand} from '../parser/lexemUtils'
+import {testTokenizeStr, testManyGet} from '../../parser/testUtils'
+import {expand} from '../../parser/lexemUtils'
 
 import {evaluateStr, exprCtxDefaultGet} from '.'
 

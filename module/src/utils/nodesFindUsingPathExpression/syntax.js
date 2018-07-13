@@ -5,14 +5,14 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve} from '../object'
-import {relativePathTokenRegex} from '../nodesAtRelativePath'
+import {stupidIterativeObjectDependencyResolve} from '@leonardpauli/utils/lib/object'
+import {relativePathTokenRegex} from '@leonardpauli/utils/lib/nodesAtRelativePath'
 import {root as filterExpression} from '../filterExpression'
 import {root as regexp} from '../regularExpression'
 
-import {astidsExpand, flags, expand} from '../parser/lexemUtils'
-import {evaluate} from '../parser/evaluate'
-import {astify} from '../parser/aster'
+import {astidsExpand, flags, expand} from '../../parser/lexemUtils'
+import {evaluate} from '../../parser/evaluate'
+import {astify} from '../../parser/aster'
 
 
 // --- TOKENIZE ----

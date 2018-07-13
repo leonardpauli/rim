@@ -7,7 +7,7 @@
 // based on rim / towards rim
 
 import sfo, {log} from 'string-from-object'
-import {objectMapRecursive} from '../object'
+import {objectMapRecursive} from '@leonardpauli/utils/lib/object'
 const concat = xxs=> xxs.reduce((a, xs)=> (a.push(...xs), a), [])
 
 

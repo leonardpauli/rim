@@ -5,7 +5,7 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve as objr} from '../object'
+import {stupidIterativeObjectDependencyResolve as objr} from '@leonardpauli/utils/lib/object'
 import {tokenizeNext} from './tokenizer'
 import {flags, expand} from './lexemUtils'
 

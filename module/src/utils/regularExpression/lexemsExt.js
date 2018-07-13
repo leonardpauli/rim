@@ -5,13 +5,13 @@
 // copyright © Leonard Pauli 2018
 
 import sfo, {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve} from '../object'
-import {relativePathTokenRegex} from '../nodesAtRelativePath'
+import {stupidIterativeObjectDependencyResolve} from '@leonardpauli/utils/lib/object'
+import {relativePathTokenRegex} from '@leonardpauli/utils/lib/nodesAtRelativePath'
 import {root as filterExpression} from '../filterExpression'
 
-import {astidsExpand, astidFlags} from '../parser/lexemUtils'
-import {evaluate} from '../parser/evaluate'
-import {astify} from '../parser/aster'
+import {astidsExpand, astidFlags} from '../../parser/lexemUtils'
+import {evaluate} from '../../parser/evaluate'
+import {astify} from '../../parser/aster'
 
 import root from './lexems'
 

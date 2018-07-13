@@ -5,10 +5,10 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve} from '../object'
+import {stupidIterativeObjectDependencyResolve} from '@leonardpauli/utils/lib/object'
 import {root as filterExpression} from '../filterExpression'
 
-import {flags, expand} from '../parser/lexemUtils'
+import {flags, expand} from '../../parser/lexemUtils'
 
 // TODO: ability to define a lexem as failable,
 // 	eg. behaves like optional during matching (but always returns as matched)

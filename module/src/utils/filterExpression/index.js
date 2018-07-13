@@ -5,8 +5,8 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {lexemExtendCopyClean1Level} from '../parser/lexemUtils'
-import {evaluateStr as evaluateStr_} from '../parser/evaluate'
+import {lexemExtendCopyClean1Level} from '../../parser/lexemUtils'
+import {evaluateStr as evaluateStr_} from '../../parser/evaluate'
 
 import root from './lexems'
 import './lexemsEvalExt'

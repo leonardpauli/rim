@@ -8,8 +8,8 @@
 // based on rim / towards rim
 
 import sfo, {log} from 'string-from-object'
-import {astify, tokensGroupPrio} from '../parser/aster'
-import {astidsExpand, lexemsAstTypesExpand, astidFlags} from '../parser/lexemUtils'
+import {astify, tokensGroupPrio} from '../../parser/aster'
+import {astidsExpand, lexemsAstTypesExpand, astidFlags} from '../../parser/lexemUtils'
 import root from './lexems'
 
 const concat = xxs=> xxs.reduce((a, xs)=> (a.push(...xs), a), [])

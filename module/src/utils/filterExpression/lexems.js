@@ -7,9 +7,9 @@
 // based on rim / towards rim
 
 import {log} from 'string-from-object'
-import {stupidIterativeObjectDependencyResolve} from '../object'
+import {stupidIterativeObjectDependencyResolve} from '@leonardpauli/utils/lib/object'
 
-import {flags, expand} from '../parser/lexemUtils'
+import {flags, expand} from '../../parser/lexemUtils'
 const {autoInsertIfNeeded, optional, repeat, usingOr} = flags
 
 // TODO: fix autoInsertIfNeeded

@@ -4,8 +4,8 @@
 // created by Leonard Pauli, jun 2018
 // copyright © Leonard Pauli 2018
 
-import {lexemExtendCopyClean1Level} from '../parser/lexemUtils'
-import {evaluateStr as evaluateStr_} from '../parser/evaluate'
+import {lexemExtendCopyClean1Level} from '../../parser/lexemUtils'
+import {evaluateStr as evaluateStr_} from '../../parser/evaluate'
 
 import root from './syntax'
 

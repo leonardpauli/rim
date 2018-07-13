@@ -5,7 +5,7 @@
 // copyright © Leonard Pauli 2018
 
 import {log} from 'string-from-object'
-import {evaluate} from '../parser/evaluate'
+import {evaluate} from '../../parser/evaluate'
 
 import root from './lexems'
 // import './lexemsAstExt'
