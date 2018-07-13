@@ -57,6 +57,7 @@ instantiate:
 		- add licence
 			- cp $lpdocs/admin/licensing/texts/"$licence_spdx" LICENSE
 	- update package.json
+		// - subname="$(echo */package.json | head -n 1)"; subname="${subname%%/*}"
 		- cd "$subname"
 		- package-json-set-val author "$author_line"
 		- package-json-set-val name "$name"

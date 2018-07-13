@@ -11,3 +11,7 @@ trim_trailing_whitespace = true
 [{package.json}]
 indent_style = tab
 indent_size = 2
+
+[{README.md}]
+trim_trailing_whitespace = false
+indent_style = space
