@@ -1,0 +1,47 @@
+parse debug comment correctly (currently repeats if run multiple times)
+parse debug comment block
+	detect
+	set context
+	write back with something
+	format tokens as lines
+	make token context
+	write back as token context to text
+	option to use one line
+	use write back with context as one line for lineContexts.comment(debug=true)
+
+look into string block
+	make block + context work
+	make sure expressions are tokenized correctly
+
+regex token
+keyvalue token
+parens allow comma
+	+ or comma infix.. comma is just an infix?
+
+
+make //: show expression/math result first, simple (for plus, etc)
+build indentifier dependency graph
+	on resolve, count passes and always return an array?
+
+build text exporter
+	fix "use" token
+build js exporter
+build vue exporter
+
+
+analyze:
+	- paren w/o paren-close?
+	- undefined identifiers
+
+infix
+	pipe token
+	pipe-map token
+	expression use of dots
+	plus operator
+	slash operator for file paths
+
+more
+	comments doc + tests annotation / format + highlighting etc
+		oh, built in with todo: etc
+	https://nodeca.github.io/js-yaml/
+	https://github.com/rsms/sublime-react-es6/blob/master/syntax/JavaScript%20(JSX).YAML-tmLanguage

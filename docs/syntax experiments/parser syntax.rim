@@ -1,0 +1,93 @@
+# parser syntax
+' Created by Leonard Pauli, 17 mar 2018
+' inspired by https://github.com/harc/ohm/tree/master/examples
+
+
+# csv parser syntax
+
+import (:{syntaxParser})
+syntaxParser (:{Syntax})
+syntaxParser.tokens (:{char, eof}) // Set, Char
+syntaxParser.modifiers (:{optional, many, or})
+
+space: " "
+comma: ","
+quote: "\""
+quoteEscaped: "\\\""
+newline: optional "\r", "\n"
+
+csv is Syntax: many{min: 1; separator: newline} row{exclude: eof}, eof
+	row{exclude}: many{separator: comma, optional space} col{exclude: newline + exclude}
+		col{exclude}: or: quoted, unquoted
+			quoted: quote, many (char - exclude), quote
+			unquoted: or: quoteEscaped, many (char - comma - exclude)
+
+// if exclude is implicit (in char, add to subscope)
+csv is Syntax: many{min: 1; separator: newline} row{exclude: eof}, eof
+	row: many{separator: comma, optional space} col{exclude: newline}
+		col: or: quoted, unquoted
+			quoted: quote, many char, quote
+			unquoted: or: quoteEscaped, many (char - comma)
+
+// if no char vars
+csv is Syntax: many{min: 1; separator: "\n"} row{exclude: eof}, eof
+	row: many{separator: ",", optional " "} col{exclude: "\n"}
+		col: or: quoted, unquoted
+			quoted: "\"", many char, "\""
+			unquoted: or: "\\\"", many (char - ",")
+
+// if many operator (*, +)
+csv is Syntax: row{exclude: eof} *(> 1, "\n"), eof
+	row: col{exclude: "\n"} *(",", optional " ")
+		col: or: quoted, unquoted
+			quoted: "\"", char*, "\""
+			unquoted: or: "\\\"", (char - ",")*
+
+// if optional operator (?), char/any operator (.), inline or
+csv is Syntax: row{exclude: eof} *(> 1, "\n"), eof
+	row: col{exclude: "\n"} *(",", " "?)
+		col: ("\"", .*, "\"") or ("\\\"" or (. - ","))*
+
+// use first
+csv is Syntax: row{exclude: eof} *(> 1, "\n"), eof
+	row: col{exclude: "\n"} *(",", " "?)
+		col: {"\"": .*, "\""; else: ("\\\"" or (. - ","))*}
+
+// string parser
+csv is Syntax: parse "\(row)+\n\eof"
+	row{exclude: eof}: parse "\(col)*(, ?)"
+		col{exclude: "\n"}:
+			"\"": parse ".*\\\""
+			else: parse "\\\"|[^,]*"
+
+// string parse implicit, note var (:), an or only switches with first char, clearer option notation ({})
+csv is Syntax: ":row{:eof}+{\n}:eof"
+	row: ":col{\n}*{, ?}"
+		col: ":quoted|:unquoted"
+			quoted: "\".*\\\""
+			unquoted: "\\\"|[^,]*"
+
+// inline ([])
+csv is Syntax: ":row[:col[:quoted[\".*\\\"]|:unquoted[\\\"|[^,]*]]{\n}*{, ?}]{:eof}+{\n}:eof"
+
+// unnamed
+csv is Syntax: "[[[\".*\\\"]|[\\\"|[^,]*]]{\n}*{, ?}]{:eof}+{\n}:eof"
+
+// nicer
+csv is Syntax: ":row{:eof}+{:eol}:eof"
+	row: ":col{:eol}*{, ?}"
+	col: ":quoted|:unquoted"
+	quoted: "\".*\\\""
+	unquoted: "\\\"|[^,]*"
+	eol: "\r?\n""
+
+// ohm
+CSV {
+  csv = row (eol ~end row)* eol?
+  row = col ("," col)*
+  col = colChar*
+  colChar = ~(eol | ",") any
+  eol = "\r"? "\n"
+}
+
+	

@@ -1,0 +1,212 @@
+Center(
+	Column([
+		Text('Hello, World!'),
+		Icon(Icons.star, color: Colors.green),
+	])
+)
+
+Center Column
+	- Text "Hello, World!"
+	- Icon .green .star
+		
+
+
+Widget build(BuildContext context) =>
+	Container(
+		height: 56.0,
+		padding: EdgeInsets.symmetric(horizontal: 8.0),
+		decoration: BoxDecoration(color: Colors.blue[500]),
+		child: Row(
+			...
+		),
+	);
+
+Widget Container
+	height: 56
+	padding: .symmetric .horizontal 8
+	decoration: .blue 500
+	- Row
+		- ...
+
+
+
+Future<Null> getBatteryLevel() async {
+	var batteryLevel = 'unknown';
+	try {
+		int result = await methodChannel.invokeMethod('getBatteryLevel');
+		batteryLevel = 'Battery level: $result%';
+	} on PlatformException {
+		batteryLevel = 'Failed to get battery level.';
+	}
+	setState(() {
+		_batteryLevel = batteryLevel;
+	});
+}
+
+on batteryLevelText: do every 2.s: methodChannel.getBatteryLevel |> last |> or:
+	- is Number: "Battery level: $result%"
+	- else: "Failed to get battery level."
+
+
+TextStyle bold24Roboto = new TextStyle(
+	color: Colors.white,
+	fontSize: 24.0,
+	fontWeight: FontWeight.w900,
+);
+
+bold24Roboto: Text.Style
+	color: .white
+	size: 24
+	weight: .900
+
+var container = new Container( // gray box
+	child: new Center(
+		child:  new Transform(
+			child:  new Container( // red box
+				child: new RichText(
+					// overflow: TextOverflow.ellipsis,
+					// maxLines: 1,
+					text: new TextSpan(
+						style: bold24Roboto,
+						children: <TextSpan>[
+							new TextSpan(text: "Lorem "),
+							new TextSpan(
+								text: "ipsum",
+								style: new TextStyle(
+									fontWeight: FontWeight.w300,
+									fontStyle: FontStyle.italic,
+									fontSize: 48.0,
+								),
+							),
+						],
+					),
+				), 
+				decoration: new BoxDecoration(
+					color: Colors.red[400],
+				),
+				padding: new EdgeInsets.all(16.0),
+			),
+			alignment: Alignment.center,
+			transform: new Matrix4.identity()
+				..rotateZ(15 * 3.1415927 / 180),
+		), 
+	),
+	width: 320.0,
+	height: 240.0,
+	color: Colors.grey[300],
+);
+
+
+
+
+container: Container
+	size: 320, 240
+	color: .grey 300
+	- Center Transform
+		alignment: .center
+		transform: .identity |> rotateZ 15.deg
+		- Container
+			padding: .all 16
+			decoration: .color: .red 400
+			- Center Text
+				style: bold24Roboto
+				overflow: .ellipsis
+				maxLines: 1
+				- Text "Lorem "
+				- Text "ipsum"
+					weight: .w300
+					style: .italic
+					size: 48
+
+- Center Text "Lorem `bold "ipsum"`"
+	style: bold24Roboto
+	styles.bold
+		weight: .w300
+		style: .italic
+		size: 48
+
+
+
+
+
+
+
+
+// TapboxA manages its own state.
+
+//------------------------- TapboxA ----------------------------------
+
+class TapboxA extends StatefulWidget {
+	TapboxA({Key key}) : super(key: key);
+
+	@override
+	_TapboxAState createState() => new _TapboxAState();
+}
+
+class _TapboxAState extends State<TapboxA> {
+	bool _active = false;
+
+	void _handleTap() {
+		setState(() {
+			_active = !_active;
+		});
+	}
+
+	Widget build(BuildContext context) {
+		return new GestureDetector(
+			onTap: _handleTap,
+			child: new Container(
+				child: new Center(
+					child: new Text(
+						_active ? 'Active' : 'Inactive',
+						style: new TextStyle(fontSize: 32.0, color: Colors.white),
+					),
+				),
+				width: 200.0,
+				height: 200.0,
+				decoration: new BoxDecoration(
+					color: _active ? Colors.lightGreen[700] : Colors.grey[600],
+				),
+			),
+		);
+	}
+}
+
+//------------------------- MyApp ----------------------------------
+
+class MyApp extends StatelessWidget {
+	@override
+	Widget build(BuildContext context) {
+		return new MaterialApp(
+			title: 'Flutter Demo',
+			home: new Scaffold(
+				appBar: new AppBar(
+					title: new Text('Flutter Demo'),
+				),
+				body: new Center(
+					child: new TapboxA(),
+				),
+			),
+		);
+	}
+}
+
+
+
+# Tapbox example
+// TapboxA manages its own state.
+
+TapboxA is View
+	not active
+	GestureDetector{on tap: do active = true} Container
+		decoration .color: .lightGreen 700 if active else .grey 600
+		size 200
+		- Center Text "Active" if active else "Inactive"
+			size: 32; color: .white
+
+// MyApp
+MyApp is MaterialApp
+	title: "Some Demo"
+	home: Scaffold
+		appBar: AppBar .title: Text "Some Demo"
+		body: Center TapboxA

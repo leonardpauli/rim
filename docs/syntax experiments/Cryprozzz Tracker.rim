@@ -1,0 +1,28 @@
+App:
+	if osx: is MenuBarModal
+		icon: ...
+		
+	view:
+		- title is Text: "Cryprozzz Tracker"
+		- list: currentUser.cryptos
+			item: on click: do open .link
+
+		- add is Button{title: "Add"}
+			on click: do show AddCryptoModal is Modal:
+				- text{editable, placeholder: "crypty, eg. BTC"}
+				- list: Crypto(symbol like text)
+					item: on click: do currentUser.cryptos += it
+
+Crypto as Row:
+	- icon: .logo
+	- title: .symbol
+	- price: .price
+
+Crypto
+	logo is Image
+	symbol is Text
+	price is Text: Http....
+	link: "https://coinmarketcap.com/currencies/\(.symbol)/"
+
+Modal: ...
+

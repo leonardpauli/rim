@@ -1,0 +1,131 @@
+// Copyright 2016 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// rim syntax copyright Leonard Pauli, 2018
+
+
+import (:{package.flutter: {material}, UI: {View}}
+
+asset name: AssetImage "shrine/vendors/`name`"
+	package: "flutter_gallery_assets"
+
+_kAsset0: asset "zach.jpg"
+_kAsset1: asset "16c477b.jpg"
+_kAsset2: asset "sandra-adams.jpg"
+
+
+DrawerDemo is View
+	routeName: "/material/drawer"
+
+	is TickerProviderStateMixin
+	_scaffoldKey: GlobalKey
+
+	_drawerContents: "ABCDE" |> split ""
+
+	_controller: AnimationController
+		vsync: self
+		duration: 200.ms
+	_drawerContentsOpacity: CurvedAnimation
+		parent: ReverseAnimation _controller
+		curve: .fastOutSlowIn
+	_drawerDetailsPosition: CurvedAnimation
+		parent: _controller
+		curve: .fastOutSlowIn
+		tween: Tween
+			begin: Offset: 0.0, -1.0
+			end: .zero
+	_showDrawerContents: true
+
+	on dispose
+		do _controller.dispose
+		do super.dispose
+
+
+	_backIcon: IconData: or context.theme:
+		- .iOS: .arrow_back_ios
+		- else: .arrow_back
+
+	on showNotImplementedMessage
+		do context.navigator.pop // Dismiss the drawer.
+		_scaffoldKey.currentState.showSnackBar SnackBar
+			content: Text "The drawer's items don't do anything"
+		
+
+	- Scaffold
+		key: _scaffoldKey
+		appBar: AppBar
+			leading: IconButton
+				icon: ._backIcon
+				alignment: .centerLeft
+				tooltip: "Back"
+				on pressed: do context.navigator.pop
+			title: Text "Navigation drawer"
+		
+
+		body: Center InkWell
+			on tap: do _scaffoldKey.currentState.openDrawer
+			- Column{mainAxisSize: .min}
+
+				- Container
+					size: 100
+					decoration: BoxDecoration
+						shape: .circle
+						image: DecorationImage _kAsset0
+
+				- Padding{padding: .only .top: 8}
+					- Text "Tap here to open the drawer"
+						style: context.theme.text.subhead
+
+
+		drawer: Drawer Column
+			- UserAccountsDrawerHeader
+				accountName: Text "Zach Widget"
+				accountEmail: Text "zach.widget@example.com"
+				currentAccountPicture: CircleAvatar .backgroundImage: _kAsset0
+				otherAccountsPictures:
+					- CircleAvatar .backgroundImage: _kAsset1
+					- CircleAvatar .backgroundImage: _kAsset2
+
+				margin: .zero
+				on detailsPressed
+					do _showDrawerContents = !_showDrawerContents
+					do _controller(.reverse if _showDrawerContents else .forward)
+			
+
+			- MediaQuery.removePadding
+				context: context
+				// DrawerHeader consumes top MediaQuery padding.
+				removeTop: true
+				- Expanded ListView{padding: .only .top: 8} Stack
+					// The initial contents of the drawer.
+					- FadeTransition
+						opacity: _drawerContentsOpacity
+						- Column
+							mainAxisSize: MainAxisSize.min
+							crossAxisAlignment: CrossAxisAlignment.stretch
+
+							- ...: _drawerContents |> map: ListTile
+								leading: CircleAvatar Text it
+								title: Text "Drawer item $id"
+								on tap: do showNotImplementedMessage
+					
+
+					// The drawer"s "details" view.
+					- SlideTransition
+						position: _drawerDetailsPosition
+						- FadeTransition
+							opacity: _drawerContentsOpacity.reverse
+							- Column
+								mainAxisSize: .min; crossAxisAlignment: .stretch
+
+								- ListTile
+									leading: Icon .add
+									title: Text "Add account"
+									on tap: do showNotImplementedMessage
+								
+								- ListTile
+									leading: Icon .settings
+									title: Text "Manage accounts"
+									on tap: do showNotImplementedMessage
+						

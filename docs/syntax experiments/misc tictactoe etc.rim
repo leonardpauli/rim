@@ -1,0 +1,88 @@
+Button
+	with title: Self{title}
+
+View
+	counter: 0
+	- Button "Increment"
+		on click: do counter += 1
+	- Text "\(counter)"
+
+Button "1", do .title as Int += 1
+
+// https://www.red-lang.org/p/getting-started.html
+// http://easiestprogramminglanguage.com/easiest_programming_language.html
+
+import visitors | groupby .date |> (it |> .time | avg) | Graph
+
+
+Todo is View
+	- title is Text: "Todo MVP"
+	- block is View
+		- addRow is Input
+			placeholder "what todo?"
+			on enter: do tasks += Task{title: .title}, .title = ""
+		- filteredTasks: ...tasks | filter .completed is match status:
+			- completed: true
+			- todo: false
+			- else: any
+		- footer is View
+			- count is Text: "\(filteredTasks.count or "No") \("tasks" if status is all else status)"
+			- status is Dropdown and Enum-{all, completed, todo}
+			- clear is Button "Clear completed"
+				disabled if tasks(completed).count is 0
+				on click: do tasks = tasks(not completed)
+	tasks is many Task
+		is View
+		- completed is Boolean and Checkbox: nope
+		- title is String and Text
+			style.text.stroke if completed
+
+
+TicTacToe
+	brickLineWidth: 5
+	players is many Player{is View; to String: .name}
+		- {name: "Player 1"; shape: Cross.border{width: brickLineWidth}; background: red};
+			Cross is Shape
+				- backslash: Line: .min, .max
+				- forwardslash: backslash | flip
+		- {name: "Player 2"; shape: Circle.border{offset: -1; width: brickLineWidth}; background: black}
+	currentTurnIdx: 0
+	turns: players | repeat | take currentTurnIdx + 1 |> Turn{player: it; position is Vector of Int(0..2)}
+	turn: turns | last
+	ended if winner exists
+	fullDiscreteLines with {positions, length}: concat lines:
+		- x: positions | groupby .x | filter .count is length
+		- y: positions | groupby .y | filter .count is length
+		- diagonal-up: 0..<length |> positions(x: it; y: it) | filter exists | filter count is length
+		- diagonal-down: 0..<length |> positions(x: it; y: length - 1 - it) | filter exists | filter count is length
+	winner: players | filter (turns(player=it) | fullDiscreteLines | count > 0) | first
+	- title is Text: "\(turn.player)'s turn!" if not ended else "\(winner.name) won!"
+	- board is View
+		background: black
+		- container
+			fillParentWithIndent: 2
+			- bricksContainer is View
+				fillParentWithIndent: -0.5
+				- ...0..2 |> rows (:bricksbgrows) | concat;
+					rows y: 0..2 |> (:x) BrickBg is View
+						x; y; border: 0.5; background: white;
+						- piece: turns(position.x=x; position.y=y) | first | Brick is it
+							center: @1.center
+						- flashoverlay
+							background: red; opacity: Animated{default: 0; duration: 200ms;};
+							on flash: (do opacity.value = 1; do wait 200ms; do opacity.value = 0)
+						on click: do flashoverlay.flash if piece exists else:
+							do turn.position = (x, y); do currentTurnIdx += 1
+
+
+view
+	- ball is Circle
+		background red
+		vx: 5; vy: -1
+		on y < 0: do vy += 3
+		on ticker{every: 1/60s}.change:
+			do vy -= 0.1; do y += vy; do x += vx
+
+	- ...trail
+		on ticker{every: 100ms}.change:
+			do trial += Text{x = ball.x; y=ball.y}: ball.vx | fixed 2

@@ -1,0 +1,17 @@
+loginType:
+	- client
+	- email: dataType: <{email is String, password is String}>
+	- username: dataType: <{username is String, password is String}>
+	- social: dataType: <{token is String, provider is -(fb, tw, google)}>
+
+
+on login with type<loginType>, data<type.dataType>:
+	token: token or do fetchToken.client
+	// data = loginWithEmail | loginWithUsername | loginWithSocial (fb | tw | ...)
+	tokenData, accountData: do fetchToken.(type) data
+	do save tokenData
+	if accountData:
+		do save it
+		accountData.memberships |>
+			do fetchMembershipAccountData | do save
+

@@ -1,0 +1,63 @@
+import:
+  - from: "@/components"
+    default:
+      MyButton: MyButton
+  - from: "UI"
+    default:
+      View
+      Text
+      Spacer
+      Input
+
+export:
+  default:
+    type: View
+    consts:
+      - ["Anna", "Erik"]
+      - "hello"
+    data:
+      counter: 0
+      0:
+        - name: "Anna"
+        - name: "Erik"
+        - name: "Hugo"
+        - name: "Ludvig"
+    computed:
+      name:
+        input: [consts.0, data.counter]
+        js: a=> take(a[0], mod(a[1], count(a[0])))
+      0:
+        input: [computed.name]
+        js: a=> string(["cat ", " ", " "], [a[0], a[0], a[0]])
+      something:
+        input: [computed.name]
+        js: a=> string(["hi "], [a[0]])
+      1:
+        input: [data.0, MyButton]
+        js: a=> loop(a[0], it=> block(a[1], take(it, 'name')))
+    methods:
+      0:
+        input: [data.counter]
+        output: [data.counter]
+        js: a=> [a[0] + 1]
+    children:
+    - type: Text
+      children: computed.0
+      on:
+        - action: mouse.over
+          method: methods.0
+        - action: mouse.out
+          method: methods.0
+    - type: Spacer
+    - type: Input
+      args:
+        placeholder: consts.1
+      children:
+        - computed.something
+    - type: dynamic
+      expand: true
+      value: computed.1
+    style:
+      color: style.hsl([322/360, 1, 0.29])
+      font-size: style.em(2)
+      font-weight: style.bold

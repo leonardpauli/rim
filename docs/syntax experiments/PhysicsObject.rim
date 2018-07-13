@@ -1,0 +1,50 @@
+# PhysicsObject
+' created by Leonard Pauli, 22 april 2018
+
+PhysicsObject
+	ScientificUnit is Number
+		shorthand is String
+		alias: (shorthand)
+		to Kilo(meta.name){alias: k(shorthand)}: / 1000
+	Force is (Vector of Newton is ScientificUnit{shorthand: "N"})
+	Vector{is many Number; ((c): .(index)) for c in "xyz";}
+	
+	mass is (Weight is (Gram is ScientificUnit{shorthand: "g"}))
+		// calculate from material.density + shape.volume
+	impulses is many Impulse{is Force; duration is Duration}
+	velocity is Vector
+	position is Vector // same as View
+
+	material
+		compression factor ...
+		stiffness ...
+			// bounciness?
+		friction with other-material factor ...
+		...
+		density
+
+	on update:
+		dt: now - (prevt or 0); prevt = now
+		// f = am -> a = f/m, v = at
+		acceleration +=
+		v += dt * forces.sum: it / mass * (min (.duration, dt) if .duration (and .duration -= dt) else dt)
+		(a) += dt * v(a)
+
+...
+
+# ---
+
+viewport is View
+
+	- trail is many Circle{color: red; size: x/viewport.width*ball.size}
+	- ball is Circle, PhysicsObject
+		color: red
+		size: 30
+		impulses: - gravity{is 9.81N}
+		material.compressionFactor: 0.9
+		stiffness: 1.3
+		on update: trail += Circle{x = ball.x; y = ball.y}
+
+	- border is PhysicsObject
+		shape: viewport.shape.border{width{centerOffset: 0}: 10}
+		material.density: Infinite 

@@ -1,0 +1,33 @@
+decodeMorse = function(morseCode){
+  return morseCode.trim().split('   ').map(r=> r.map(r=> MORSE_CODE[r]).join('')).join(' ')
+  // decodeMorse:| trim | split "   " |> decodeWord | join " ";
+  //   - decodeWord: | split " " |> morseCodes.(it) | join
+}
+
+function openOrSenior(data){
+  return data.map(([a,b])=> a>=55&&b>7?'Senior':'Open')
+  // openOrSenior:|> (:(age, cap)) age>=55 and cap>7 ? "Senior" else "Open"
+  // openOrSenior:|> .0>=55 and .1>7 ? "Senior" else "Open"
+}
+
+function solution(number){
+  return [...Array(Math.max(0,number)).keys()].filter(i=> i%3==0||i%5==0).reduce((a,v)=>a+v,0)
+  // | 0..max(0,it) |=> !%3 or !%5 | sum
+  // | 0..max(0,it) |=> (mod it (3, 5) | any =0) | sum
+  // | 0..max(0,it) |=> (%3, %5 | any =0) | sum
+  // | 0..max(0,it) |=> divisableBy 3, or 5 | sum;
+  // 	divisableBy n:| mod n | =0
+}
+
+const f = s=> [...new Set(s)].sort().join('')
+const longest = (c, d, a=f(c), b=f(d))=> a.length>b.length?a:b
+// longest:|> sort unique | .0.count < .1.count? .1
+// longest:|> sort unique | it. max(it |> .count).index
+// longest:|> sort unique | it(.count= max)
+
+
+fib:| 1 if < 2 else @ it - _: 1, + 2
+fib:| 1 if < 2 else fib it - 1 | + fib 1 - 2
+fib n:
+	< 2: 1
+	else: (fib n - 1) + (fib 1 - 2)

@@ -1,0 +1,10 @@
+import {UI (:{View, Text}), WebBrowser, http (:{fetch})}
+
+WebBrowser
+  on load it: it.render main
+
+main: View
+  - Text: "Let's get some gists!""
+  gists: fetch "https://api.github.com/gists" | parseJson
+  - (Text: "Loading") if gists else View:
+    gists |> - Text: it.description

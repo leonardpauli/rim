@@ -1,0 +1,19 @@
+import (:{UI})
+
+View:
+	- Text: "Hello there"
+		style.color: .red
+
+	cats:
+		- name: "Anna
+		- name: "Erik
+
+	- ...: cats |> CatView cat: View:
+		- Text: cat.name | uppercase
+			style:
+				background: .black
+				padding: 7, 5
+				color: .white
+				corner-radius: 3
+			on click: do log: "clicked cat `cat.name`"
+

@@ -1,0 +1,46 @@
+indata: file <File.path>:| File from
+stream: file.stream
+raw lines: stream.split "\n
+lines: raw lines | map Line{parent: empty}.from <Line.RawIndented>
+
+Line
+	parent <?Line>
+	context: parent.context
+	use parent?.Line
+
+	type is Enum:
+		- spacer
+			as Line.RawIndented: "\n"
+		- ghostParent // ie. when dubble indentation found, auto insert
+			as Line.RawIndented: self.subLines.as RawIndented | join "\n"
+	indentation
+		levels <0 | 1>
+			full <(x > 0)>
+	originalText <Text>
+	from <Line.RawIndented: Text>, parents <many Line>, indentsStripped {= false}:
+		intentationRegex: /\t|  /
+		maxIndents
+		res: it.replace Regex.from "^\(indentationRegex){,+2}" with ""
+		be Self:
+			indentation.levels: res.matches.0 exists
+			originalText: res.text
+
+
+
+Line.from rawText:
+	line with rawText:
+		indentations: rawLine.(match /^(\t|  )*/).1.occurences
+		rawText
+		is spacer if rawText.match /^[\t ]*$/
+
+	allLines: text.split "\n" |> line with it
+		// if line.indentations==0 add to lines
+	Line.from allLines:
+		allLines
+		lines: for line in allLines(.indentations=0):
+			idx: line.indexIn allLines
+			midx: iteration.+1.line.indexIn allLines or Infinite
+			be Line.from allLines as allLines(idx < .index < midx)
+
+	be Line.from allLines
+

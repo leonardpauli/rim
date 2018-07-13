@@ -1,0 +1,97 @@
+
+
+
+
+#
+
+Action or Fetch:
+	type is Enum<String> // routes the data to correct "processor" function in backend
+		// would possibly be well compatible with event queues as well
+	ref is Int // allows for stream, and response matching when getting back
+		// client has own counter, response will reference this
+		// allows for ie. streaming if wanted (+ later on easier decentralized)
+
+Request to /fan // separated on microservice, so loadbalancing can be independent
+	header
+		// handled by the auth module
+		auth-token: "aasdfhla02934809"
+			// possibly allow for signin info in separate field
+	data is Binary/JSON/... is many <Action or Fetch>:
+		- Fetch
+			type: search
+			ref: 3
+			users: id1u, id2u
+		- Action
+			type: post.like
+			ref: 2
+			id: id2
+		- Action
+			type: post.delete
+			ref: 5
+			id: id9
+
+#
+
+Response is Binary/JSON/...
+	// return models first so they can be referenced in responses by id only
+	// also allows normalizing, ie. if multiple actions are referencing same model object
+	models is many <{type: Model, items: many Model }>: // array for stream support
+		- type: Post // maybe from search
+			items:
+				- Post{id1, name, ...}
+				- Post{id2, name, ...}
+		- type: User // referenced by posts
+			items:
+				- User{id1u, name, ...}
+				- User{id2u, deleted: true} // push deletion from server
+		// no need to return the like because there were no errors and all data is already on the client
+		' - type: Likes
+			items:
+				- Like{post: id2}
+	responses is many (ref<Int>: {error: many <String>, ...})
+		- 3: // client provided id 
+			error:
+				- "user id2u doesn't exist" // also send that the user is deleted in models
+			posts: [id1, id2]
+		- 2:
+			error: Empty
+		- 5: // no need to send the deleted post; 
+			error: // array of error messages, most generic first
+				- "post doesn't exist"
+			// extra error info could be provided as generic payload and standardized later on
+
+
+
+
+
+#
+
+modules
+	search: Fetch:
+		query: String
+		users: many User.id
+		returns Bool
+		do ...
+
+	User
+		signup: Action: ...
+		login: Action: ...
+
+	Post
+		like: Action
+			id: Post.id
+			returns Bool
+			auth with user:
+				- user: "signin required"
+			do ...
+		delete: Action
+			id: Post.id
+			returns Bool
+			auth with user:
+				- user: "signin required
+				- Post(id): "post doesn't exist"
+				- Post(id).user = user: "you're not the author"
+			do ...
+
+
+

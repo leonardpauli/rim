@@ -1,0 +1,138 @@
+# hackerrank problems in rim
+' Created by Leonard Pauli, dec 2017
+
+# rim base
+on input:| split "\n" | r
+intList:| split " " |> Number.Int
+
+# haskell base
+import Control.Applicative
+import Control.Monad
+import System.IO
+
+main :: IO ()
+intList ln = map (\x -> read x :: Int) $ words ln
+// r ln = ...
+main = do
+	_ <- getLine
+	ln <- getLine
+	putStrLn $ r ln
+
+# js base
+const r = ls=> 0
+
+process.stdin.resume()
+process.stdin.setEncoding('ascii')
+let s = ''
+process.stdin.on('data', d=> s+= d)
+process.stdin.on('end', ()=> console.log(r(s.split('\n'))))
+
+const intList = str=> str.split(' ').map(i=> parseInt(i))
+const mapLen = (len = 0, m)=> new Array(len).fill().map((_, i, a)=> m(i, a))
+
+const fold = (xs, m, ...args)=> [].reduce.call(xs, m, ...args)
+const add = xss=> fold(xss, (a, xs)=> a.concat(xs), ...(xss.length? []: [xss]))
+const max = xs=> fold(xs, (a, b)=> Math.max(a, b))
+const sum = xs=> fold(xs, (a, b)=> a+b, 0)
+const zip = xss=> new Array(max(xss.map(xs=> xs.length))).fill().map((_, i)=> xss.map(xs=> xs[i]))
+const last = (xs, i=0)=> xs[xs.length-1-i]
+
+const padding = (xs, n, x)=> mapLen(max([0, n - xs.length]), ()=> x)
+const leftpad = (xs, ...args)=> add([padding(xs, ...args).join(''), xs])
+const rightpad = (xs, ...args)=> add([xs, padding(xs, ...args).join('')])
+
+
+
+
+
+' Created by Leonard Pauli, dec 2017
+
+# https://www.hackerrank.com/challenges/simple-array-sum/problem
+' const r = ls=> sum(intList(ls[1]))
+r:| .1 | intList | sum
+
+# https://www.hackerrank.com/challenges/compare-the-triplets/problem
+' const r = ls=> zip( zip(ls.map(intList)).map(([a, b])=> [a > b, a < b]) ).map(sum).join(' ')
+r:|> intList | zip |> (.0 > .1, .0 < .1) | zip |> sum | join " "
+
+# https://www.hackerrank.com/challenges/a-very-big-sum/problem
+' const r = ls=> sum(intList(ls[1]))
+r:| .1 | intList | sum
+
+# https://www.hackerrank.com/challenges/diagonal-difference/problem
+' const r = ls=> Math.abs(sum( ls.slice(1).map(intList) .map((r, i)=> r[i] - last(r, i))))
+r:| skip 1 |> intList |> .(i) - .(- i) | sum | abs
+
+# https://www.hackerrank.com/challenges/plus-minus/problem
+' const r = ls=> (l=> [v=> v > 0, v=> v < 0, v=> v == 0].map(f=> l.filter(f).length / l.length))(intList(ls[1])).join('\n')
+r:| .1 | intList | ((>, <, ==) |> filter it 0 |> / .count) | join "\n" // Created by Leonard Pauli, dec 2017
+
+# https://www.hackerrank.com/challenges/staircase/problem
+' const r = ls=> mapLen(parseInt(ls[0]), (i, {length})=> mapLen(length, j=> j < length-i-1? ' ': '#').join('')).join('\n')
+r:| .0 | Number.Int (:nr) | 1..(it) |> (nr - it) * " " + it * "#" | join "\n"
+
+# https://www.hackerrank.com/challenges/mini-max-sum/problem
+' const r = ls=> (l=> [l.slice(0, -1), l.slice(1)])(intList(ls[0]).sort()).map(sum).join(' ')
+r:| .0 | intList | sort | skip (-1, 1) |> sum | join " "
+
+# https://www.hackerrank.com/challenges/birthday-cake-candles/problem
+' r ln = let xs = intList ln in show $ length $ filter ((==) (foldr max 0 xs)) xs
+' const r = ls=> ((l, m=max(l))=> l.filter(v=> v==m).length)(intList(ls[1]))
+r:| .1 | intList | filter == .max | count
+
+# https://www.hackerrank.com/challenges/time-conversion/problem
+' const r = ls=> (([__, _h, t, _, pm], h=parseInt(_h))=> leftpad(''+(h==12?pm?12:0:pm?h+12:h), 2, "0") + t)(ls[0].match(/(\d+)(.*)(AM|(PM))/))
+// r:| .0 | match-{h: Number | - 12 if == 12, t, _, am} /(\d+)(.*)((AM)|PM)/ | if .am: .h else: 12 + .h; + .t
+r:| .0 | match-{_, h: Number, t, _, pm: exists} /(\d+)(.*)(AM|(PM))/ | +:
+	- hh: leftpad 2, "0" <| String <| or:
+		- .h == 12: 12 if .pm else 0
+		- true: .h + (12 if .pm)
+	- .t
+		
+# https://www.hackerrank.com/challenges/similarpair/problem
+' const r = ls=> {
+		const [[_,k], ...xs] = ls.map(intList)
+		const nodesHash = {}
+		const getNode = (key, data={})=> nodesHash[key] = Object.assign(nodesHash[key] || {key, nodes: [], top: true}, data)
+		xs.map(([n, c])=> getNode(n).nodes.push(getNode(c, {top:false})))
+		const nodes = Object.keys(nodesHash).map(k=> nodesHash[k])
+		const topNodes = nodes.filter(n=> n.top)
+		const ancestorsPairs = (n, ps=[])=> add(n.nodes.map(d=> {
+			if (ps.indexOf(d)>=0) return []
+			const l = [n, ...ps]
+			return [...l.map(p=> [p.key, d.key]), ...ancestorsPairs(d, l)]
+		}))
+		const pairs = add(topNodes.map(n=> ancestorsPairs(n)))
+		const similar = (a, b)=> Math.abs(a - b) <= k
+		return pairs.filter(v=> similar(...v)).length
+	}
+' const r = ls=> {
+		const [[_,k], ...xs] = ls.map(intList)
+		const concat = xs=> xs.reduce((a, xs)=> a.concat(xs), [])
+		const prot = Object.create({}, {
+			put: {value (v, k=typeof v=='object'?v.v:v) {return this[k] = this[k] || (this.s[this.s.length] = typeof v=='object'?v:makeNode(v))} },
+			ss: {get () {return [...new Set([...this.s, ...concat(this.s.map(s=> s.ss))])] }},
+			pairss: {get () {return this.ss.map(s=> [this.v, s.v])}},
+		})
+		const makeNode = v=> Object.create(prot, {
+			v: {value: v},
+			s: {value: []},
+		})
+		const root = makeNode(0)
+		xs.forEach(([p, c])=> root.put(p).put(root.put(c)))
+		const pairs = concat(root.s.map(s=> s.pairss))
+		const similar = (a, b)=> Math.abs(a - b) <= k
+		return pairs.filter(v=> similar(...v)).length
+	}
+
+r:|> intList (:((,k), ...xs)); topNodes |> ancestorsPairs | add |=> similar | count;
+	- nodes: xs |> (.0): nodes.(.1)
+	- topNodes: nodes |=> not in (nodes | add)
+	- ancestorsPairs node: node |> (node, it), ...ancestorsPairs it | add
+	- similar a, b: abs(a - b) <= k
+
+
+
+
+
+

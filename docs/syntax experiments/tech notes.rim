@@ -1,0 +1,14 @@
+gitkeep
+nodemon.json in package.json?
+docker-compose
+vi syntax highlightning + line nr + autocompletion
+setup users
+docker trusted registry
+
+packageJson.scripts.setup if ENV==PRODUCTION npm install -P else npm install
+testing only deps? else; bring testing to prod, or dev to testing?
+ENV==PRODUCTION
+
+- sicp book / pdf read
+- lambda calculus
+ 

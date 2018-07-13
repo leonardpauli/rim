@@ -1,0 +1,66 @@
+# steps
+steps:
+	identifier:
+	colon:
+	space:
+	space-tab:
+
+
+	# expression
+	expression-first:
+		any: expression-then-starter
+	expression-then-starter:
+		open: 
+	expression-then-open:
+		open: expression-then
+		any: 'identifier'
+		paths:
+			- ':': colon
+			- '"': [string, {}]
+			- ' ': space
+			- '\t': space-tab
+
+
+	# strings
+	string-open:
+		open: string
+		any: string-inner-open
+
+	string-inner-open:
+		open: string-inner
+		any: string-raw
+		unconsume: 1
+		paths:
+		- '"': string-close
+	string-inner-close:
+		close: string-inner
+
+	string-raw:
+
+
+# contexts
+contexts:
+	expression:
+		autoClose: true
+		state:
+			type: default
+			closeChar: null
+	expression-then:
+		close: false
+
+	string:
+	string-inner:
+		close: false
+
+
+
+
+export const expression: Context = new Context({
+	name: 'expression',
+	open: state=> [{unconsume: 1, any: expressionFirst}, state],
+	State: {
+		type: 'default',
+		close: null,
+	},
+})
+expression.lexemTypes.closeUnexpected = expression.lexemTypes.close

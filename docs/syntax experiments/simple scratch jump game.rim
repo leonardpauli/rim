@@ -1,0 +1,19 @@
+import (:{Graphics (:{Sprite})})
+
+game is Game
+	sprites:
+		- Ball
+		- Cat
+
+Ball is Sprite
+	on update:
+		x = it - 1
+		if x < 0: x = game.width
+
+Cat is Sprite
+	vy: 0
+	on update:
+		vy = it - 1
+		if y < 0: y = 0
+	// on keypress key: if key = " ": // pattern match it
+	on keypress " ": vy = it + 10

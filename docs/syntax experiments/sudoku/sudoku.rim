@@ -1,0 +1,100 @@
+# Sudoku view
+' Created by Leonard Pauli, 20 may 2018
+	Copyright © Leonard Pauli, 2018
+	exploration of view / data separation using rim
+
+Sudoku is App
+	
+	inner.side: 3
+	outer.side: 3
+	total.side: inner.side * outer.side // inner, outer |> .side | *
+	maxNr: total.side
+
+	values.raw: {Empty, 7, Empty, 2, 5, Empty, 4, Empty, Empty, 8, Empty, Empty, Empty, Empty, Empty, 9, Empty, 3, Empty, Empty, Empty, Empty, Empty, 3, Empty, 7, Empty, 7, Empty, Empty, Empty, Empty, 4, Empty, 2, Empty, 1, Empty, Empty, Empty, Empty, Empty, Empty, Empty, 7, Empty, 4, Empty, 5, Empty, Empty, Empty, Empty, 8, Empty, 9, Empty, 6, Empty, Empty, Empty, Empty, Empty, 4, Empty, 1, Empty, Empty, Empty, Empty, Empty, 5, Empty, Empty, 7, Empty, 8, 2, Empty, 3, Empty}
+
+	leftFilter:
+		value is Number{range: 1..maxNr} or Empty
+		options.available.max is Number{range: 0..maxNr} or Empty
+
+	availableValues: (1..maxNr)(not in it)
+
+	Box
+		with {index, value}: Self{index, value}
+		index is Number.Int
+		value is Number{range: 1..maxNr} or Empty
+
+		total.x: index mod total.side
+		total.y: index div total.side // "/" is divide, div is integer division (floors)
+		...: x, y |> outer.(it): outer.(it) div outer.side
+		...: x, y |> inner.(it): total.(it) mod inner.side
+
+		all is many Box
+		inner.family: all(.outer.(x, y) = outer.(x, y))
+		...: x, y |> inner.(it).family: inner.family(.total.(it) = total.(it))
+		...: x, y |> total.(it).family: all(.total.(it) = total.(it))
+
+		inner.availableValues: availableValues (inner.family(not self) |> .value)
+		...: x, y |> total.(it).availableValues: availableValues (total.(it).family(not self) |> .value)
+
+		available: intersection:
+			- inner.availableValues 
+			- ...: x, y |> total.(it).availableValues
+		
+		options: 1..maxNr |> (:index) Option{index; value: index}
+			pos: // TODO: make use of inner.side more generic like maxNr, also see grid is View...options...size
+				x: .index mod inner.side
+				y: .index div inner.side
+			available: value in @1.available
+			sameInInner: inner.family(value is Empty) |> it{optionsFiltered: .options(value=value)} | filter .optionsFiltered not Empty
+			lineInBox: x, y |> (sameInInner | groupby .inner.(it)) |> .count | sort | .0 is 1
+
+		wrong: value isn't Empty and not in available
+
+
+Sudoku.view: View
+	border: 1, .red
+	- title: Text{is h1} "This is an about page"
+
+	- bar: View
+		- Text "leftFilter:"
+		- Text{editable}: leftFilter.value
+		- Text{editable}: leftFilter.options.available.max
+
+	- grid: View
+		box.size: 50
+		size: box.size * totalBoxSide
+		border: 2, black
+
+		- ...: boxes: values.raw |> BoxView{key: .index} {index: .index, value: it}
+
+	BoxView is View
+		position: box.size |> total.(.key) * it
+		size: box.size
+
+		border 1, .black{alpha: 0.1}
+			offset: .inside
+			(left.color.alpha: 0.6) if .outer.x > 0 and .inner.x is 0
+			(top.color.alpha: 0.6) if .outer.y > 0 and .inner.y is 0
+		(background: .red) if .wrong
+
+		- Text{editable; align: center; size: .fill}: .valueRaw to String
+			(background: .black{alpha: 0.01}) if is focused
+
+		- if .value is Empty: options is View{size: fill; not interactive}
+			- ...: .options |> it{is Text (it.value to String)}
+				size: .parent.size / inner.side
+				position: size * pos
+
+				font.size: 8
+				opacity: match:
+					- .same: 0.2
+					- .available: 0.5
+					- else: 0
+				background:
+					r: 0
+					g: (.sameInInner.count is 0) to Int
+					b: 1
+					a: 0.9 / (pow{2} (.sameInInner.count + 1))
+				(border.radius: 10) if .lineInBox
+
+				- Text{font.size: 6} .sameInInner.count

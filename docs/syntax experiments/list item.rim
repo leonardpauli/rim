@@ -1,0 +1,114 @@
+lp, 29 may 2018
+
+the `-` thing is the "list-item-indicator" operator / function, which meta marks the following as being a "list item"
+
+
+thing
+	some
+	another
+	- apple
+	something
+	- pear
+
+(node thing (list some another (- apple) something (- pear)))
+(node thing (list
+	some
+	another
+	(- apple)
+	something
+	(- pear)))
+
+thing
+	some
+	another
+	- apple
+	something
+	- pear
+
+basically re-inventing lisp but with indentation instead of parentensis
+
+see https://www.youtube.com/watch?v=OyfBQmvr2Hc
+https://www.lvguowei.me/post/the-most-beautiful-program-ever-written/
+todo: https://www.youtube.com/watch?v=SrKj4hYic5A
+
+
+// (:(a, b)) loose destructuring, (:[a, b]) fail if not exactly 2 items in list
+// todo: replace (:x), (:{a, b: {z}}) syntax with [x], [{a, b: {z}}]
+// 	or just :x, :{a, b: {z}} ?
+eval-expr (expr, env): or expr:
+	- is symbol: env it
+	- :('l, x, body): eval-body arg: eval-expr body newenv;
+		- newenv y: or y:
+			- is x: eval-expr arg env
+			- else: env y
+	- :(rator, rand): fn arg;
+		- fn: eval-expr rator env
+		- arg: eval-expr rand env
+	- else: fail "syntax error, got \(expr), expected (symbol), (rator, rand), or ('l, x, body)"
+
+(define e (\ p (\ v
+	(get (count p) (concat
+		(list
+			fail
+			(v (get 0 p))
+			(\ a (e (get 2 p)
+				(\ y (¿ (= y (get 1 p)) (e a v) (v y)))
+			))
+			((e (get 0 p) v) (e (get 1 p) v))
+		)
+		(repeat fail)
+	))
+)))
+
+// -s just for naming/comments
+(define evalexpr (\ expr (\ env
+	(get (count expr) (concat
+		(list
+			fail
+			-symbol(env -symbol(get 0 expr))
+			-lambda(\ a (evalexpr -body(get 2 expr)
+				(\ y (¿ (= y -arg(get 1 expr)) (evalexpr a env) (env y)))
+			))
+			-apply((evalexpr -rator(get 0 expr) env) (evalexpr -rand(get 1 expr) env))
+		)
+		(repeat fail)
+	))
+)))
+
+// auto-close on dedent, open paren before on colon, . for reverse notation, x.n (n is Int) -> get n x
+define: evalexpr \expr: \env:
+	get: expr.count concat:
+		list:
+			fail
+			-symbol: env -symbol(expr.0)
+			-lambda: \a: evalexpr -body(expr.2)
+				\y: ¿: (= y -arg(expr.1)) (evalexpr a env) (env y)
+			-apply: (evalexpr -rator(expr.0) env) (evalexpr -rand(expr.1) env)
+		repeat fail
+
+// outside bounds will fail anyhow
+define: evalexpr \expr: \env:
+	get: expr.count list:
+		fail
+		-symbol: env -symbol(expr.0)
+		-lambda: \a: evalexpr -body(expr.2)
+			\y: ¿: (= y -arg(expr.1)) (evalexpr a env) (env y)
+		-apply: (evalexpr -rator(expr.0) env) (evalexpr -rand(expr.1) env)
+
+// = -> define
+evalexpr= \expr: \env:
+	get: expr.count list:
+		fail
+		-symbol: env -symbol(expr.0)
+		-lambda: \a: evalexpr -body(expr.2)
+			\y: ¿: (= y -arg(expr.1)) (evalexpr a env) (env y)
+		-apply: (evalexpr -rator(expr.0) env) (evalexpr -rand(expr.1) env)
+
+
+eval-expr 'name env: with x: fail "symbol '\(x)' is undefined" // symbol 'name' is undefined
+eval-expr 'name env: with x: or x: // Leo
+	- is 'name: 'Leo
+	- else: fail "symbol '\(x)' is undefined"
+eval-expr ('name) env: with x: or x: // Leo
+	- is 'name: 'Leo
+	- else: fail "symbol '\(x)' is undefined"

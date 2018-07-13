@@ -1,0 +1,12 @@
+// short js
+Array(100000).fill().map(i=> "\t\n ab\""[Math.floor(Math.random()*6)]).join('')
+// short rim
+0..100000 |> "\t\n ab\"".(rnd 0..<6)
+
+// long js
+const pickRandom = arr=> arr[Math.floor(Math.random()*arr.length)]
+const slumptext = Array(100000).fill().map(_=> pickRandom("\t\n ab\"")).join('')
+// long rim
+slumptext: 0..100000 |> pickRandom "\t\n ab\"";
+	- pickRandom:| it.(rnd 0..<it.count)
+

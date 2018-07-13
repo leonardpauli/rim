@@ -143,4 +143,5 @@ Copyright © Leonard Pauli, 2016-2018
 
 License: GNU Affero General Public License v3.0 or later.  
 For commersial / closed-source / custom licencing needs, please contact us.  
-Interesting discussion: https://github.com/pybee/paying-the-piper/issues/61
+Interesting discussion: https://github.com/pybee/paying-the-piper/issues/61  
+Why: I believe this project (or other similar projects) will lead the next wave of productivity boost, and thereby be essential for a lot of companies, that in turn will earn a lot of resources (eg. money) using it. Though, for projects like these to reach their full potential, resources are needed (eg. to support people working on it).

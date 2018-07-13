@@ -1,0 +1,53 @@
+' Created by Leonard Pauli, 26 apr 2017
+// see http://incidentalcomplexity.com/2016/06/22/mar1/
+
+# --- average count moons per planet
+
+planets.avg .moons
+(avg .moons .count) of planets
+planets's avg .moons .count
+
+avg what kind: it |> (what) | avg (kind)
+list.avg {kind: (.count)}: self.sum (kind) / (self | (kind))
+
+
+moons per planet -> planets |> .moons
+count (moons per planet) -> planets |> .moons |> count
+average (count (moons per planet)) -> planets |> .moons |> count | avg
+
+List-<List-<Number>>
+List{is many List{is many Number}}
+List is many (List is many Number)
+{is many {is many Number}}
+many many Number
+
+List
+	of type: Self{is many type}
+
+(List of (List of Number)).sum: self |> + (prev or 0)
+(List of (List of Number)).avg: sum / .count
+
+// ---
+Planet
+Moon
+	planet is Planet
+
+Planet |> Moon(planet=it).count | avg
+
+# --- sum salary per department [via employee]
+
+departments |> {department: it; salary-sum: it.employees |> .salary | sum}
+
+// ---
+Department
+	employees: Employee(department: self)
+Employee
+	department is Department
+	salary is Number
+
+Department |> (it): .employees |> .salary | sum
+' reverse NL
+	department per (employees) |> salary | sum
+	planet per (moons) |> count | average
+	per -> |> (it): (via)
+

@@ -1,0 +1,48 @@
+import (:{Node, UI: {View, DOM: {render}}})
+import (:{DB})
+
+
+Model is Node
+Person is Model
+	name is String
+	age is Number
+
+db: DB{file: "./data", models: - people: Person}
+on start: do render table:
+	entries: db.people
+	on addColumn {name, type}:
+		do Person = Person
+			(name) is (type)
+
+table is {entries: many Model, addColumn: do {name: String, type: Node}}: *
+table with {entries, addColumn}: View 
+	fields: typeof one entries |> .fields
+	Column is Text
+
+	- HeaderRow: View:
+		- ...: fields |> Column .name
+		- Column "Add Column"
+			on click: do addColumn:
+				name: prompt "Name?"
+				type: String if prompt "String or Int?" is "string" else Int
+	- ...: entries |> DataRow with entry: View:
+		- ...: values |> Column;
+			values: fields |> .name |> entry.(it)
+
+
+
+
+
+
+
+
+
+
+import (:{IO: {print}})
+do print: 30..1 |> (prev or fst | + (-1, 0, 1) | pickRandom) |> * " " |> ++ "0" | join "\n"
+30›(.-1||30|+ -1,0,1|.(rnd 3))›(*" ")++"0"›do print
+30 › (.-1 or 30 | + (-1,0,1) | .(rnd 3)) › (*" ") ++ "0" › do print
+30 › (.-1 or .0 | + rnd 3 - 1 › (*" ") ++ "0" › do print
+30 › .-1 + rnd 3 - 1, or .0 › (*" ") ++ "0" › do print
+30›.-1-1+rnd 3, or .0›*" "›++"0"
+$#a=29;map{$#a+=rand(3)-say"@a -"}@a

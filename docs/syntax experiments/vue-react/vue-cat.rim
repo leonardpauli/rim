@@ -1,0 +1,26 @@
+import "@/components" (:{MyButton})
+import "UI" (:{View, Text, Spacer, Input})
+
+export.default: View:
+	counter: 0
+	name: "Anna", "Erik" | .(counter mod it.count)
+	- Text: "cat `name` `name` `name`"
+		on mouse.(over, out):
+			do counter: it + 1
+
+	- Spacer
+
+	something: "hi `name`"
+	- Input{placeholder: "hello"}: something
+
+	- ... <| cats |> MyButton: it.name;
+		cats:
+			- name: "Anna"
+			- name: "Erik"
+			- name: "Hugo"
+			- name: "Ludvig"
+
+	style:
+		color: .hsl: 322/360, 1, 0.29
+		font-size: 2em
+		font-weight: .bold

@@ -1,0 +1,16 @@
+import (:{Networking: {Http (:{Middleware, Router})}})
+import local (:{models: {User}})
+
+Http | chain middlewares | router;
+	- middlewares is many Middleware:
+		- authentication with (req (:{token}), res):
+			req.user: token? it as User
+	- router is Http:
+		auth: .user is admin
+		- users
+			get: User(name.match q, created > .query.afterDate) | take limit
+				- limit: min: 100, .query.perPage
+			post: User(.body)
+			- id{is parameter}
+				delete: User(id=.params.id) | do remove
+				post: User(id=.params.id) | do update .body

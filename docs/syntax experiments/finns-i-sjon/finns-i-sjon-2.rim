@@ -1,0 +1,200 @@
+# Finns i Sjön
+' kortspel
+	skapat av Leonard Pauli, 30-31 mar 2018 
+
+
+
+on start:
+	do print .clear
+	do print "Välkommen till Finns i Sjön!"
+	spel: Kortspel
+		kortlek: Kortlek | shuffle
+		spelare: do print "Namn på spelare? (eg. Anna, Erik, ...)"
+			| do read{line} or "Spelare 1, Spelare 2"
+			| split ", ?" |> Spelare{namn: it}
+	do spel.start
+	do print "Ny omgång? (y/n)" | do read{char}
+		| do start if is "y" else exit
+
+
+
+// Kortspelet
+
+
+Kortspel
+	spelare is many Spelare
+	kortlek is Kortlek
+	sjö: Sjö
+
+	aktivaSpelare: spelare(kortPåHand.count>0)
+	ledandeSpelare: spelare | sort .par.count | last
+	ställning: "Par: " +: spelare |> "\(.namn): \(.par.count)" | join " | "
+
+	on start:
+		do delaUtKort
+		do spridUtPåBordet
+		do körAllaTurer
+		do slut
+
+	on slut:
+		do print .clear
+		do print ställning
+		do print "-----"
+		do print "Spelet är slut! Vinnaren är \(ledandeSpelare.name)"
+
+
+	// subroutines
+
+	on delaUtKort: spelare |> geKort;
+		geKort tillSpelare: do kortlek.take{mutating} 4 | do tillSpelare.kortPåHand.add
+	
+	on spridUtPåBordet: do kortlek.take{mutating} .all | do sjö.add
+
+	on körAllaTurer with förraSpelare{is empty or Spelare}:
+		nästaSpelare: aktivaSpelare.first if not förraSpelare else: spelare
+			| takeAfter förraSpelare
+			| filter: in aktivaSpelare
+			| first or aktivaSpelare.first
+		if nästaSpelare and aktivaSpelare.count > 1:
+			do Tur{spelare: nästaSpelare; kortspel: self}.start
+			do .again with nästaSpelare
+
+
+	// subtypes
+
+	Sjö is many Kort
+		on väljOchTaKort:
+			index: do print "Vilket kort vill du ta? (1-\(count))" | do read{line} | Int | -1
+			be: or index in 0..<count:
+				- true: kortspel.sjö.takeAt{mutating} index
+				- else: do print "Naäh, testa igen!" | do.again
+
+	Par is many Kort
+
+	Spelare
+		par is many Par
+		kortPåHand is many Kort
+			medSammaValör:| self(valör=.valör)
+			on.after add: if medSammaValör.count is 4:
+				self.take{mutating} medSammaValör | par.add
+			on empty:
+				do print .clear
+				do print "Insticksfråga till \(spelare.namn)!"
+				do print "Din hand är tom, ta ett kort från sjön!"
+				do kortspel.sjö.väljOchTaKort | do self.add
+				do print "Napp! Tillbaka till föregående spelare! Redo? (endast hen får se skärmen)"
+				do read{char}
+				do print .clear
+
+	Tur
+		spelare is Spelare
+		kortspel is Kortspel
+
+		on start:
+			
+			do print .clear
+			do print kortspel.ställning
+			do print "\(spelare.namn)'s tur! Redo? (endast hen får se skärmen)"
+			do read{char}
+			do print "Dina kort: \(spelare.kort |> .namn.kort | join ", ")"
+			kort: do getKortAttFrågaEfter
+			spelareAttFråga: do getSpelareAttFråga
+
+			do print "\(spelareAttFråga.name), har du \(kort.name.lång)? (retorisk fråga)"
+			harKortet: kort in spelareAttFråga.kortPåHand
+			or harKortet:
+				- true: do taKortOchBörjaOm{spelareAttFråga; kort}
+				- else: do finnsISjön{målKort: kort}
+
+		on slut:
+			do print .clear
+
+
+		// subroutines
+
+		on getSpelareAttFråga:
+			namn: do print "Vem vill du fråga?" | do read{line}
+			möljligaSpelare: kortspel.aktivaSpelare(it!=spelare)
+			spelareAttFråga: möljligaSpelare(namn.lowercase=namn.lowercase)
+			be spelareAttFråga if exists else:
+				do print "Vem är det? Testa \(möjligaSpelare | join{last: ", eller "} ", ")."
+				do .again
+
+		on getKortAttFrågaEfter:
+			kortnamn: do print "Vilket kort vill du fråga efter? (eg. ruter 4)" | do read{line}
+			kort: kortnamn as Kort
+			harValör: kort.valör in (spelare.kortPåHand |> .valör)
+			be: kort if harValör else:
+				do print "du har inte valören \(kort.valör) på hand, testa igen;"
+				do .again
+
+		on taKortOchBörjaOm {spelareAttFråga; kort}:
+			do print "Yess"
+			do spelareAttFråga.kortPåHand.remove kort
+			do spelare.kortPåHand.add kort
+			do start
+
+
+		on finnsISjön {målKort is Kort}:
+			do print "Finns i sjön!"
+			kort: do kortspel.sjö.väljOchTaKort
+			do spelare.kortPåHand.add kort
+			or kort:
+				- is målKort:
+					do print "Grattis! Du fick ditt kort!"
+					do start
+				- else:
+					do slut
+
+
+
+// Kortlek
+
+Färg
+	namn is String
+	hsl is (Number, Number, Number)
+
+	svart: Self{name: "svart"; hsl: 0, 0, 0}
+	röd: Self{name: "röd"; hsl: 0, 1, 0.5}
+
+Kort
+	valör is Valör
+	svit is Svit
+
+	namn.kort: "\(valör.svit.symbol)\(valör.värde)"
+	namn.lång: "\(valör.namn) \(valör.svit.namn)"
+
+	from String: or:
+		- /^([^ \d]+) ?([^ \d]+|\d+)$/: Self{svit: .0 as Svit, valör: .1 as Valör};
+		- else: fail "beskriv kortet som 'h4' eller 'hjärter fyra'"
+
+	slumpad: Self
+		valör: Valör.all.random
+		svit: Svit.all.random
+
+
+	Svit is Enum
+		template (namn is String, (:(färg is Färg, symbol is String))):
+			namn; färg; symbol
+		- spader: .svart, "♠"
+		- hjärter: .röd, "♥"
+		- ruter: .röd, "♦"
+		- klöver: .svart, "♣"
+		from String: or:
+			- Svit(name=it.lowercase, name.0=it.lowercase, or symbol=it)
+			- fail "sviten \(it) finns inte, testa \(alternativ | join{last: ", eller "} ", ")";
+				- alternativ: Svit |> .name, .name.0, .symbol | concat
+
+	Valör is Enum
+		template (namn is String, värde is Number): {namn; värde}
+		- ...: "ess,två,tre,fyra,fem,sex,sju,åtta,nio,knekt,dam,kung"
+			| split "," |> (it): index+1
+		from String: or:
+			- Valör(värde=Int it, or name=it)
+			- fail "valören \(it) finns inte, testa \(alternativ | join{last: ", eller "} ", ")"
+				- alternativ: Valör |> .värde, .namn | concat
+
+
+Kortlek is many Kort:
+	Kort.Svit.all |> allaKortMedSvit | concat;
+		allaKortMedSvit svit: Kort.Valör.all |> Kort{svit; valör: it}

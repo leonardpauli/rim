@@ -1,0 +1,45 @@
+Node
+	...: —3 * (— value)
+	...: -3 * —(value)
+	- sdfs:| sdfs
+	- items: 4* —a, 2* —b
+
+2 * (0 - 3)
+NumberFunction: _ + 2
+NumberFunction: + 2
+NumberFunction: +2
+NumberFunction: - 2
+NumberFunction: -2
+
+NumberFunction
+	as Number: it <| 0
+		0 + 2, 		+ 2 0
+		0 +2, 		+ 2 0
+		0 - 2,	 	- 2 0
+		0 -2, 		- 2 0
+
+5 | +: 3 / 7
+
+fns1: (- a, + a)
+fns2: (- a)
+value |> (- a, + a)
+"cde" | - "c" //: "de"
+	("c", "d", "e") | - ("c") //: "de"
+"cde" | -2 //: "c"
+	("c", "d", "e") | (- 2) //: "c"
+"cde" | -2, - 1 //: "c", "cd"
+	("c", "d", "e") | (- 2, - 1) //: "c", "cd"
+"cde" |> -2 //: "a", "b", "c"
+	("c", "d", "e") |> (- 2) //: ("a"), ("b"), ("c") = ("a", "b", "c") = "abc"?
+"cde" |> -2, - 1 //: ("a", "b"), ("b", "c"), ("c", "d")
+	("c", "d", "e") |> (- 2, - 1) //: ("a", "b"), ("b", "c"), ("c", "d")
+"cde" |> -2, - 1 |> join | join "-" //: ab-bc-cd
+"cde" |> -2 | join //: "abc"
+
+
+(+: -1 * value)
+
+Node
+	— value
+	— value
+	— value

@@ -1,0 +1,161 @@
+# Finns i Sjön
+' kortspel
+	skapat av Leonard Pauli, 30-31 mar 2018 
+
+
+
+
+on start:
+	do print "Välkommen till Finns i Sjön!"
+	spelarNamn: do print "Namn på spelare? (eg. Anna, Erik, ...)"
+		| do read{line} or "Spelare 1, Spelare 2" | split ", ?"
+	spel: Kortspel
+		spelare: spelarNamn |> Spelare{namn: it}
+	do spel.start
+	do print "Ny omgång? (y/n)" | do read{char} | do start if is "y" else exit
+
+
+
+// Kortspel:et
+
+
+Kortspel
+	Sjö is many Kort
+	Par is many Kort
+
+	Spelare
+		par is many Par
+		kortPåHand is many Kort
+			medSammaValör:| self(valör=.valör)
+			on add: if medSammaValör.count is 4:
+				self.take{mutating} medSammaValör | par.add
+			on empty:
+				// TODO: se till att detta händer vid rätt tillfälle, samt visas för rätt spelare
+				do print "Din hand är tom, ta ett kort från sjön!"
+				kort: do kortspel.sjö.take{mutating} .random
+				do self.add kort
+
+	Tur
+		spelare is Spelare
+		körNästa is Boolean: false
+
+		on start {kortspel is Kortspel}:
+			
+			// do print .clear
+			do print kortspel.ställning
+			do print "\(spelare.namn)'s tur! Redo? (endast hen får se skärmen)" | do read{char}
+
+			do print "Dina kort: \(spelare.kort |> .namn.kort | join ", ")"
+			kort: do: on getKortAttFrågaEfter:
+				kortnamn: do print "Vilket kort vill du fråga efter? (eg. ruter 4)" | do read{line}
+				kort: kortnamn as Kort
+				harValör: kort.valör in (spelare.kortPåHand |> .valör)
+				be: kort if harValör else:
+					do print "du har inte valören \(kort.valör) på hand, testa igen;"
+					do getKortAttFrågaEfter
+			spelareAttFråga: do: on getSpelareAttFråga:
+				namn: do print "Vem vill du fråga?" | do read{line}
+				möljligaSpelare: kortspel.aktivaSpelare(it!=spelare)
+				spelareAttFråga: möljligaSpelare(namn.lowercase=namn.lowercase)
+				be spelareAttFråga if exists else:
+					do print "Vem är det? Testa \(möjligaSpelare | join{last: ", eller "} ", ")."
+					do getSpelareAttFråga
+			do print "\(spelareAttFråga.name), har du \(kort.name.lång)?"
+			harKortet: kort in spelareAttFråga.kortPåHand
+			or harKortet:
+				- true:
+					do print "Yess"
+					do spelareAttFråga.kortPåHand.remove kort
+					do spelare.kortPåHand.add kort
+					do start {kortspel}
+				- else:
+					do print "Finns i sjön!"
+					do {målKort: kort}: on finnsISjön {målKort is Kort}:
+						// TODO: man ska kunna välja kort
+						kort: do kortspel.sjö.take{mutating} .random
+						do spelare.kortPåHand.add kort
+						or kort:
+							- is målKort:
+								do print "Grattis! Du fick ditt kort!"
+								do start {kortspel}
+							- else:
+								do slut
+
+		on slut:
+			do print .clear
+
+	spelare is many Spelare
+	sjö: Sjö
+
+	aktivaSpelare: spelare(kortPåHand.count>0)
+	ställning: "Par: " +: spelare |> "\(.namn): \(.par.count)" | join " | "
+
+	on start:
+		on delaUtKort: spelare |> geKort;
+			geKort tillSpelare: do kortlek.take{mutating} 4 | do tillSpelare.kortPåHand.add
+		on spridUtPåBordet: do kortlek.take{mutating} .all | do sjö.add
+
+		kortlek: Kortlek | shuffle
+		do delaUtKort
+		do spridUtPåBordet
+		do aktivaSpelare.0: on nästaTur förraSpelare:
+			nästaSpelare: spelare.takeAfter förraSpelare.indexIn(spelare)
+				| filter it in aktivaSpelare | first or aktivaSpelare.first
+			if nästaSpelare: Tur{spelare: nästaSpelare}.start{kortspel: self}
+		do slut
+
+	on slut:
+		do print .clear
+		do print ställning
+		do print "-----"
+		do print "Spelet är slut! Vinnaren är \(vinnare.name)";
+			vinnare: spelare | sort .par.count | last
+
+
+
+// Kortlek
+
+Färg
+	namn is String
+	hsl is (Number, Number, Number)
+
+	svart: Self{name: "svart"; hsl: 0, 0, 0}
+	röd: Self{name: "röd"; hsl: 0, 1, 0.5}
+
+Kort
+	Svit is Enum
+		template (namn is String, (:(färg is Färg, symbol is String))):
+			namn; färg; symbol
+		- spader: .svart, "♠"
+		- hjärter: .röd, "♥"
+		- ruter: .röd, "♦"
+		- klöver: .svart, "♣"
+		from String: or:
+			- Svit(name=it.lowercase, name.0=it.lowercase, or symbol=it)
+			- fail "sviten \(it) finns inte, testa \(Svit |> .name, .name.0, .symbol | concat | join{last: ", eller "} ", ")"
+
+	Valör is Enum
+		template (namn is String, värde is Number): {namn; värde}
+		- ...: "ess,två,tre,fyra,fem,sex,sju,åtta,nio,knekt,dam,kung"
+			| split "," |> (it): index+1
+		from String: or:
+			- Valör(värde=Int it, or name=it)
+			- fail "valören \(it) finns inte, testa \(Valör |> .värde, .namn | concat | join{last: ", eller "} ", ")"
+
+	valör is Valör
+	svit is Svit
+
+	namn.kort: "\(valör.svit.symbol)\(valör.värde)"
+	namn.lång: "\(valör.namn) \(valör.svit.namn)"
+
+	from String: or:
+		- /^([^ \d]+) ?([^ \d]+|\d+)$/: Self{svit: .0 as Svit, valör: .1 as Valör};
+		- else: fail "beskriv kortet som 'h4' eller 'hjärter fyra'"
+
+	slumpad: Self
+		valör: Valör.all.random
+		svit: Svit.all.random
+
+Kortlek is many Kort:
+	Kort.Svit.all |> allaKortMedSvit | concat;
+		allaKortMedSvit svit: Kort.Valör.all |> Kort{svit; valör: it}

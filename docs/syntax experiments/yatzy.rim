@@ -1,0 +1,171 @@
+# Yatzy
+' tärningsspel
+	skapat av Leonard Pauli, 31 mar 2018 
+
+
+
+on start:
+	do print .clear
+	do print "Välkommen till Yatzy!"
+	spel: Spel
+		spelare: do print "Namn på spelare? (eg. Anna, Erik, ...)"
+			| do read{line} or "Spelare 1, Spelare 2"
+			| split ", ?" |> Spel.Spelare{namn: it}
+		omgångarAntal: do print "Hur många omgångar vill ni köra?" | do read{line} | as Int or 15
+	do spel.start
+	do print "Ny omgång? (y/n)" | do read{char}
+		| do start if is "y" else exit
+
+
+Spel
+	spelare is many Spelare
+	tärningarAntal is Number: 5
+	tärningar is many Tärning: 1..tärningarAntal |> Tärning
+	omgångarAntal is Number
+	omgångar is many Omgång
+	maxKastPerTur is Number: 3
+
+
+	on start:
+		omgångar: 0..<omgångarAntal |> Omgång (| do it.start)
+		do slut
+
+	on slut:
+		do print "Spelet är slut!"
+		do print ställning
+		do print "Vinnare: \(ledartavla.first.spelare.name) med \(ledartavla.0.poäng - ledartavla.1.poäng) poäng"
+
+
+	omgångstext: "Omgång \(omgångar.count+1) av \(omgångarAntal)"
+	ställning: "Ställning: \(ställningar | join " | ")";
+		ställningar: spelare |> "\(.namn): \(poängFörSpelare)"
+
+	allaTurer: omgångar |> .turer | concat
+	poängFörSpelare spelaren: allaTurer(spelare=spelaren) |> .poäng | sum
+	ledartavla: spelare |> {spelare; poäng: poängFörSpelare} | sort .poäng | reverse
+
+	tärningsresultat: "Resultat: \(tärningar |> .värde | join " ")"
+
+
+
+	// -
+
+	Spelare
+		namn is String
+		chansTaken: false
+
+		turer: allaTurer(spelare=self)
+
+		bonus: turer(it in Tur.kombinationer.allaSamma) |> .värde | sum | > 63
+		totalt: (turer |> .värde | sum) + (50 if bonus)
+
+
+
+	Omgång
+		turer is many Tur
+
+		on start:
+			do print .clear
+			do print omgångstext
+			turer: spelare |> Tur{spelare} (| do it.start)
+			do slut
+
+		on slut:
+			do print "Redo för nästa omgång?"
+			do read {char}
+
+
+		// -
+
+		Tur
+			spelare is Spelare
+			tärningsvärden is many Number
+			resultat is {kombination is Kombination; poäng is Int}
+			poäng: resultat.poäng
+
+			on start:
+				do print "\(spelare.name)'s tur!"
+				1..maxKastPerTur |> do kastOmgång nr
+				
+				do tärningsvärden = tärningar |> .värden
+				do resultat = Kombination.möjligaFörTärningsvärden{chansTaken: spelare.chansTaken} tärningsvärden
+					| sort .poäng | reverse | first or {kombination: .ingen; poäng: 0}
+				if resultat.kombination is chans: do spelare.chansTaken = true
+
+				or resultat.kombination:
+					- is .ingen: do print "Aw, matchar ingen giltig kombination, och chansen är tagen! Bättre lycka nästa omgång!"
+					- else: do print "Detta ger dig \(resultat.poäng) poäng för en \(resultat.kombination.name)!"
+
+				do slut
+
+
+			on slut:
+				do print "Redo för nästa omgång?"
+				do read {char}
+
+
+			// -
+
+			on kastOmgång nr{is Int}:
+				kastKvar: maxKastPerTur - nr + 1
+				tärningsPlatserAttKasta: or nr:
+					- 1:
+						do print: "Klicka för att kasta!"		
+						be 1..tärningarAntal
+					- else:
+						do print "Du har \(kastKvar) kast kvar!"
+						do print "Vilka vill du kasta om? (eg. 1, 5, 3 för tärning nr 1, 5 och 3)"
+						be: or do read{line}:
+							- "alla": 1..tärningarAntal
+							- "inga" or nummerLista.count is 0
+							- else: nummerLista
+							nummerLista:| split / |, ?/ | filter .count>0 | Int{1..tärningarAntal} or:
+								fail "'\(it)' är inget giltigt tärningsnummer"
+				do read{char}
+				tärningar | filter (index + 1) in tärningsPlatserAttKasta |> do kasta
+				do print tärningsresultat
+				do kastOmgång nr + 1 if kastKvar - 1 > 0
+
+
+	Kombination is Enum
+		template (namn is String, beräkna is Function): {namn, beräkna}
+		- ...: allaSamma
+		- ett-par: fleraLika 2
+		- triss: fleraLika 3
+		- fyrtal:	fleraLika 4
+		- två-olika-par:| grupperMedLika 2 |> sum | unique | or:
+			- .count > 1: it.0 + it.1
+			- else: 0
+		- liten-stege:| sort | 1..5 in it
+		- stor-stege:| sort | 2..6 in it
+		- kåk:| medTre.sum + medTvå.sum, if medTre and medTvå else 0;
+			- medTre: grupperMedLika 3 | first
+			- allaMedTvå: grupperMedLika 2
+			- medTvå: allaMedTvå | filter .0 isn't medTre.0 | first
+		- yatzy:| fleraLika 5 | 50 if > 0 else 0
+		- chans{chansTaken: false}:| sum if not chansTaken else 0 // + set chansTaken
+		- ingen:| 0
+
+		// -
+		allaSamma: "ettor,tvåor,treor,fyror,femmor,sexor" |> {(it): sammaBeräkning index}
+
+		möjligaFörTärningsvärden{...opt} värden: self.all |> {kombination: it; poäng: it.beräkna{...opt} värden} | filter .poäng > 0
+
+		// -
+		grupperMedLika antal{is Int}:| sort | reverse | takeRanges | filter isAllSame
+			- isAllSame all: all.everyone is all.first
+			- takeRanges all: ranges |> all.take it
+			- ranges: 0..<(tärningarAntal - antal) |> it..(it+antal)
+		fleraLika antal{is Int}:| grupperMedLika antal | (first | sum) or 0
+		sammaBeräkning nr{is Int}:| filter is nr | sum
+
+
+
+Tärning
+	sidor is Number{>0}: 6
+	värde is Number: slumpSida
+
+	slumpSida: 1..sidor | take .random 
+
+	on kasta: do värde = slumpSida
+
