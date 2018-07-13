@@ -1,2 +1,1 @@
-const name = 'js-module-base'
-export default r=> `Hello from ${name}, ${r}` |> console.log
+throw new Error('no index file, see code')
