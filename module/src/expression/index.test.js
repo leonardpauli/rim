@@ -42,36 +42,3 @@ describe('tokenize', ()=> {
 		testTokenizeStr(exprCtxDefaultGet(), 'a+', [['a', '@.id'], ['+', '@.id.special']])
 	})
 })
-
-describe('evaluate', ()=> {
-	const testMany = testManyGet(s=> {
-		const ctx = exprCtxDefaultGet()
-		ctx.vars.name = 'Leo'
-		ctx.vars.a = {b: {c: 'itsa c'}}
-		return evaluateStr(s, ctx)
-	})
-
-	describe('simple math', ()=> testMany({
-		'1': [1],
-		' 2 + 3': [void 0, ' 2 + 3'],
-		'( (3 * ((4) + 2) - 1) )': [17],
-	}))
-
-	describe('simple text', ()=> testMany({
-		'"1"': ['1'],
-		'"hello"': ['hello'],
-		'(33)': [33],
-		'()': [[]],
-		'"\\()"': [''],
-		'"\\(33)"': ['33'],
-		'"he\\(33)llo"': ['he33llo'],
-		'"he\\(33+7)llo" + "hi"': ['he40llohi'],
-		'"he\\(33+7)llo" + "hi" = "he40llohi"': [true],
-		'"he\\(33+7)llo" + "hi" = "he40llohio"': [false],
-		'"Hi \\(name)!"': ['Hi Leo!'],
-		'"Hi \\(namea)!"': {toerror: /undefined.*namea/},
-		'a.b.c': ['itsa c'],
-		'a.c.d': {toerror: /undefined.*c/}, // or d?
-		// 'name in ("a", "b", "c")': ['Hi Leo!'],
-	}))
-})

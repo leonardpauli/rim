@@ -18,6 +18,8 @@ const {paren, expr, dot, id, text, num, sp} = root
 
 // astToken declaration
 
+// TODO: what did these exactly do again?
+// 	Not used in regexp, but possibly should?
 expr.single.astTokenWrapperIs = true
 expr.lexems[1].type.astTokenWrapperIs = true
 sp.astTokenNot = true
@@ -59,24 +61,10 @@ const {prefix, infix} = astidFlags
 
 export const astids = {
 	comma: {is: ({type: t, astValue: v})=> t===id.special && v===',', infix},
-	eq: {is: ({type: t, astValue: v})=> t===id.special && v==='=', infix},
-	
-	plus: {is: ({type: t, astValue: v})=> t===id.special && v==='+', infix},
-	minus: {is: ({type: t, astValue: v})=> t===id.special && v==='-', infix},
-	mul: {is: ({type: t, astValue: v})=> t===id.special && v==='*', infix},
-	div: {is: ({type: t, astValue: v})=> t===id.special && v==='/', infix},
-
 	other: {is: ()=> true, prefix},
 }; astidsExpand(astids)
 
 root.expr.lexemsAstTypes = [
 	astids.comma,
-	astids.eq,
-	
-	astids.plus,
-	astids.minus,
-	astids.mul,
-	astids.div,
-	
 	astids.other,
 ]; lexemsAstTypesExpand(root.expr.lexemsAstTypes)
