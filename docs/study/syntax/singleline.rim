@@ -77,6 +77,36 @@ a(b) c // a(b, c)
 a (b) c // a(b(c)) // spacing makes a difference for grouping
 
 
+# identifier.special.dot // dot notation
+. // what? some parent/self or partial application hole?
+. . // what?
+. b // what?
+a . b // what?
+
+a. // what?
+a.{b: c} // what?
+
+.. // see identifier.special.range
+... // see identifier.special.spread
+
+# dot notation, identifier strip
+a.b // [a, b], indicating b property on a
+a.b.c // [a, b, c], indicating c property on b property on a
+.b // with implicit base (usually a parent (recursive), or "it")
+a.0 // [a, listitem 0], indicating list item with index 0 (first) of a
+a.1 // [a, listitem 1], indicating list item with index 1 (second) of a
+a.-1 // [a, listitem.fromEnd 0], indicating list item with index 0 (from end) (last) of a
+a.-2 // [a, listitem.fromEnd 1], indicating list item with index 1 (from end) (second last) of a
+a.1.2 // [a, listitem 1, listitem 2], dot is dot notation, not decimal point here
+a.01 // lint `a.1` (overidable if wanted for lineup, autofixable)
+a.(1).b // [a, listitem 1, b]; see "paren" and "paren list uses"
+a."b".c // [a, b, c]
+a.{} // what?
+a.(+ 3) // partially applied function
+a.(+ 3) 4 // [a, 7] (?)
+
+
+
 # curly braces
 } // alone close brace; expected to close brace block, traverse before and see if faulty indentation to auto fix, else ignore and warn
 a } // eighter treat as alone close brace, or ignore + warn for unexpected (probably unintentional) extra close brace (if valid matching open not found)
@@ -100,9 +130,40 @@ a{not b} // remove b proberty
 0
 1
 001.00200 // lint `1.00200` // trailing zeros for precision, leading are superfluous
+-5 // negative nr, sure // no real diff between neg/pos nr, just relative to origo 
+.0 // not a number, see dot notation
 
 
-# range
+# identifier.special.range	
+.. // range function infix operator? valid use?
+(..) (3, 5) // (3, 4, 5)
+3.. // infinite range; (negative list index (3..).-1 returns Infinity) (fn taking end `(3..) 5`)
+..5 // infinite range; (positive list index (..5).0 returns -Infinity) (fn taking start `(..10) 5`)
+(3..).1 // 4 // see "smart lazy evaluated"
+(3..) 5 // (3, 4, 5) // fn taking end
+(..5) 3 // (3, 4, 5) // fn taking start
+
+0..3 // (0, 1, 2, 3)
+0.. 3 // (0, 1, 2, 3) // lint `0..3` // it's an operator, so spacing doesn't matter
+0 .. 3 // (0, 1, 2, 3) // lint `0..3`
+
+0..<3 // (0, 1, 2) // ..< is range-up-to-excluding operator
+0 ..< 3 // (0, 1, 2) // lint `0..<3`
+0.. < 3 // "is an infinite range from 0 less than 3?" TODO: do a.0 < 3, treat it as a partially applied function, lint warn on comparing different types, or cast infinite range to positive Infinity?, probably last one, in which case, false (+Infinity isn't < 3)
+0 .. < 3 // lint `(0..) < 3`
+
+0..(+ 2) // partially applied function
+0..(+ 2) 3 // 0..5
+
+(10,9).. // infinite range w step -1 (or fn taking end)
+(2.2,+0.2)..3 // 2.2,2.4,2.6,2.8,3 (+0.2 is stepper fn)
+(2.2,(+ 0.2))..3 // same as above
+(2.2,(- 0.2))..3 // 2.2,2.0,1.8,... (- 0.2 is stepper fn)
+(2.2,-0.2).. // 2.2,-0.2,-2.6,... (-0.2 is a negative number, hence the step) // possibly ambiguous, ability to use / turn off lint rule that enforces (2.2,-0.2).. and (2.2,(-) 0.2).., etc?
+
+0..x // ability to use variables/identifiers, it's just an operator
+(firstValue,nextValueOrStepperFn)..lastValue // TODO: how to differentiate stepperFn from nextValue if it's a variable? ability to detect if partially applied or not
+(firstValue,nextValue,nextValue2,nextValue3)..lastValue // what? -> (start.(0..<(-2)), ...start.(-2, -1)..lastValue)
 
 
 # identifier.special.comma
@@ -117,3 +178,7 @@ a, (b, c) // should be same as (a, b), c // , is an associative operator, thereb
 a; b
 
 a: b, c // a: (b, c) or a: b; c
+
+
+# identifier.special.spread // destructuring / spreading
+...

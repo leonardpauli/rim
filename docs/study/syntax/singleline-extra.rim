@@ -7,10 +7,31 @@
 
 
 # number.more
+1mm
 1 mm
 b2`0101` // custom nr formats (0[identifier sans nr])
 b16`FF02c3`.mm
 b16'FF02c3.mm
+
+
+# identifier.type
+' starts with capital letter
+	how about supporting (script) languages without capital letters?
+		use a specific prefix char to denote type?
+			some scripts have other forms to denote, so custom function best?
+	rim.syntax.type.is with String: it.0 is: or:
+		- .capitalLetter
+		- "类" // Chinese hanzi, possibly "种"?
+		- "形" // Japanese hiragana/katakana (?)
+		- "형" // Korean hangul (?)
+		- ...
+Number
+Number.Int // related types
+Text // usually default for "" (allows more options etc), though convertable to String (most cases lossless?)
+String
+Cat // custom
+a is Type // declare protocol/type
+a is Type: 5 // same as `a is Type{default: 5}`
 
 
 # identifier.(not, is)
@@ -22,9 +43,10 @@ a is not b
 // isnt (a, b): a is not b; isnt.alias(isn't){infix, priority: is.rim.priority}
 
 is b // make the block "inherit" / match the b protocol, each `is` adds to `inherits` list, which applies in order (if conflicts), own properties are applied last, and can access the list to eg. return some overridden inherited property (eg. a{b: 5}; c{b: 6}; d{is a; is c; b: a.b}) // or `is (a, c); b: my.a.b`?
+a{b: Number{default: 5}}, c{b: 6}, d{is a; is c; b: a.b}
 
 
-# identifier.(if, exists, Empty)
+# identifier.(if, exists, Empty) // TODO!
 {} is Empty // true
 Empty is {} // false or true?
 () is Empty // false?
@@ -34,3 +56,21 @@ Empty is {} // false or true?
 {a} is Empty // false
 {} is {a} // false
 b exists // check if b is defined or not... though {} should be same as Empty (false) should not be same as () which is no value
+
+
+# identifier.or // TODO
+
+
+# paren list uses
+a.(1, 2).b // -> (a.1, a.2).b -> (a.1.b, a.2.b)
+
+
+# notes // TODO: move to study/..?
+' smart lazy evaluated
+	- cache
+	- use statistics
+		eg. precompute every 5th fibonacci value
+			up to some max
+				based on user provided estimated input ranges at compile time
+		+ improve during execution
+	- optimise fn (eg. here (3..), it will just do x=> x>0? x+3: Infinity), etc)

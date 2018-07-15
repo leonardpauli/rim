@@ -32,7 +32,7 @@ __Intro notes (preview)__:
   - modifier function (takes its input list + its properties + an index)
   - output list (using modifier function, ordered list of nodes)
   - optional binary data store
-- that is, a node is both an object, array, value, and function, at the same time
+- that is, a node is both an object, array/stream, value, and function, at the same time
   - a "string" has its actual data in the binary data store
     - the modifier function then returns a list with the node itself, for every index
   - same for number
@@ -40,6 +40,7 @@ __Intro notes (preview)__:
     - where the input list is constructed at build time
   - a variable pointing to another is like a list with only one item
   - ranges, eg. 0,2.. has fn: `i=> i*2`
+  - declarativity has no sense of time (?), thereby everything can be though of as async by default, thereby, a list is also a stream
 - all other syntax elements are just nodes
   - using the rim property, eg. alias to special characters can be made + pre/in/suffix + priority can be set.
   - `,` is an operator similar to haskells `:`, just building a list
