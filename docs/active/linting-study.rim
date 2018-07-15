@@ -7,15 +7,30 @@ linting:
 	user settings:
 		defined using rim // makes them extendable, etc
 		depending on environment + variable:
-			- during editing
+			use same rim parser/compiler/runtime instance for all
+			- on editing pause // delay more than 300 ms? configurable
 				autofix clear + when cursor is moved away
 					ability to overide which rules this is done for // add/remove
-					eg. spacings
 					...
-			- on save 
+				warn ambiguous unintrusively
+			- on save
+				autofix unambiguous ambiguous
+				loose: warn ambiguous intrusively
+				strict: error ambiguous intrusively
+			- on dev run:
+				reuse on save
+			- on commit:
+				use strict + use max warnings, only pass if ok
+				allow parts marked as WIP to pass even with errors/warnings
+					branch specific setting
+						+ ability to take "dead code elimination" into account
+							eg. only pass errors if WIP and dead code, as determined by tests?
+					files with top level comment `# WIP` // (?)
+					blocks with `// WIP` (?)
 		strictness: strict/loose
 	case:
-		- clear 
+		- clear
+			eg. spacings
 		- ambiguous
 			case to select
 				- unambiguous with user lint settings
@@ -31,8 +46,31 @@ linting:
 					(ability to add ambiguous-syntax-max-warnings-ok )
 			auto debugging
 				of output cases, eg. "or did you expect this output instead (because of this (autocorrected) ambiguous case?
+
+lint notes:
+	this has been: auto added / auto fixed
+	reason: or:
+		- parser core
+		- ast core
+		- ast additions by code from core lib
+		- ast additions by code from user imported lib
+		- ast additions by code from user
+		- default lint settings
+		- user lint setting
+			plausable reasons:
+				- intentional (user writes without formatting, but want to read it pretty)
+		- ambiguous // ie. "just took one to make it valid"
+			plausable reasons:
+				- unintentional:
+					- user missed something when working with the code
+						-> show correction options
+					- user unsure about syntax
+						-> explain differences in correction options
+							smart: if user has shown that they know what they do, show only wanted info/options
+
+
 parsing
 	parse level lint notes
 astify
 	core ast level lint notes
-	user/lib ast additions level lint notes
+	user/lib code ast additions level lint notes
