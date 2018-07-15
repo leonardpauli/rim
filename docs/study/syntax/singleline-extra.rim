@@ -6,6 +6,39 @@
 // see singleline
 
 
+# parent accessor
+@.0 // -> this parent (which is this module is top scope)
+a{b: @.0, c: {d: @.0, e: @.1}} // same as `a{b: a, c: {d: c, e: a}}`
+@.(-1) // last parent, ie. module (same as @.0 in this case; already in module top level)
+@.(2 * 0) // dynamic, as everything else
+
+# current rim context / meta node accessor / "reflection api"
+' previously seen as a.rim.x
+@ // current rim context / meta node
+a.@ // a's rim context, only valid in rim source code
+a."@" // property on a named "@", not rim context
+a.(@) // possibly same as a.@ or not? or should `a.('@)` for passing a token be introduced (like in lisp)?
+
+' TODO: access properties (structure?)
+	@:
+		parser.version
+		token/lexem info...
+		input // list
+		output // list
+		properties.own // key
+		inherits // list
+		...
+
+
+# identifier.special."@", other uses
+' TODO
+	- @0
+	- @1
+	- @(-1)
+	- @directive
+	- see date/time format/literal
+
+
 # number.more
 1mm
 1 mm
