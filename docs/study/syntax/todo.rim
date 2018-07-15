@@ -1,0 +1,147 @@
+# study/syntax/todo
+' rim
+	Created by Leonard Pauli, 14 jul 2018
+	Copyright © Leonard Pauli 2017-2018
+
+
+# top-level line comment
+code // end-of-line comment
+' block-comment
+still in comment block
+
+key: value
+value: 5 // order doesn't matter, declarative!
+greeting: "Hello" // text type (currently with a "string" value)
+phrase: "\(greeting) \(value)!" // phrase is "Hello 5!" (interpolation)
+
+ball: {color: "red", material.type: "paper"} // properties
+ball.material.thickness{value: 5, unit: "mm"} // extend properties
+// same as: (using indentation to define / nest "blocks")
+ball:
+color: "red"
+material:
+	type: "paper"
+	thickness:
+		value: 5
+		unit: "mm"
+
+fruits: (apple, orange, banana) // list
+"an \(fruits.0) ate a \(fruits.-1)" // "an apple ate a banana"
+' index starts at 0, ie. list.0 is the first item in the list
+	list.1 is the second (orange), etc
+	negative numbers gets from the end, ie. list.-1 is the last one
+	list.-2 is the second last one (in this case, also orange)
+fruits.count // 3
+fruits.myFruitIndex: 2
+myFruitIndex: 1
+fruits.(myFruitIndex) // "orange", use parents to indicate priority
+fruits.myFruitIndex // 2
+fruits.(fruits.myFruitIndex) // "banana"
+
+listAsBlock:
+	- "first"
+	- "second"
+	someProperty: "in the middle"
+	- "third"
+listAsBlock.someProperty // "in the middle"
+"\(listAsBlock.1), \(listAsBlock.2), \(listAsBlock.count)" // "second, third, 3"
+' same as all the following:
+	- listAsBlock("first", "second"){someProperty: "in the middle"}("third")
+	- listAsBlock("first", "second", "third"){someProperty: "in the middle"}
+	- listAsBlock{someProperty: "in the middle"}("first", "second", "third")
+	- listAsBlock{someProperty: "in the middle"}("first", "second")
+		- "third"
+
+# functions
+
+js: import "javascript" // ability to import "adapters" for other languages
+add1: js`x=> x+1` // ability to use other languages!
+	// add1 is a javascript function that takes one variable
+six: add1 key // shell/haskell style
+six: add1 (key)
+six: add1(key) // also valid, c/javascript style
+six: key | add1 // (pipe)
+
+' also six:
+	6
+	js`6`
+	js`x=> 6` "some random unused value"
+	js`x=> x` 6
+	js`x=> x+1` 5
+	js`x=> x+1` value // value: 5, see above
+	js`x=> x+1` key // key: value, see above
+	add1: js`x=> x+1`; add1 key // just put a name to it
+
+add: js`(a, b)=> a+b`
+six: add1 (add 2) 3 // partial application
+six: add1((add 2)(3)) // parents indicate "AST" grouping / what to do first
+six: add (2, 4) // multiple args (list) directly
+six: 4 | add 2
+addTwo: add 2 // partial application
+six: add1 add2 3
+six: add1(add2(3)) // parents indicate "AST" grouping / what to do first
+six: 3 | add2 | add1 // (pipe)
+six: add (2, 4)
+six: (add 2) 4
+
+// functions like this has to be pure, to use side-effects/state:
+on start: do js`new Date()*1` // "do" can only be used inside "on" block
+// "start" event is triggered on program start
+// no impure code can be run during compile (safe, reliable, repeatable, etc)
+on ms.now: do js`new Date()*1`
+on delay: do js`ms=> new Promise(r=> setTimeout(r, ms))` // awaits promises
+on start:
+	t: do ms.now
+	do print "now \(t)" // with do, order matters (imperative)
+	do: delay js`Math.random()*500` // in a sequence, do is only necessary once (TODO: actually wanted? how to unambiguously?)
+	sub{alias{infix}: "-"}: js`(a,b)=> a-b` // add operators on the go
+	do: print "later \(ms.now), diff: \(ms.now - t)"
+
+# ranges
+
+0..3, 0..<2, 0,2..7 // (0, 1, 2, 3), (0, 1), (0, 2, 4, 6)
+0,2.. | add1 | .(2..4) // (5, 7, 9), (lazy infinite list), (implicit dot notation / partial application), (access with ranges)
+
+
+# block syntax
+
+ball:
+	color: "red"
+	material.type: "paper"
+// also allow
+ball: { // but require closing on end-of-block
+	color: "red"; // indentation not as important for parsing then, but still enforced as obligatory linting
+	material.type: "paper"; // semicolon at EOL doesn't matter, but happy for those who got that muscle memory ;)
+} // EOB here required then
+
+
+textBlock: "
+	my text
+	is multiline
+		and nested
+		with "quotes" inside
+	to close it, just end the block...
+// ...by de-indenting (indentation inside block will be keept)
+textBlockExample: "
+
+	a
+		b\
+	c\n\td"e
+
+
+' same as "\na\n\tbc\n\td\"e"
+note:
+	- one, not two leading new lines
+	- \t before b
+	- no new line between b and c
+	- " between d and e is keept intact
+	- no trailing new line
+textBlockExample2: "hi \
+	hello
+// same as "hi hello"
+textBlockExample3: "\n\
+	hello
+// same as "\nhello"
+textBlockExample4: "hi
+	hello
+// same as "hi\n\thello"

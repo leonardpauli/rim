@@ -1,0 +1,36 @@
+# study/syntax/singleline-extra
+' rim
+	Created by Leonard Pauli, 15 jul 2018
+	Copyright © Leonard Pauli 2017-2018
+
+// see singleline
+
+
+# number.more
+1 mm
+b2`0101` // custom nr formats (0[identifier sans nr])
+b16`FF02c3`.mm
+b16'FF02c3.mm
+
+
+# identifier.(not, is)
+not // prefix operator, type specific, gets the opposite (eg. (not true) is false, 5 is not (..4, 6..), (not "a") is (specific fn to check or to start enumerate (through value-from-regex enumeration) the infinite possibilities...) )
+is // both binary and prefix operator
+
+a is b // does a match (b as a protocol), ie. if (b: String) or (b: String{default: "other"}), a can be String or eg. "hello", but not 5 or Number, if b is 5, a can be 5.0 and 5, but not Number?
+a is not b
+// isnt (a, b): a is not b; isnt.alias(isn't){infix, priority: is.rim.priority}
+
+is b // make the block "inherit" / match the b protocol, each `is` adds to `inherits` list, which applies in order (if conflicts), own properties are applied last, and can access the list to eg. return some overridden inherited property (eg. a{b: 5}; c{b: 6}; d{is a; is c; b: a.b}) // or `is (a, c); b: my.a.b`?
+
+
+# identifier.(if, exists, Empty)
+{} is Empty // true
+Empty is {} // false or true?
+() is Empty // false?
+() is () // true
+{} is () // false
+{a} is {} // true
+{a} is Empty // false
+{} is {a} // false
+b exists // check if b is defined or not... though {} should be same as Empty (false) should not be same as () which is no value

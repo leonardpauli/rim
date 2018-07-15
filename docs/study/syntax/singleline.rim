@@ -4,6 +4,8 @@
 	Copyright © Leonard Pauli 2017-2018
 
 // see study/linting
+// see singleline-extra
+// TODO: see singleline-todo
 
 
 # top-level line comment
@@ -15,12 +17,14 @@
 # // lint remove empty comment
 // // lint remove empty comment
 
+
 # identifier
 identifier
 identifier // EOL comment
 identifier//EOL comment // to lint
 a b // two identifiers
 a b c d // many identifiers
+
 
 # identifier.special
 +
@@ -29,15 +33,12 @@ a + // normal + special identifier (suf)
 a + b // normal + special identifier (in)
 a+ // normal + special identifier (no space)
 
+
 # identifier.boolean // not in parser, also, aliases
 true
 false
 // yes: true; no: false // add aliases // TODO: though this should be done with true.rim.alias(yes)
-not // prefix operator, type specific, gets the opposite (eg. (not true) is false, 5 is not (..4, 6..), (not "a") is (specific fn to check or to start enumerate (through value-from-regex enumeration) the infinite possibilities...) )
-is // both binary and prefix operator
-a is b // does a match (b as a protocol), ie. if (b: String) or (b: String{default: "other"}), a can be String or eg. "hello", but not 5 or Number, if b is 5, a can be 5.0 and 5, but not Number?
-a isn't b // same as `a is not b
-is b // make the block "inherit" / match the b protocol, each `is` adds to `inherits` list, which applies in order (if conflicts), own properties are applied last, and can access the list to eg. return some overridden inherited property (eg. a{b: 5}; c{b: 6}; d{is a; is c; b: a.b}) // or `is (a, c); b: my.a.b`?
+
 
 # colon
 : // alone
@@ -54,7 +55,8 @@ a :: b // another special identifier
 a:b // special operator / format (eg. see date/time) (though potetially warn)
 a : b // special operator / format (eg. see date/time) (though potetially warn)
 
-# parens
+
+# parens // used to group parts at ast-level
 ( // lint add close (with question)
 ) // lint remove (with question)
 () // shorthand for Empty, or just no value?
@@ -74,6 +76,7 @@ a(b) // similar to (`a (b)` same as `a b`)
 a(b) c // a(b, c)
 a (b) c // a(b(c)) // spacing makes a difference for grouping
 
+
 # curly braces
 } // alone close brace; expected to close brace block, traverse before and see if faulty indentation to auto fix, else ignore and warn
 a } // eighter treat as alone close brace, or ignore + warn for unexpected (probably unintentional) extra close brace (if valid matching open not found)
@@ -87,20 +90,17 @@ a{} // extend a's properties (not input as in `a {}`)
 a.b // just accesses b property of a, doesn't create anything
 a.b: true // set value on b property on a
 
-a{b} // similar to (a.b; a).-1 // (a.b: b) if b else a.b: true
+a{b} // (a.b: b) if b exists or (a.b: {}) // not same as (a.b; a).-1
 a{is b}
 a{not b} // remove b proberty
 {b: c} // similar to (a.b: c; a).-1
 
 
-
-# number
+# number.(integer, decimal)
 0
-1 mm
-001.00200mm // lint `1.00200` // trailing zeros for precision, leading are superfluous
-b2`0101` // custom nr formats (0[identifier sans nr])
-b16`FF02c3`.mm
-b16'FF02c3.mm
+1
+001.00200 // lint `1.00200` // trailing zeros for precision, leading are superfluous
+
 
 # range
 
@@ -111,153 +111,9 @@ a, b // one
 a, b, c // many
 a ,b , c,d // to lint
 a, , b // abundant, to lint (with question) (-> a, b) // or use a, Empty, b
+a, (b, c) // should be same as (a, b), c // , is an associative operator, thereby parents doesn't matter
 # identifier.special.comma // same effect as comma, though lint-preffered in block
 ; // semicolon
 a; b
 
 a: b, c // a: (b, c) or a: b; c
-
-
-
-
-# top-level line comment
-code // end-of-line comment
-' block-comment
-still in comment block
-
-key: value
-value: 5 // order doesn't matter, declarative!
-greeting: "Hello" // text type (currently with a "string" value)
-phrase: "\(greeting) \(value)!" // phrase is "Hello 5!" (interpolation)
-
-ball: {color: "red", material.type: "paper"} // properties
-ball.material.thickness{value: 5, unit: "mm"} // extend properties
-// same as: (using indentation to define / nest "blocks")
-ball:
-color: "red"
-material:
-	type: "paper"
-	thickness:
-		value: 5
-		unit: "mm"
-
-fruits: (apple, orange, banana) // list
-"an \(fruits.0) ate a \(fruits.-1)" // "an apple ate a banana"
-' index starts at 0, ie. list.0 is the first item in the list
-	list.1 is the second (orange), etc
-	negative numbers gets from the end, ie. list.-1 is the last one
-	list.-2 is the second last one (in this case, also orange)
-fruits.count // 3
-fruits.myFruitIndex: 2
-myFruitIndex: 1
-fruits.(myFruitIndex) // "orange", use parents to indicate priority
-fruits.myFruitIndex // 2
-fruits.(fruits.myFruitIndex) // "banana"
-
-listAsBlock:
-	- "first"
-	- "second"
-	someProperty: "in the middle"
-	- "third"
-listAsBlock.someProperty // "in the middle"
-"\(listAsBlock.1), \(listAsBlock.2), \(listAsBlock.count)" // "second, third, 3"
-' same as all the following:
-	- listAsBlock("first", "second"){someProperty: "in the middle"}("third")
-	- listAsBlock("first", "second", "third"){someProperty: "in the middle"}
-	- listAsBlock{someProperty: "in the middle"}("first", "second", "third")
-	- listAsBlock{someProperty: "in the middle"}("first", "second")
-		- "third"
-
-# functions
-
-js: import "javascript" // ability to import "adapters" for other languages
-add1: js`x=> x+1` // ability to use other languages!
-	// add1 is a javascript function that takes one variable
-six: add1 key // shell/haskell style
-six: add1 (key)
-six: add1(key) // also valid, c/javascript style
-six: key | add1 // (pipe)
-
-' also six:
-	6
-	js`6`
-	js`x=> 6` "some random unused value"
-	js`x=> x` 6
-	js`x=> x+1` 5
-	js`x=> x+1` value // value: 5, see above
-	js`x=> x+1` key // key: value, see above
-	add1: js`x=> x+1`; add1 key // just put a name to it
-
-add: js`(a, b)=> a+b`
-six: add1 (add 2) 3 // partial application
-six: add1((add 2)(3)) // parents indicate "AST" grouping / what to do first
-six: add (2, 4) // multiple args (list) directly
-six: 4 | add 2
-addTwo: add 2 // partial application
-six: add1 add2 3
-six: add1(add2(3)) // parents indicate "AST" grouping / what to do first
-six: 3 | add2 | add1 // (pipe)
-six: add (2, 4)
-six: (add 2) 4
-
-// functions like this has to be pure, to use side-effects/state:
-on start: do js`new Date()*1` // "do" can only be used inside "on" block
-// "start" event is triggered on program start
-// no impure code can be run during compile (safe, reliable, repeatable, etc)
-on ms.now: do js`new Date()*1`
-on delay: do js`ms=> new Promise(r=> setTimeout(r, ms))` // awaits promises
-on start:
-	t: do ms.now
-	do print "now \(t)" // with do, order matters (imperative)
-	do: delay js`Math.random()*500` // in a sequence, do is only necessary once (TODO: actually wanted? how to unambiguously?)
-	sub{alias{infix}: "-"}: js`(a,b)=> a-b` // add operators on the go
-	do: print "later \(ms.now), diff: \(ms.now - t)"
-
-# ranges
-
-0..3, 0..<2, 0,2..7 // (0, 1, 2, 3), (0, 1), (0, 2, 4, 6)
-0,2.. | add1 | .(2..4) // (5, 7, 9), (lazy infinite list), (implicit dot notation / partial application), (access with ranges)
-
-
-# block syntax
-
-ball:
-	color: "red"
-	material.type: "paper"
-// also allow
-ball: { // but require closing on end-of-block
-	color: "red"; // indentation not as important for parsing then, but still enforced as obligatory linting
-	material.type: "paper"; // semicolon at EOL doesn't matter, but happy for those who got that muscle memory ;)
-} // EOB here required then
-
-
-textBlock: "
-	my text
-	is multiline
-		and nested
-		with "quotes" inside
-	to close it, just end the block...
-// ...by de-indenting (indentation inside block will be keept)
-textBlockExample: "
-
-	a
-		b\
-	c\n\td"e
-
-
-' same as "\na\n\tbc\n\td\"e"
-note:
-	- one, not two leading new lines
-	- \t before b
-	- no new line between b and c
-	- " between d and e is keept intact
-	- no trailing new line
-textBlockExample2: "hi \
-	hello
-// same as "hi hello"
-textBlockExample3: "\n\
-	hello
-// same as "\nhello"
-textBlockExample4: "hi
-	hello
-// same as "hi\n\thello"
