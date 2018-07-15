@@ -1,0 +1,38 @@
+# linting-study
+' rim
+	Created by Leonard Pauli, 14 jul 2018
+	Copyright © Leonard Pauli 2018
+
+linting:
+	user settings:
+		defined using rim // makes them extendable, etc
+		depending on environment + variable:
+			- during editing
+				autofix clear + when cursor is moved away
+					ability to overide which rules this is done for // add/remove
+					eg. spacings
+					...
+			- on save 
+		strictness: strict/loose
+	case:
+		- clear 
+		- ambiguous
+			case to select
+				- unambiguous with user lint settings
+					autofix through change of sourcecode
+					add note that it was fixed
+						option to add lint option comment (ignore or alt rule)
+				- strict: force user to choose
+					though change of sourcecode // syntax
+					give autofix options
+					option to add to lint config
+						unintrusive smart: if many similar + majority conform, etc
+				- loose: choose one, go on, + add warning
+					(ability to add ambiguous-syntax-max-warnings-ok )
+			auto debugging
+				of output cases, eg. "or did you expect this output instead (because of this (autocorrected) ambiguous case?
+parsing
+	parse level lint notes
+astify
+	core ast level lint notes
+	user/lib ast additions level lint notes
