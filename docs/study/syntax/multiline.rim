@@ -4,3 +4,63 @@
 	Copyright © Leonard Pauli 2017-2018
 
 // see singleline
+
+# TODO
+
+
+# comments
+' this
+		has: "to be valid code"
+'"this
+	can
+			be anything // don't correct indentation past block level, see string
+' @directive
+' @documentation??
+	here...
+
+// custom header patterns parsing:
+# path/sub/module-name
+' my-project
+	Created by author with spaces, date
+	Copyright © name with spaces year-or-year-range
+' eg. @.header.patterns.add: SyntaxPattern(comment.top-level, comment.block)...
+
+
+# blocks
+a
+	b
+	c
+
+a
+	b: {
+	c // lint fix add indentation
+d // lint fix or warn... see todo.rim
+	}
+
+# lists
+a
+	- b
+	- c
+
+# mixed
+a
+	- b
+	d
+		e
+	- c
+		f
+
+
+# operator at SOL
+// a | b | c
+a
+	| b
+	| c
+
+# text/string
+"
+	asdf
+
+# unescaped / pure / raw text/string
+`
+	text

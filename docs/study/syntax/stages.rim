@@ -1,0 +1,177 @@
+# study/syntax/stages
+' rim
+	Created by Leonard Pauli, 16 jul 2018
+	Copyright © Leonard Pauli 2018
+
+' inverse stage notation from js
+	stage 0 is required for any parsing
+	stage 1 is fundamental for use as declarative data structure/graphs
+	stage 2 is default additions, helpers/sugar + makes logic possible
+	stage 3 is experimental
+
+structure:
+	singleline
+	multiline
+
+singleline
+	stage-0-base
+		space
+
+		comment
+			top-level
+			eol
+		
+		identifier // no grouping
+		identifier.special
+
+		number{int, decimal{precision}}{spacer} // 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
+		string
+
+	stage-1-core
+		grouping // parens (a, b)
+
+		key-value // colon
+		
+		identifier{grouping} // operators{(pre, in, suf)fix, commutable, associative}
+		
+		identifier.strip{Number, identifier, String} // a.b.c, a.0.c, a.-1.c, a."b".c
+			' note that a.b.c is (a.b).c while a,b,c is a,(b,c) like a b c is a (b c)
+				-> looks like operator associativity direction is necessary?
+		
+		nothing-literal // ()
+		node-base-literal // {}
+		node-literal // {a, b}
+		
+		string{interpolation} // "a\("c")b" ("acb")
+		string.raw // `\` ("\\")
+		
+		boolean // true, false
+
+	stage-2-default
+		import // a: import "./a" // want to avoid public/private/export, though if wanted, accomplish through linter using directives
+
+		list-literal // [a, b] -> {}(a, b)
+		
+		identifier.strip{grouping} // a.("b", "c").d -> (a.b.d, a.c.d)
+		identifier.strip{list} // a.["b", "c"].d -> a.b.c.d
+		
+		range{default} // ..
+		range{up-to-excluding} // ..<
+		range{step, stepperFn, start-values} // .., (1, 3)..6 (1, 3, 5), (1, (+ 3))..6 (1, 4), (4, 5, 2, 4)..6 (4, 5, 2, 4, 6)
+		
+		spread // ...
+		stub // ...
+		stub{defaultValue} // defaultValue...
+
+	stage-3-experimental
+		partial-application
+		partial-application.hole // _
+		partial-application.hole{spread} // ..._
+
+		parent-accessor // @.0; module: @.-1 (last/top parent)
+		
+		meta-node // @ // current rim context + "reflection api"
+		meta-accessor // @.property...
+
+		meta-node{parser}
+		meta-node{block-lexem} // inc. all sub tokens, ast info, source code location, etc
+		meta-node{node-meta} // eg. input/output/inherits/properties lists, input->output modifier function, query function, etc
+
+		query // a.{is Number, ...}
+		
+		type // Type, Number.Int, String, ...
+		type{declaration} // a is String, a is String: 5
+		type{validation}
+
+		is{inherits} // a{b: 5}; c{is a}; c.b // 5
+		is{check{MVP}} // a{b: 5}; c{is a}; c is a // true
+		not{Boolean, is{check{MVP}} // returns "inverse"
+		// isnt // or isn't
+		// TODO: is, isn't vs =, ≠ ?
+
+		range{infinite} // eg. ((1,3)..) to get all odd numbers
+
+	stage-4-thoughs
+		directive // @identifier, @(expression) // see meta-node and meta-accessor
+		date-literal // 10:57, 16/7-2018@12:30.47.300am{UTC}
+		number{suffix} // 10mm
+		number{custom-formats/bases} // Number{base: 16}`4fA`, b16: Number{base: 16}; b16`4fA`
+		
+		exists
+		empty // Empty ?
+
+		label // colon, :label, (:label)
+		label{destructuring} // import "@/components" (:{MyButton}) -> tmp: import "@/components"; MyButton: tmp.MyButton
+
+		event // do, on
+		event.state-update // do a.b = 7, or do a.b: 7?, explicit with =
+
+		boolean.list.(or, and) // or returns the first non-empty value, does not convert to boolean
+		boolean.list.or{match-mode} // eg. `or {is Number and > 5: it, is String: 10, else: 2}`
+		conditional.(if, else)
+
+		pipe, map // |, |>
+		it, self, Self
+		type-maybe-literal // Type? -> (Type or Empty)
+		identifier.strip{implicit} // .a
+		enum-implicit-access // a.b is Enum(x: 8, y: 7, z): .x
+
+		string.raw{meta-syntax-highlighting-custom} // eg. for js`...` or Regex`[A-z]+`
+
+		angle-bracket-context // what for? // <blabla>, can't contain > or <, if not directly wrapping other context, eg: <(hello < something)>, <{a is String}>
+
+		type-conversion(as, from) // eg. "5" as Number, String from 5
+
+	stage-4-default-libs
+		math
+			operators:
+				+, -, *, /, =, ≠, =/= or !=, ≈, **, %, <, >, ≥, ≤, <= >=,
+			functions:
+				sin, cos, etc
+				impure: do random
+			types: Number.Rational, etc
+			constants: pi, e, etc
+			list extentions: avg, sum, min, max
+		list
+			functions:
+				modifications: update/remove/add/insert etc // on copy
+				see lodash, haskell libs, etc
+			impure: do (functions.modifications{but not on copy or replace original})
+		string
+			count
+			.0 ...
+			.(2..4)
+			.match...
+		regex
+			Regex`[A-z]+`
+		...
+
+	stage-4-packages
+		image
+		network/http
+		view // ViewModuler
+		data // DataModuler
+		...
+
+
+multiline
+	stage-0-base
+		comment.block
+		indentation + new line parsing
+
+	stage-1-core
+		escaping related to indentation + new line
+		
+		multiline special block declaration // [, (, {, ", `, ' , '"
+
+		comment.block.string // '"
+		comment.top-level.hashbang // #!/usr/bin/env rim
+
+		listitem-indicator
+
+	stage-2-default
+		comment.directive // ' @version: ...
+
+	stage-3-experimental
+		comment.headerPatterns // auto-detect author and copyright, etc
+		comment.directive.documentation

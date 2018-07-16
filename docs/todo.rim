@@ -2,6 +2,9 @@
 ' LeonardPauli/rim
 	Created by Leonard Pauli, 13 jul 2018
 
+- copy in to syntax-experiments + update study/syntax, from:
+	- rim-parser-old-schedule/algorithm-notes
+	- rim-parser/notes
 
 # utils
 // partly from LeonardPauli/LayerRenamer

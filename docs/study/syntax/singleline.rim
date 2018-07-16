@@ -19,6 +19,11 @@
 
 
 # identifier
+' space, parens, and quotes always separates identifiers
+	some "special" characters also separates (.,;+-*/&|\^'<>!#%=?≈≠~...) (+ from rim core extension)
+	then, some sequences of special chars might be joined (eg. ".." and "...")
+	then, allow unused variants of special identifier to be treated as parts of normal identifiers?
+	TODO ...
 identifier
 identifier // EOL comment
 identifier//EOL comment // to lint
@@ -31,29 +36,25 @@ a b c d // many identifiers
 a + // normal + special identifier (suf)
 + a // normal + special identifier (pre)
 a + b // normal + special identifier (in)
+a + b // +(a, b)
 a+ // normal + special identifier (no space)
 
-
-# identifier.boolean // not in parser, also, aliases
-true
-false
-// yes: true; no: false // add aliases // TODO: though this should be done with true.rim.alias(yes)
-
-
-# colon
-: // alone
-a: // no value
-a: b // key-value, make a be a function of b // though same as setting a.0 to b? (right, and resetting a.(1..))
-a b // pass b to the a function, return result (same as ((a.copy): b) (ie. setting a.0 to b and returning result of a's function without modifying a))
-
-:: // double alone, another special identifier
-a::b // another special identifier
-a :: b // another special identifier
-
-: b // no key (though could have meaning?, extend block with b (nah)?)
-:b // to lint (though could have meaning?)
+# identifier.special.colon
+// see identifier.special.colon, key-value
+// see identifier.special.colon, label
 a:b // special operator / format (eg. see date/time) (though potetially warn)
-a : b // special operator / format (eg. see date/time) (though potetially warn)
+a : b // lint warn, suggest (see all relevant identifier.special.colon cases)
+// see identifier.special.colon-double
+
+# identifier.special.colon, key-value
+: // alone, lint warn ``
+(:) (a, b) // key-value operator -> KeyValue{key: a, value: b}
+a: b // same as above
+a: // no value // KeyValue{key: a, value: ()}
+a: b // key-value, make a be a function of b // though same as setting a.0 to b? (right, and resetting a.(1..))
+
+a b // pass b to the a function, return result (same as ((a.copy): b) (ie. setting a.0 to b and returning result of a's function without modifying a))
+a b c // `a (b c)` by default
 
 
 # parens // used to group parts at ast-level
@@ -78,18 +79,31 @@ a (b) c // a(b(c)) // spacing makes a difference for grouping
 
 
 # identifier.special.dot // dot notation
-. // what? some parent/self or partial application hole?
-. . // what?
-. b // what?
-a . b // what?
+. // identifier strip operator // lint `(.)` or `it` or `@.0`
+. . // lint `(.) (.)` -> `(.) (_, _, _)` -> `(_._._)` // where `_` is a partial application hole
+. b // lint `.b` (same as _.b or it.b or @.0.b?) or ´it b´ or (`(.) b` -> `b._`)
+a . b // lint `a.b` or `a it b` or (`a (.) b` -> `a (b._)`)
+a. // lint `a._` // see PartialApplicator.Hole
 
-a. // what?
-a.{b: c} // what?
-
+(.), a.b, a.1, a.(), a.[], a."", a.`` // see identifier.strip
+a.{ // see query
 .. // see identifier.special.range
 ... // see identifier.special.spread
 
-# dot notation, identifier strip
+# identifier.special.dot, query
+' node that's queried can declare custom handler
+		to forward supported subquery to eg. external database efficiently
+		+ then use the unsupported part to just normal rim filter
+			so all filter functionallity always will be supported
+				using the same uniform syntax
+	default query handler is filter handler
+		simple case: List.filter with query: ...(items |> it if is query else ())
+a.{} // send {} as query/filter options node to a
+[3, "a", 7].{is Number} // (3, 7)
+
+# identifier.special.dot, identifier.strip
+(.) ("a", "b", "c") // identifier.Strip("a", "b", "c") // same as `a.b.c`
+
 a.b // [a, b], indicating b property on a
 a.b.c // [a, b, c], indicating c property on b property on a
 .b // with implicit base (usually a parent (recursive), or "it")
@@ -133,7 +147,7 @@ a{not b} // remove b proberty
 -5 // negative nr, sure // no real diff between neg/pos nr, just relative to origo 
 .0 // not a number, see dot notation
 +2 // lint `+ 2`, possibly `(+ 2)` or ´(+) 2´ to mark that + is a function here, not a sign or part of the number
-
+5_001_000.001_001 // ability to use spacers // using strict lint rules, if one spacer is detected, all relevant are required / auto fixed (overidable with custom rule / fix fn)
 
 # identifier.special.range	
 .. // range function infix operator? valid use?
@@ -174,14 +188,24 @@ a, b, c // many
 a ,b , c,d // to lint
 a, , b // abundant, to lint (with question) (-> a, b) // or use a, Empty, b
 a, (b, c) // should be same as (a, b), c // , is an associative operator, thereby parents doesn't matter
-# identifier.special.comma // same effect as comma, though lint-preffered in block
-; // semicolon
+# identifier.special.semicolon // TODO
+' same effect as comma, though lint-preffered in block (?)
+	higher prio (lower prio value) than comma
+; // semicolon, lint -> ``
+;; // two semicolon, lint `;` -> ``
 a; b
+{a; b} // lint `{a, b}`
+{a: b, c} // {(a: b), (c)}
+{a}
 
-a: b, c // a: (b, c) or a: b; c
+{a: b, c} // a: (b, c) or a: b; c
 
 
-# braces, lists // sure?
+# braces, lists
+' sure? default option to lint warn against its usage
+	usually used as a "quick fix" instead of adding wrapper node (?)
+		(that is correctly named and extendable)
+		requesting good use case examples that proves otherwise
 (a, (b, c)) // a, b, c // parens only for ast grouping
 c(a, b) // send a and b to c's input list (which, by default, also is the output list)
 {}(a, b) // send a and b to a new empty node's input list
@@ -189,8 +213,17 @@ c(a, b) // send a and b to c's input list (which, by default, also is the output
 (a, [b, c]) // `[x]` syntax sugar for `{}(x)`?
 
 
-# identifier.special.spread // destructuring / spreading
-... // spread operator, prefix
+# identifier.special.dotdotdot, stub operator
+... // by itself as TO-IMPLEMENT stub mark
+' the whole dependency tree using that value will be marked as unfinished
+	with all the ... parts listed as TODO's
+	but will run mostly fine in dev mode (with non-intrusive warnings)
+		by using defaultValue or first fake value from expected Type
+defaultValue... // as suffix, custom stub // Stub{default: defaultValue}
+a ... // lint -> `a...` or `(a)...` or `(a...)`
+// see spread operator
+
+# identifier.special.dotdotdot, spread operator
 ' concept: [a, ...[b, ...[e, f], c], d] -> [a, b, e, f, c, d]
 	a: (c, d)
 	b: (e, f)
@@ -203,17 +236,63 @@ c(a, b) // send a and b to c's input list (which, by default, also is the output
 			add1(1..3).@.input -> (1, 2, 3)
 		- output list; add1(1..3) -> (2, 3, 4) // though same by default (eg. a: (1..3))
 			(add1(1..3), ...add1(1..3)) -> ({}(2, 3, 4), 2, 3, 4) // ie. .0.1 is .2
-
-a... // lint `a ...` -> `a (...)`, passing the spread function to a
-a ... // same as above
-
+...a // spread operator, as prefix // Spreaded{inner: a}
 a ...b // send Spreaded{inner: b} to a (ie. ... only markes/wrapps it as "to be spreaded", it's up to the receiveing operators/functions to do something about it)
-a...b // lint `a ...b`
+a...b // lint `a ...b`, eg. `a , ... b` -> `a, ...b` -> `(,) (a, (...b))`
 a ... b // same as above
 
 (a, ...{}(c, d)) // -> (a, Spreaded{inner: {}(c, d)}) -> ((,) (a, Spreaded{inner: {}(c, d)})) -> (a, c, d) // the comma function unwraps the output list of Spreaded.inner values
+(a, ...[c, d]) // like above // -> (a, Spreaded{inner: {}(c, d)})
 ...a // spread output list inside to parent, see above (though here it is the "invisible block constructor" that does the work?)
 
 {a, ...{b, c}, d} // lint warn if no relevant outputlist
 {a, is {b, c}, d} // {a, b, c, d}
 {a, is {b, is {e, f}, c}, d} // {a, b, e, f, c, d} // nested
+// see stub operator
+
+
+# TODO:
+# text/strings
+"
+""
+"""
+
+"a"
+"a
+
+"a\nb"
+"a\bc"
+"a\"b\\c\\"
+
+"a\(b)c"
+"a\("b\("d")e")c"
+
+a""
+a"
+
+a ""
+a "
+
+a "b"
+a "b
+
+""{}
+""()
+
+"ab".count
+"ab".0
+
+
+# "raw" strings // TODO what to call?
+`
+``
+```
+
+``()
+``()``
+`\`
+`\\`
+`a```b`
+js``
+js`a
+

@@ -1,0 +1,16 @@
+# study/syntax/notes
+' rim
+	Created by Leonard Pauli, 16 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// see stages
+
+logic: // TODO: move to study/logic...? 
+	smart lazy evaluated
+		- cache
+		- use statistics
+			eg. precompute every 5th fibonacci value
+				up to some max
+					based on user provided estimated input ranges at compile time
+			+ improve during execution
+		- optimise fn (eg. here (3..), it will just do x=> x>0? x+3: Infinity), etc

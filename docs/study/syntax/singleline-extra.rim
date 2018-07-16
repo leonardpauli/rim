@@ -5,11 +5,56 @@
 
 // see singleline
 
+# identifier.special.underscore, partial application hole
+(_ - 3) 2 // (2 - 3) -> -1 // or `((-) (_, 3)) 2`
+(_, 1, ..._) (a, b, c) // (a, 1, b, c) // usage with spread operator
+_ // PartialApplicator.Hole
+..._ // Spreaded{inner: Hole} -> PartialApplicator.Hole{is Spreaded}
+(_, 1) // (PartialApplicator.Hole, 1)
+' middleware fn: on hole, return node
+		wrapped in PartialApplicator
+			inner: [Hole, 1, Hole{is Spreaded}]
+			holes.count: 1
+			holeSpreaded: true... // allows "infinite" consumtion... or futher detection...
+		that returns reduced PartialApplicator on input
+			until only holeSpreaded is left
+				then the real is unwrapped if possible, else act as proxy?
+		if gets PartialApplicator, reduce to one?
+			TODO: if child contains holeSpreaded, how to act? should be self contained
+
+
+
+# identifier.boolean // not in parser, also, aliases
+true
+false // Boolean{value: false}
+// yes: true; no: false // add aliases // TODO: though this should be done with true.rim.alias(yes)
+
+# identifier.special.colon, label
+: b // no key // lint warn, suggest `b`, `is b`, or `(:b)`
+:b // label / 
+
+# identifier.special.colon-double
+:: // double alone, another special identifier
+a::b // another special identifier
+a :: b // another special identifier
+
+
+# comments // TODO
+// @directives??
+#!/usr/bin/env rim // @version 1.2 // hashbang
+' validates version
+	keeps multiple version of engine
+		so there will only ever have to be one installed
+			(cough.. python/ruby/swift/js... cough..)
+
 
 # parent accessor
 @.0 // -> this parent (which is this module is top scope)
 a{b: @.0, c: {d: @.0, e: @.1}} // same as `a{b: a, c: {d: c, e: a}}`
 @.(-1) // last parent, ie. module (same as @.0 in this case; already in module top level)
+g{a: (b: (c: (@.0, @.-2)))} // g.a.b.c: (g, g) // parens only do ast-grouping, not blocks (everything inside the curly braces are treated as declared in the same block, g is declared in the module block (@.-1 inside the curly braces))
+g[a: [@.0, @.1]] // g[a: [a, g]] // if [] is enabled, it also creates a list block
+
 @.(2 * 0) // dynamic, as everything else
 
 # current rim context / meta node accessor / "reflection api"
@@ -30,7 +75,7 @@ a.(@) // possibly same as a.@ or not? or should `a.('@)` for passing a token be 
 		...
 
 
-# identifier.special."@", other uses
+# identifier.special."@", other uses // TODO
 ' TODO
 	- @0
 	- @1
@@ -39,15 +84,16 @@ a.(@) // possibly same as a.@ or not? or should `a.('@)` for passing a token be 
 	- see date/time format/literal
 
 
-# number.more
+# number.more // TODO
 1mm
 1 mm
+0b0101mm
 b2`0101` // custom nr formats (0[identifier sans nr])
 b16`FF02c3`.mm
 b16'FF02c3.mm
 
 
-# identifier.type
+# identifier.type // TODO
 ' starts with capital letter
 	how about supporting (script) languages without capital letters?
 		use a specific prefix char to denote type?
@@ -91,19 +137,46 @@ Empty is {} // false or true?
 b exists // check if b is defined or not... though {} should be same as Empty (false) should not be same as () which is no value
 
 
-# identifier.or // TODO
+# functions // TODO
+a b
+a b c
 
 
-# paren list uses
+# more // TODO
+do, on
+
+it
+
+a: {b: (4 + 5)(:g) * 4, c: g/2} // a: {g: 9, b: 9*4, c: 9/2}
+
+// ./a/b/c // Path(".", "a", "b", "c")
+Path`./a/b/c` // Path(".", "a", "b", "c"), get correct syntax highlighting using ``
+
+import `./a` // import also does the path thing
+a: import `./a`
+({b, c.d (:e)}): import `./a` // baah..
+// is import (`./a`, `./b`({default, c: .r, d})) // too implicit?
+
+
+# identifier.(or, and, if, else) // TODO
+a 1 if b 2 else c 3 // a 1(if(b 2) else(c 3)) // all nodes have fn wrapper/middleware that handles eg. syntax like this (also see spread marker), if value is an "if node", only run the inner fn if "if node" condition is true, otherwise, use "if nodes" other value; "if node" checks if input is "else node", etc...
+
+or (a, b, c)
+and (a, b, c)
+
+a or b or c // or (a, b, c)
+a and b and c // and (a, b, c)
+a and b or c // and (a, or(b, c))
+a or c and b // or (a, and(c, b))
+d and (a, b, c) // (and (d, a, b, c))
+
+a, b, or c // `or (a, b, c)` // on , or??
+a, b, or c, d // lint ´(a, b, or c), d´
+a, b, and c, d, e, or f
+
+
+# paren list uses // TODO
 a.(1, 2).b // -> (a.1, a.2).b -> (a.1.b, a.2.b)
-
-
-# notes // TODO: move to study/..?
-' smart lazy evaluated
-	- cache
-	- use statistics
-		eg. precompute every 5th fibonacci value
-			up to some max
-				based on user provided estimated input ranges at compile time
-		+ improve during execution
-	- optimise fn (eg. here (3..), it will just do x=> x>0? x+3: Infinity), etc)
+a.["b", "c", 2].d // a.b.c.2.d
+p: ["b", "c", 2]; a.(p).d // a.b.c.2.d
+p: "bc2"; a.(p).d // a.bc2.d
