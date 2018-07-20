@@ -1,0 +1,23 @@
+# study/stages/stage-0
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// stage-0-base
+
+singleline
+	space
+
+	comment
+		top-level
+		eol
+	
+	identifier // no grouping
+	identifier.special
+
+	number{int, decimal{precision}}{spacer} // 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
+	string
+
+multiline
+	comment.block
+	indentation + new line parsing

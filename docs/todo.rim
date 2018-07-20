@@ -7,10 +7,7 @@ version 0.2.0 - declarative package
 	' notes:
 		rim.study.syntax.(singleline, multiline).(stage 0..1, notes for stage 2..3)
 		rim.implement.(singleline, multiline).stage 0..1
-	add study/syntax/stage-X.rim info to notes.rim
-		// "speccing singleline+multiline syntax + parsing + node mapping"
-		// later on: create study/js/node-structure.rim // outlining the rim js Node objects interface + mapping to the rim js parser Node objects
-		// add stage community-experimental for plugins created by community
+	// add study/syntax/stage-X.rim info to notes.rim
 	create study/syntax/stage-0.rim
 	create study/syntax/stage-1.rim
 	create study/syntax/stage-X.rim // WIP notes to be moved to future stage files

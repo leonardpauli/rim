@@ -5,6 +5,23 @@
 
 // see stages
 
+structure:
+	stage-X.rim
+		- speccing singleline+multiline syntax + parsing + node mapping
+			see study/(js, parser)/node-structure.rim
+		content:
+			- plugins
+				- syntax extentions; parsing lexem rules
+					- list + comments
+					- divided on char
+				- astify extentions // see above?
+				- ast modifier / visitors
+				- other plugins extentions // eg. lint rules
+			- adapters
+			- packages/libs
+		structure
+
+
 logic: // TODO: move to study/logic...? 
 	smart lazy evaluated
 		- cache

@@ -1,0 +1,39 @@
+# study/parser/node-structure
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+' TODO
+	outlining the rim js parser Node object interface
+	- instantiated during astify, ie:
+		file(source code)
+			-> tokenizer(tokens tree)
+			-> astify(parserNode tree)
+			-> ...(...plugins).modifiers(parserNode tree) ' eg.:
+				- linter
+				- ?
+			-> outputs: adapters |> ' eg.:
+				- write-back
+					' -> modifiers(parserNode tree) // already done
+						- linter
+					-> reducer(source code files)
+				- wasm
+					-> modifiers(parserNode tree)
+						- optimise
+					-> reducer(wasm files + source maps)
+
+// see parser/node-structure
+
+# Notes / scratchpad
+
+Node
+	token
+
+	value
+	input
+	modifier.fn
+	output
+
+	properties
+
+	query.fn

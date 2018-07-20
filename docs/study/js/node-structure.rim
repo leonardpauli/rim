@@ -1,0 +1,24 @@
+# study/js/node-structure
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+' TODO
+	outlining the rim js Node objects interface
+		+ mapping to the rim js parser Node objects
+	- used eg. with js adapter, to interact and use rim logic from js
+		+ create reactive/observable data bindings etc
+		- eg. using rim with DB adapter, but vuejs frontend -> jsNode creates the relevant bridge
+			- allow adapters to the adapter?eg.:
+				parserNode -> jsNode -> (mobx, react, or vuejs objects) -> connect to frontend
+	// or should it even be different from the one the parser is using?
+		Yes, it should be:
+			- The parser one is optimised for explicitness
+			- This one is optimised for developer user-friendliness
+				eg. rim.JsNode.from(myParserNode)
+				eg. myNode.someProperty -> rim.JsNode.from(myParserNode.properties["someProperty"])
+				+ if is number/string, use js toValue ? (or too implicit?)
+				+ add iterator symbor for output list items
+				+ add neat function use interface, etc...
+
+// see parser/node-structure

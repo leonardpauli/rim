@@ -1,0 +1,36 @@
+# study/stages/stage-1
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// stage-1-core
+
+singleline
+	grouping // parens (a, b)
+
+	key-value // colon
+	
+	identifier{grouping} // operators{(pre, in, suf)fix, commutable, associative}
+	
+	identifier.strip{Number, identifier, String} // a.b.c, a.0.c, a.-1.c, a."b".c
+		' note that a.b.c is (a.b).c while a,b,c is a,(b,c) like a b c is a (b c)
+			-> looks like operator associativity direction is necessary?
+	
+	nothing-literal // ()
+	node-base-literal // {}
+	node-literal // {a, b}
+	
+	string{interpolation} // "a\("c")b" ("acb")
+	string.raw // `\` ("\\")
+	
+	boolean // true, false
+
+multiline
+	escaping related to indentation + new line
+	
+	multiline special block declaration // [, (, {, ", `, ' , '"
+
+	comment.block.string // '"
+	comment.top-level.hashbang // #!/usr/bin/env rim
+
+	listitem-indicator

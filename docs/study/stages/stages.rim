@@ -1,51 +1,52 @@
-# study/syntax/stages
+# study/stages
 ' rim
 	Created by Leonard Pauli, 16 jul 2018
 	Copyright © Leonard Pauli 2018
 
 ' inverse stage notation from js
-	stage 0 is required for any parsing
-	stage 1 is fundamental for use as declarative data structure/graphs
-	stage 2 is default additions, helpers/sugar + makes logic possible
-	stage 3 is experimental
+	stage 0 is base - required for any parsing
+	stage 1 is declarative - fundamental for use as declarative data structure/graphs
+	.
+	stage 2 is standard - minimal standard additions, helpers/sugar + makes logic possible
+	stage 2-packages is default core additions // network, IO, etc
+	.
+	stage 3 is recommended additions // nicer syntax, etc
+	stage 3-packages is recommended additions // extra math stuff, network nicer interface/helpers for use-cases/protocols not in core, etc
+		have or not?
+			would be neat to keep stage-2 to a minimal
+			+ have most logic + std stuff in separate stage
+				with clear notion that it's just recommended
+					and therefore easily replacable
+			though, eg. vs:
+				- http (few uses, core functionality + explicit (not as dev-user-friendly), but std)
+				- express
+					became seen as the "recommended"
+						early + in most tutorials, similar as to jQuery
+					easier use, but not std
+				- koa
+					better imo
+					made by same as behind express
+					lower use, but slowly increasing
+			using declarative... it should be possible to have:
+				- explicit core (in stage 2??)
+				- recommended implicit binding (in stage 3??)
+				- that can easily be switched to another variant by user (stage 4..5??)
+	.
+	stage 4 is experimental // "best" community implementation from stage 5 selected
+	stage 5 is experimental-community for plugins created by community but not yet incorporated into rim // multiple variation can exist, no guarantees, do not use in production (if you're not a maintainer)
+	stage 6 is ideas without MVP experimental implementation
+	.
+	stage-X-plugins // for source-code -> internal
+	stage-X-adapters // for internal -> external (eg. back to source-code, or different target)
+	stage-X-packages/libs // eg. UI, DB, 
 
 structure:
 	singleline
 	multiline
 
 singleline
-	stage-0-base
-		space
-
-		comment
-			top-level
-			eol
-		
-		identifier // no grouping
-		identifier.special
-
-		number{int, decimal{precision}}{spacer} // 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
-		string
-
-	stage-1-core
-		grouping // parens (a, b)
-
-		key-value // colon
-		
-		identifier{grouping} // operators{(pre, in, suf)fix, commutable, associative}
-		
-		identifier.strip{Number, identifier, String} // a.b.c, a.0.c, a.-1.c, a."b".c
-			' note that a.b.c is (a.b).c while a,b,c is a,(b,c) like a b c is a (b c)
-				-> looks like operator associativity direction is necessary?
-		
-		nothing-literal // ()
-		node-base-literal // {}
-		node-literal // {a, b}
-		
-		string{interpolation} // "a\("c")b" ("acb")
-		string.raw // `\` ("\\")
-		
-		boolean // true, false
+	stage-0-base // see stage-0
+	stage-1-core // see stage-1
 
 	stage-2-default
 		import // a: import "./a" // want to avoid public/private/export, though if wanted, accomplish through linter using directives
@@ -155,19 +156,8 @@ singleline
 
 
 multiline
-	stage-0-base
-		comment.block
-		indentation + new line parsing
-
-	stage-1-core
-		escaping related to indentation + new line
-		
-		multiline special block declaration // [, (, {, ", `, ' , '"
-
-		comment.block.string // '"
-		comment.top-level.hashbang // #!/usr/bin/env rim
-
-		listitem-indicator
+	stage-0-base // see stage-0
+	stage-1-core // see stage-1
 
 	stage-2-default
 		comment.directive // ' @version: ...
