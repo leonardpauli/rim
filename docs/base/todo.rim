@@ -1,14 +1,14 @@
-# docs/todo
+# docs/base/todo
 ' LeonardPauli/js-module-base
 	Created by Leonard Pauli, 27 may 2018
 
 // js-module-base
 	// - create + mod setup docs based on lp-vue-base
-		// - base-setup-from-scratch.rim
-		// - base-setup.rim
-		// - vue-base-setup-from-scratch.rim
-		// - vue-base-setup.rim
-	// - follow base-setup-from-scratch.rim to create js-module-base repo in $lpdocs/files/
+		// - base/setup-from-scratch.rim
+		// - base/setup.rim
+		// - vue-base/setup-from-scratch.rim
+		// - vue-base/setup.rim
+	// - follow base/setup-from-scratch.rim to create js-module-base repo in $lpdocs/files/
 		// - ln -s module/README.md README.md
 		// - AGPL by default, incl. LICENCE file
 
