@@ -1,5 +1,6 @@
 {
 	"folders": [
+		{ "path": "docs/study", "name": "study"},
 		{ "path": "module", "name": "module",
 			"folder_exclude_patterns": ["node_modules", "src"],
 			"file_exclude_patterns": ["package-lock.json"],

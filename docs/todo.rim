@@ -2,54 +2,78 @@
 ' LeonardPauli/rim
 	Created by Leonard Pauli, 13 jul 2018
 
-- copy in to syntax-experiments + update study/syntax, from:
-	- rim-parser-old-schedule/algorithm-notes
-	- rim-parser/notes
 
-# utils
-// partly from LeonardPauli/LayerRenamer
+version 0.2.0 - declarative package
+	' notes:
+		rim.study.syntax.(singleline, multiline).(stage 0..1, notes for stage 2..3)
+		rim.implement.(singleline, multiline).stage 0..1
+	add study/syntax/stage-X.rim info to notes.rim
+		// "speccing singleline+multiline syntax + parsing + node mapping"
+		// later on: create study/js/node-structure.rim // outlining the rim js Node objects interface + mapping to the rim js parser Node objects
+		// add stage community-experimental for plugins created by community
+	create study/syntax/stage-0.rim
+	create study/syntax/stage-1.rim
+	create study/syntax/stage-X.rim // WIP notes to be moved to future stage files
+	create study/parser/node-structure.rim // outlining the ast results (rim js parser Node objects)
+	create study/parser/declarative-resolve.rim // outlining the resolve procedure
+	
+	create tests for node-structure
+	create tests for stage-0 tokenize + astify
+	create tests for stage-1 tokenize + astify
+	create tests for declarative-resolve
+	
+	implement node-structure for stage(0, 1)
+	implement stage(0, 1) tokenize
+	implement stage(0, 1) astify
+	implement declarative-resolve // as module (ie. code separated from core, included in parser.options.plugins/modules/stages... through stage-1)
 
-' expression notes
-	// all: "<*>*" // nah
-	// selected: ""
-	// inside selected: ">*"
-	:(fill=red) => :(fill.0=red.threshold(10%))
-	hello (.*)! => :/hello (.*)!/rig // (initially using default flags) r-egex (otherwise plain text match), i-gnoreCase, g-lobal
-	:: => : // escape colon separator
-	:>0>2n+1 // path
-	hello (.*)!:>0:/bg/:(fill=red, hidden=false):+1
-	then, in replace; $1 = \(.0.1) = first group in first search regex
-		\(.1.0) would be the resulting node from ":>0"
-		\(.3) would be list of the ones matching filter/query
-		\(.4) would be list of the ones resulting from ":+1"
-		eg. \(.3.0.border.0.fill) or \(.4.0.title)
-		eg. \(.path(">0").0.title)
+	create study/stringify.rim
+	create stringify tests for stage(0, 1) // eg. construct rim-js-node-objects manually through js -> stringify -> rim source code; (rim | parse | modify | stringify | expect rim-with-mod)
+	implement stringify
 
+	create study/linting/linter.rim // declared using rim (ability to use only parser with stage(0, 1)+declarative-resolve, eg. without the to-be-created linter etc) (one rim file for each stage, extending each other, + inc last stage as user settings / overrides) (containing rules (available options (declarative +, if needed, imperative js code (as placeholder MVP until rim only ready)), choosen option))
+	create tests for linting // input source + options(strictness, rule overrides, etc) -> expected output source + warnings + errors(with autofix options + test that autofix works) + correct positions/line/col before/after fix
+	create tests for linting with files/write-back // use node tmp fs
+	implement linting // as module/plugin
 
-- create nodesFindUsingPathExpression.js // in utils/
-	taking parentGet, childrenGet, titleGet?, initial regex default flags, (expression evaluator propertiesGet)?
-- create nodesFindUsingPathExpression.test.js
-	test for simple path
-	test for simple text
-	test for simple text + simple path
-	test for simple text + simple path + simple text + ...
-	test for regex
-	test for simple expression
+	create lint-rule debug-show (test + implentation) // auto-fixes block-comment following `@debug.show my-node` to unfolded dependency-resolved tree of my-node // in stage-experimental
+	create lint-rule sync (test + implentation) // in stage-experimental // `@sync{depth: 3, is filter-options} my-node` // a{b, c: @sync a, d: @sync a.c} -> a{b, c: a, d: (a.c -> a)} // @sync is only directive for parser/linter on how to autofix source, will check that the value exists at least once, will add `// @sync.keep` if @sync{depth...} would otherwise auto-remove, if changeing to `@sync.keep false`, it will be moved to sync source, if possible with MVP imp. otherwise lint warning 
 
-- update
-	// - arrayDeltaActions
-		// - create
-		// - test
-	- nodesFindUsingPathExpression
-		// - relativePath // -> findLayersUsingRelativePath
-			// - refactor
-			// - test js
-				// - parseRelativePathStrPart
-				// - nodesAtRelativePath
-		- string/regex
-			- simple test
-		- filter MVP
-			- simple test
-		- combined path expression
-			- keep part results // eg. regex groups / (path traversal, filter) resulting nodes
-			- simple test
+	create study/build/options.rim // with @version directive + top-level-comment hashbang
+	implement directive.version (+test) // + for now, auto use versioning from package.json + warn if missmatch // later on, use declarative diff to detect feature changes between rim versions + warn or info + auto bump nr if auto-fix possible, else use relevant old plugins
+	implement top-level-comment.hashbang (+test) // add link for `/usr/bin/env rim` to rim.. evaluator? later on, it should (compile + cache using hash if cache-miss), run cached executable directly (which will ask user about sensitive IO access when applicable and store choices? or will host rim do that? depending on pre-compiled or not)
+
+	create study/build/watch.rim
+	create tests for watch
+	implement watch
+
+	publish version 0.2.0 "rim declarative - describe graph-like linked data across multiple files, with custom consistent views (using @sync) into the one underlying source of thruth" // inc. readme update (text saying under active development - see vision + development branch(, join us in our mission!(?))) with gifs, install instructions, usage instructions, examples folder in docs, + switch to development branch
+	convert study structure using @sync and 0.2.0 // install 0.2.0 separately, update development readme with `development setup` section, setup different views (eg. syntax: examples per char/stage/feature-category, etc, etc)
+	use rim file for lexem setup, etc
+
+adapters (UI, DB) - outline
+	create study/adapter/adapter.rim // plugin is for parser/syntax/linting/etc (rim source -> data structure), adapter is for compiling/exporting/etc (usually includes plugin(s) and libs) (data structure -> target)
+	create study/adapter/adapters.rim // UI using view-moduler, DB using data-moduler, js-eval, wasm, llvm
+	create study/adapter/UI/overview.rim // using view-moduler (js, own repo, possible to use without rim), adaper is connection to it
+	create study/adapter/DB/overview.rim // using data-moduler (js, own repo, possible to use without rim), adaper is connection to it
+	create study/adapter/UI/db-integration.rim // with DB adapter / data/state in general?
+	// create study/syntax/stage-2.rim // necessary for logic? nah, MVP use js template string for now..? but state update necessary?
+	' notes:
+		ViewModuler: create MVP structure // select adapter from rim	
+		ViewModuler: create MVP for HTML and CSS with inc. for Vue file? static
+		ViewModuler: create MVP for JS actions + interactions + connect rim do update
+		ViewModuler: create example static site
+		DataModuler: create MVP structure // select adapter from rim
+		DataModuler: create adapter for tmp storage (se lpme)
+adapters (UI, DB) - implement MVP
+
+version 0.3.0 - logic MVP + libs and features relevant for UI/DB usage
+
+link in old parsers
+	- add to repo as separate histories
+	- merge in their notes: to syntax-experiments, from:
+		- rim-parser-old-schedule/algorithm-notes
+		- rim-parser/notes
+	- clean up syntax-experiments + update study/syntax accordingly // + add syntax-experiments overview?
+
+- see "src/utils/todo"
