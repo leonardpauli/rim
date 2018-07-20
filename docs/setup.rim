@@ -1,10 +1,11 @@
 # setup
+base: import`./base/setup`
 
-Self is ./base-setup
+Self is base
 	get running:
-		see ./base-setup."get running"
+		see base."get running"
 	instantiate:
-		see ./base-setup.instantiate
+		see base.instantiate
 
 ' TODO:
 	...

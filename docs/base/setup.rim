@@ -1,10 +1,10 @@
-# setup
+# base/setup
 ' LeonardPauli/js-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
 
 prerequisites:
-	- see ./base-setup-from-scratch
+	- see ./base/setup-from-scratch
 	- get lpdocs (optional)
 		- lpdocs=$"(cd ~/some/path && git clone git@github.com:LeonardPauli/docs.git lpdocs && cd $_ && pwd)"
 			// see $lpdocs/app/node/registry/local
@@ -17,7 +17,7 @@ get running:
 		- cd project
 		- name="$(pwd)"; name="${name##*/}"
 		- subname="$(echo */package.json | head -n 1)"; subname="${subname%%/*}" // not necessarily, usually "web" or "module"
-	fix git hooks: // see base-setup-from-scratch."fix git hooks"
+	fix git hooks: // see base/setup-from-scratch."fix git hooks"
 		- $lpdocs/app/repo/git-hook-runner.sh install pre-commit
 		- $lpdocs/app/repo/git-hook-runner.sh install -noop all
 
@@ -49,7 +49,7 @@ instantiate:
 		- description_shorter="..."
 		- author_line="" // Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)
 		- copyright_holder="" // Leonard Pauli
-	- "$base_location"/docs/instantiate.sh $name && cd $_
+	- "$base_location"/docs/base/instantiate.sh $name && cd $_
 	- see $lpdocs/admin/{licencing,readme}
 		- update readme
 			- . $lpdocs/os/terminal/lib.sh

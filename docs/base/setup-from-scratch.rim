@@ -1,4 +1,4 @@
-# base-setup-from-scratch
+# base/setup-from-scratch
 ' LeonardPauli/js-module-base
 	Created by Leonard Pauli, 21 may 2018
 	partly based on lp-vue-base, 17 apr 2018
@@ -55,9 +55,9 @@ prerequisites:
 - init:
 	- mkdir "$project" && cd $_
 	- git init
-	- mkdir docs && vi docs/base-setup-from-scratch.rim // this document
-	- gaa && gc -m "docs: added base-setup-from-scratch.rim starting-point"
-	// - git add . && git commit -m "docs: added base-setup.rim + instantiate.sh"
+	- mkdir docs && vi docs/base/setup-from-scratch.rim // this document
+	- gaa && gc -m "docs: added base/setup-from-scratch.rim starting-point"
+	// - git add . && git commit -m "docs: added base/setup.rim + base/instantiate.sh"
 
 - fix branch
 	- git branch -m master "$name"'-master' // rename branch so it will ba able to co-exist in other repos with lp-vue-base as custom origin
