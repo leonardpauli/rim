@@ -180,3 +180,14 @@ a.(1, 2).b // -> (a.1, a.2).b -> (a.1.b, a.2.b)
 a.["b", "c", 2].d // a.b.c.2.d
 p: ["b", "c", 2]; a.(p).d // a.b.c.2.d
 p: "bc2"; a.(p).d // a.bc2.d
+
+
+# NOTES TODO:
+' minimize keywords.. option to make them all optional or enforced (it vs "it")
+loops
+.index
+index
+@index
+@.index
+@.it
+it@index

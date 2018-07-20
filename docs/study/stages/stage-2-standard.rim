@@ -1,0 +1,25 @@
+# study/stages/stage-2
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// standard
+
+singleline
+	import // a: import "./a" // want to avoid public/private/export, though if wanted, accomplish through linter using directives
+
+	list-literal // [a, b] -> {}(a, b)
+	
+	identifier.strip{grouping} // a.("b", "c").d -> (a.b.d, a.c.d)
+	identifier.strip{list} // a.["b", "c"].d -> a.b.c.d
+	
+	range{default} // ..
+	range{up-to-excluding} // ..<
+	range{step, stepperFn, start-values} // .., (1, 3)..6 (1, 3, 5), (1, (+ 3))..6 (1, 4), (4, 5, 2, 4)..6 (4, 5, 2, 4, 6)
+	
+	spread // ...
+	stub // ...
+	stub{defaultValue} // defaultValue...
+
+multiline
+	comment.directive // ' @version: ...

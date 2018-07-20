@@ -1,0 +1,37 @@
+# study/stages/stage-3
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// recommended
+
+singleline
+	partial-application
+	partial-application.hole // _
+	partial-application.hole{spread} // ..._
+
+	parent-accessor // @.0; module: @.-1 (last/top parent)
+	
+	meta-node // @ // current rim context + "reflection api"
+	meta-accessor // @.property...
+
+	meta-node{parser}
+	meta-node{block-lexem} // inc. all sub tokens, ast info, source code location, etc
+	meta-node{node-meta} // eg. input/output/inherits/properties lists, input->output modifier function, query function, etc
+
+	query // a.{is Number, ...}
+	
+	type // Type, Number.Int, String, ...
+	type{declaration} // a is String, a is String: 5
+	type{validation}
+
+	is{inherits} // a{b: 5}; c{is a}; c.b // 5
+	is{check{MVP}} // a{b: 5}; c{is a}; c is a // true
+	not{Boolean, is{check{MVP}} // returns "inverse"
+	// isnt // or isn't
+	// TODO: is, isn't vs =, ≠ ?
+
+	range{infinite} // eg. ((1,3)..) to get all odd numbers
+
+multiline
+

@@ -1,0 +1,71 @@
+# study/stages/stage-7
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// idea
+
+singleline
+	directive // @identifier, @(expression) // see meta-node and meta-accessor
+	date-literal // 10:57, 16/7-2018@12:30.47.300am{UTC}
+	number{suffix} // 10mm
+	number{custom-formats/bases} // Number{base: 16}`4fA`, b16: Number{base: 16}; b16`4fA`
+	
+	exists
+	empty // Empty ?
+
+	label // colon, :label, (:label)
+	label{destructuring} // import "@/components" (:{MyButton}) -> tmp: import "@/components"; MyButton: tmp.MyButton
+
+	event // do, on
+	event.state-update // do a.b = 7, or do a.b: 7?, explicit with =
+
+	boolean.list.(or, and) // or returns the first non-empty value, does not convert to boolean
+	boolean.list.or{match-mode} // eg. `or {is Number and > 5: it, is String: 10, else: 2}`
+	conditional.(if, else)
+
+	pipe, map // |, |>
+	it, self, Self
+	type-maybe-literal // Type? -> (Type or Empty)
+	identifier.strip{implicit} // .a
+	enum-implicit-access // a.b is Enum(x: 8, y: 7, z): .x
+
+	string.raw{meta-syntax-highlighting-custom} // eg. for js`...` or Regex`[A-z]+`
+
+	angle-bracket-context // what for? // <blabla>, can't contain > or <, if not directly wrapping other context, eg: <(hello < something)>, <{a is String}>
+
+	type-conversion(as, from) // eg. "5" as Number, String from 5
+
+multiline
+
+
+libs:
+	math
+		operators:
+			+, -, *, /, =, ≠, =/= or !=, ≈, **, %, <, >, ≥, ≤, <= >=,
+		functions:
+			sin, cos, etc
+			impure: do random
+		types: Number.Rational, etc
+		constants: pi, e, etc
+		list extentions: avg, sum, min, max
+	list
+		functions:
+			modifications: update/remove/add/insert etc // on copy
+			see lodash, haskell libs, etc
+		impure: do (functions.modifications{but not on copy or replace original})
+	string
+		count
+		.0 ...
+		.(2..4)
+		.match...
+	regex
+		Regex`[A-z]+`
+	...
+
+packages:
+	image
+	network/http
+	view // ViewModuler
+	data // DataModuler
+	...

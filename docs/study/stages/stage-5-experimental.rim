@@ -1,0 +1,12 @@
+# study/stages/stage-5
+' rim
+	Created by Leonard Pauli, 20 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// experimental
+
+singleline
+
+multiline
+	comment.headerPatterns // auto-detect author and copyright, etc
+	comment.directive.documentation
