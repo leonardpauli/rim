@@ -10,5 +10,5 @@ Feel free to fork and send PR's :)
 
 Copyright © {{=${copyright_holder:-Leonard Pauli} }}, {{=${copyright_year:-2018} }}
 
-Licence: {{=${licence_short:-GNU Affero General Public License v3.0 or later}.}}
+License: {{=${licence_short:-GNU Affero General Public License v3.0 or later}.}}
 {{="$'\n'"${licence_note:-For commersial / closed-source / custom licencing needs, please contact us.} }}
