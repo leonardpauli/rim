@@ -1,0 +1,85 @@
+// https://www.st.cs.uni-saarland.de/edu/seminare/2005/advanced-fp/docs/sweeny.pdf
+
+package UnrealEngine;
+
+class Actor
+{
+	int Health;
+	void TakeDamage(int Amount)
+	{
+		Health = Health – Amount;
+		if (Health<0)
+			Die();
+	}
+}
+
+class Player extends Actor
+{
+	string PlayerName;
+	socket NetworkConnection;
+}
+
+
+is import.package.UnrealEngine
+
+Actor
+	health is Int
+	on damage.take (amount is Int):
+		do health -= amount
+		do die if health < 0
+
+Player is Actor
+	name is String
+	network.connection is Socket
+
+
+
+// rim
+
+package UnrealEngine;
+
+class Actor {
+	int health;
+	void takeDamage(int amount) {
+		health = health – amount;
+		if (health<0) die();
+	}
+}
+
+class Player extends Actor {
+	string PlayerName;
+	socket NetworkConnection;
+}
+
+
+is import.package.UnrealEngine
+
+Actor
+	health is Int
+	on damage.take Int:
+		do health -= it
+		do die if health < 0
+
+Player is Actor
+	name is String
+	network.connection is Socket
+
+
+# ---
+
+Vertex[] Transform (Vertex[] Vertices, int[] Indices, Matrix m)
+{
+	Vertex[] Result = new Vertex[Indices.length];
+	for(int i=0; i<Indices.length; i++)
+		Result[i] = Transform(m,Vertices[Indices[i]]);
+	return Result;
+};
+
+Transform{n:nat}(Vertices:[n]Vertex, Indices:[]nat<n, m:Matrix):[]Vertex=
+	for each(i in Indices)
+		Transform(m,Vertices[i])
+
+// rim
+transform with (m is Matrix, vertices is many Vertex, indices is many Int)
+	indices |> vertices.(it) |> m.transform
+

@@ -133,6 +133,33 @@ r:|> intList (:((,k), ...xs)); topNodes |> ancestorsPairs | add |=> similar | co
 
 
 
+# ---
+// http://www.codewars.com/kata/ip-validation/train/javascript
+// ip.as.string.valid:| split "." |-> is: (it as Int) as String |> as Int |-> < 256 | .count is 4
+/* const isValidIP = s=> s
+  .split('.')
+  .filter(s=> parseInt(s, 10)+'' === s) // ok: (0, 5, 73, 255), fail: (00, 05, 5a, +5)
+  .map(s=> parseInt(s, 10))
+  .filter(n=> n < 256)
+  .length === 4 // expect 4 valid octets
+*/
+
+// ip.as.string.valid:| split "." |-> .match r`^([1-9][0-9]*|0)$` |-> as Int < 256 | .count is 4
+const isValidIP = s=> s.split('.').filter(s=> s.match(/^([1-9][0-9]*|0)$/) && parseInt(s, 10) < 256).length === 4
+
+describe('Solution', ()=> {
+  it('valid inputs', ()=> [
+    '1.2.3.4',
+    '123.45.67.89',
+  ].map(x=> Test.assertEquals(isValidIP(x), true, x)))
+  it('invalid inputs', ()=> [
+    '1.2.3',
+    '1.2.3.4.5',
+    '123.456.78.90',
+    '123.045.067.089',
+  ].map(x=> Test.assertEquals(isValidIP(x), false, x)))
+})
+
 
 
 

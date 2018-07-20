@@ -1,0 +1,72 @@
+'	18 july 2018
+	based on https://github.com/BSVino/JaiPrimer/blob/master/JaiPrimer.md
+ 
+
+# Jai, from
+
+draw_particles :: () {
+    view_left: Vector3 = get_view_left();
+    view_up: Vector3 = get_view_up();
+
+    for particles {
+        // Inside for loops the "it" object is the iterator for the current object.
+        particle_left := view_left * it.particle_size;
+        particle_up := view_up * it.particle_size;
+
+        // m is a global object that helps us build meshes to send to the graphics API
+        m.Position3fv(it.origin - particle_left - particle_up);
+        m.Position3fv(it.origin + particle_left - particle_up);
+        m.Position3fv(it.origin + particle_left + particle_up);
+        m.Position3fv(it.origin - particle_left + particle_up);
+    }
+}
+
+// to
+
+draw_quad :: (origin: Vector3, left: Vector3, up: Vector3) [m] {
+    m.Position3fv(origin - left - up);
+    m.Position3fv(origin + left - up);
+    m.Position3fv(origin + left + up);
+    m.Position3fv(origin - left + up);
+};
+
+draw_particles :: () {
+    view_left: Vector3 = get_view_left();
+    view_up: Vector3 = get_view_up();
+
+    for particles {
+        particle_left:= view_left * it.particle_size;
+        particle_up:= view_up * it.particle_size;
+
+        draw_quad(particle_left, particle_up, origin);
+    }
+}
+
+# rim, from
+
+m: import ...
+view.left: ...
+view.up: ...
+particles: ...
+on particles.draw: particles |> Particle
+	(left, up): view.(left, up) * .size // view.(key) ?, it.size
+	do m.append
+		- .origin - left - up
+		- .origin + left - up
+		- .origin + left + up
+		- .origin - left + up
+
+// to
+
+m: import ...
+on m.quad.draw with (origin, left, up) is many Vector3: m.append
+	- origin - left - up
+	- origin + left - up
+	- origin + left + up
+	- origin - left + up
+
+view.left: ...
+view.up: ...
+particles: ...
+on particles.draw: particles |> m.quad.draw
+	.origin, (left, up): view.(left, up) * it.size
