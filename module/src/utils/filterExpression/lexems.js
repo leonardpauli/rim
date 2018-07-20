@@ -20,6 +20,7 @@ const {autoInsertIfNeeded, optional, repeat, usingOr} = flags
 const root = stupidIterativeObjectDependencyResolve(({
 	lexems, paren, num, sp, spo, expr, text, dot, comma, id,
 })=> ({
+	// name: 'filterExpression', // TODO
 	paren: {
 		lexems: [paren.open, spo, {type: expr, optional}, spo, {type: paren.close, optional}], // TODO: autoInsertIfNeeded instead
 		open: {regex: /^\(/},

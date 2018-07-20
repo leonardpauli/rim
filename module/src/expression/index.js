@@ -9,11 +9,10 @@ import {lexemExtendCopyClean1Level} from '../parser/lexemUtils'
 import {evaluateStr as evaluateStr_} from '../parser/evaluate'
 
 import root from './lexems'
-import './lexemsEvalExt'
 import evalFns from './evalFns'
 
 export {root}
-export const evaluateStr = (str, ctx = exprCtxDefaultGet())=> evaluateStr_(ctx, str)
+export const evaluateStr = (str, ctx = exprCtxDefaultGet(), opt)=> evaluateStr_(ctx, str, opt)
 
 export const exprCtxDefaultGet = ({
 	functions: evalFns,
