@@ -8,12 +8,16 @@ version 0.2.0 - declarative package
 		rim.study.syntax.(singleline, multiline).(stage 0..1, notes for stage 2..3)
 		rim.implement.(singleline, multiline).stage 0..1
 	// add study/syntax/stage-X.rim info to notes.rim
-	create study/syntax/stage-0.rim
-	create study/syntax/stage-1.rim
-	create study/syntax/stage-X.rim // WIP notes to be moved to future stage files
+	// create study/syntax/stage-0.rim
+		write down "indentation-based block tokenization" from A3 notes
+		take in char sequence studies + reorder for lexem creation + define lexem structure in rim
+	// create study/syntax/stage-1.rim
+		repeat stage-0 for define lexem structure, look inte good way of extending existing
+	// create study/syntax/stage-X.rim
 	create study/parser/node-structure.rim // outlining the ast results (rim js parser Node objects)
 	create study/parser/declarative-resolve.rim // outlining the resolve procedure
-	
+		finish notes
+
 	create tests for node-structure
 	create tests for stage-0 tokenize + astify
 	create tests for stage-1 tokenize + astify

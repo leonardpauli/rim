@@ -1,0 +1,132 @@
+# study/parser/declarative-resolve
+' rim
+	Created by Leonard Pauli, 21 jul 2018
+	Copyright © Leonard Pauli 2018
+
+// declarative resolve to build dependency graphs + logic for reactive updates
+
+// dependency graph buildup over updates
+a: 5, b: 6, c: a + b
+(a, b) -> c
+
+do a:= b
+b -> ((_ -> a), _) -> c
+
+do b:= c
+c{circular} -> b -> ((_ -> a), _) -> c
+
+do e:= b
+c{circular} -> b -> e, (((_ -> a), _) -> c)
+
+
+step.fn.alt.0:
+	State
+		nodes is Dictionary
+			key is Node
+			value is {iterations: {taken is IntRs: [], targets is IntRs: [0]}}
+			// TODO: ability to use many
+			// TODO: ability to overide automatic compiler decisions (eg. Type.@.datastructure{options...})
+		dependents-left is Set of many Node
+	step with (node, state) is (Node, State): // (node is Node, state is State)
+		iterations: state.nodes with node | .iterations
+		// ({iterations}:) state.nodes with node // using destructuring
+		' Dictionary is KeyValueCollection / utility wrapper for `many KeyValue`
+			`(myDict: Dictionary({key, value: 5})) with key` returns value for key, in this case 5
+			if entry doesn't exist, it's created
+		if iterations.taken 
+		circular: true if node is in taken else false
+		if circular: circular...
+		if not circular:
+			dependents-left.add ...node.dependents
+		dependents-left | stepOptimisingSort | step .0
+		// TODO
+	stepOptimisingSort: ...
+		' eg. `c, e -> e, c`
+				will reduce e (shortest subtree) as fast as possible
+				instead of having it accumulate bc. c subtree is recursive
+					(and therefore of infinite length)
+			// TODO: how to handle two dependent infinite/circular?
+	IntRs is (many Int){@.datastructure{use(ranges, single values)}}
+
+
+step.fn.alt.1:
+	' overview:
+		source changed
+			-> Node.update with value
+			-> Node.value changed
+			-> step with node
+			-> add ordered dependents of node to list
+				case ((a, b) -> c), update b
+					-> c is dependent -> recalc c after
+				case (a -> (_, _ -> b) -> c), update a
+					-> (b, c) is dependent
+						but c is dependent on b, so do b before c
+	Node
+		on update with new-value
+			return if self.value is{exactly} new-value
+			// old-value:= self.value
+			node.value:= new-value
+			step with self
+	step with (node is Node, taken is Dictionary{key is Node, value is many Int}): // value; circular index
+		
+		node 
+
+(taken; dependents-left)
+- b
+- a; (c)
+- c; (b)
+- b; (a, c)
+
+
+
+
+
+
+// js parser node
+// see parser/node-structure
+Node
+	value
+		raw
+		set with val
+
+		' input/output on node or just use modifier function + impure flag?
+			also, instead of trottle, just update on second value changes
+				which can be eg a (timer | ms | /16 | floor) + if value changes?
+		input:
+			enabled: false
+			pull:
+				enabled: false
+				trottle
+					enabled: false
+					frequency.max: 100
+			fn: ...
+		output:
+			enabled: false
+			push:
+				enabled: false
+				trottle
+					enabled: false
+					frequency.max: 100
+			fn: ...
+			
+		cache: 5
+		dependents: [c, d]
+			on update: reorder for optimum update value tree update later on, eg. shortest dependents tree first?
+		// re-eval dependents
+		// defer their dependents valueSet
+	' valueSetDependentsUpdateThrottle // as plugin?
+		' eg.:
+			- time updates at 1MHz
+			- accelerometer.value updates with 1kHz
+			- UI computations only need 120Hz to get good value for
+			- screen update at 60Hz
+			then;
+				(accelerometer.value + time) // updates at max(1MHz, 1kHz) = 1MHz
+					| someProxy{@.throttle: 120Hz} | calculateVelocityForUI // updates at 120Hz
+					| someProxy{@.throttle: 60Hz} | updateUI | updateScreen
+			though this could probably be accomplished with custom node..
+			---
+			or do it backwards? only request values to be computed or fetched backwards?
+				so if only output is the screen with 60Hz, the accelerometer will only be queried at 60Hz...
+				though velocity calculation needs intermediate values... so it is triggered by a timed "sink" outlet at 120Hz
+				...

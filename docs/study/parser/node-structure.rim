@@ -22,7 +22,7 @@
 						- optimise
 					-> reducer(wasm files + source maps)
 
-// see parser/node-structure
+// see js/node-structure
 
 # Notes / scratchpad
 
@@ -30,6 +30,11 @@ Node
 	token
 
 	value
+		raw
+		set with val
+		cache?
+		dependents // see parser/declarative-resolve
+
 	input
 	modifier.fn
 	output
