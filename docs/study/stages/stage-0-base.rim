@@ -6,18 +6,104 @@
 // base
 
 singleline
-	space
+	syntax:
+		lexems: [space.none, content.wrap]
+		content.wrap
+			after-space.lexems{usingOr}:
+				- comment.eol
+			alone.lexems{usingOr}:
+				- space.none
+			lexems{usingOr}: [[content, space.one{required}, after-space], alone]
+
+		content.lexems{usingOr}:
+			- comment.top-level
+			- expression
+
+	syntax
+		any
+			// regex: `[^\n]+`
+			regex: `[^`(except.str)`]+`
+			except.str: except.without `-` | it, `-` if except.has `-` | join "" // put - last bc as regex range operator
+			except: (`\n`) // regex parts as valid in [] // TODO: use builtin regex tokenizer for validation
+
+	space.syntax
+		regex: ` `
+		tab.regex: `\t`
+		indent.regex: `  |\t`
+			' lint.options.style is Enum(tabs, spaces-2): .tabs
+			' lint.cases:
+					- {regex: `  `} and lint.options.style is .tabs:
+						warn: "indent using tabs"
+						replacement: "\t"
+					- {regex: `\t`} and lint.options.style is .spaces-2:
+						warn: "indent using two spaces"
+						replacement: "  "
+			only
+				lexems{usingOr}: [indent, space]
+				' lint.cases
+					// - indent
+					- space:
+						warn: "only white spaces using indents are allowed here"
+						replacement: []
+		any.lexems{usingOr}: [space, tab]
+		
+		none
+			optional
+			lexems{repeat}: [space.any]
+			' lint.cases
+				- isn't Empty
+					warn: "no initial space should be here"
+					replacement: Empty
+		one
+			// TODO: required if not optional... (but then it's still... optional.. proxy somehow?)
+			optional{keep-unmatched if required}
+			lexems{repeat}: [space.any]
+			// TODO: lineup as separate plugin, special for different cases
+			// 	or possible with some generic pattern recognition?
+			// TODO: lineup: auto-detect that lineup is used instead of one
+			// 	and suggest switching the option (per line, block, file/module, project, or user default)
+			' lint.options.style is Enum(one, lineup): .one
+			' lint.cases
+				- is Empty and required
+					warn: "should be some space here"
+					replacement: " "
+				- isn't " " and required and options.style is .one
+					warn: "only use one space for spacing"
 
 	comment
-		top-level
-		eol
+		initial-spacing:
+			lexems: [space.one{required}, space.indent.only{optional, repeat}]
+			' lint.options // TODO: ablility to disable sub-token linting
+		top-level.syntax:
+			start.regex: `#`
+			content
+				default.lexems: [any]
+				lexems: [initial-spacing, default{optional}]
+		 	lexems: [start, content]
+		eol:
+			indicator.regex: `//`
+			lexems: [indicator, initial-spacing, any{optional}]
+			' lint.options.clean-empty-ending
+			' lint.cases:
+				no-content: [indicator, initial-spacing{optional}, Empty]
+				- no-content:
+					warn: "no content"
 	
+	expression:
+		lexems: [content, {lexems: [space.one{optional}, content], repeat, optional}]
+		content.lexems{usingOr}:
+			- identifier, identifier.special
+			- number, string
+
 	identifier // no grouping
 	identifier.special
 
-	number{int, decimal{precision}}{spacer} // 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
+	number{int, decimal{precision}}{spacer}
+		// 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
 	string
 
 multiline
+	lexems: [singleline.start.pos, indentation, singleline]
+
 	comment.block
 	indentation + new line parsing

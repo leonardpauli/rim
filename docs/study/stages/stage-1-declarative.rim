@@ -32,5 +32,12 @@ multiline
 
 	comment.block.string // '"
 	comment.top-level.hashbang // #!/usr/bin/env rim
+		syntax
+			shell-word: `([^ ]|\\ )+`
+			command.lexems: [shell-word]
+			arguments.lexems: [{repeat, lexems: [space, shell-word]}]
+			lexems: [{regex: `!`}, command, arguments{optional}]
+		install:
+			comment.top-level.syntax.content.lexems.insertBefore(default) hashbang
 
 	listitem-indicator
