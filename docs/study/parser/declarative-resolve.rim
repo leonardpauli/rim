@@ -130,3 +130,93 @@ Node
 				so if only output is the screen with 60Hz, the accelerometer will only be queried at 60Hz...
 				though velocity calculation needs intermediate values... so it is triggered by a timed "sink" outlet at 120Hz
 				...
+
+
+
+lists:
+	' declarative-resolve: algorithm to handle merging of multiple list-declarations:
+		eg.: a (1, 2); a (3, 1, 4, 5); a (77); a (0) -> a: (0, 3, 1, 2, 4, 5, 77)
+		- commutative (order of declaration should not matter)
+			- additative only
+			- using sort/compare/< to consistently solve ambiguous cases
+		- use arrayDeltaActions to keep relative order
+	instead of using exact index for merging, store relative sorting rules
+		using utils/arrayDeltaActions:
+			- [e, b, f, g, d, c, h]
+			- [a, b, c, x, d]
+			actions:
+				- rem e, add a
+				- nop b, mov c
+				- rem f
+				- rem g, add x
+				- nop d
+				- rem h
+			actions{additative}: // [e, a, b, c, f, g, x, d, h]
+				- (nop e), add a
+				- nop b, mov c
+				- (nop f)
+				- (nop g), add x
+				- nop d
+				- (nop h)
+		using utils/arrayDeltaActions:
+			- [a, b, c, x, d]
+			- [e, b, f, g, d, c, h]
+			actions:
+				- rem a, add e
+				- nop b, add f, add g
+				- mov d
+				- nop c
+				- rem x, add h
+			actions{additative}: // [a, e, b, f, g, d, c, x, h]
+				- (nop a), add e
+				- nop b, add f, add g
+				- mov d
+				- nop c
+				- (nop x), add h
+		[e, a, |b|, c, f, g, x, d, |h|] // a -> b using delta-actions{additative}
+		[a, e, |b|, f, g, d, c, x, |h|] // b -> a using delta-actions{additative}
+		[a, e, |b|, f, g, c, x, d, |h|] // (a, b) -> merged using delta-actions{additative, commutative/consistent-using-order-constraints+sort}
+			- identify minimal self-contained sub-groups: ([e, a], [b], [c, f, g, x, d], [h])
+			- solve order in sub-groups:
+				- [a, e]: no relative constraints; ambiguous; use sort (e not < a) -> (a < e) -> [a, e]
+				- [b]: nothing to order (.count ≤ 1) -> same -> [b]
+				- [c, f, g, x, d]: resolve-ambiguous-constraints | sort-using-constaints -> [f, g, c, x, d]
+					' [c < x, x < d], [f < g, g < d, d < c]
+							-> [c < x, x < d, c < d], [f < g, g < d, d < c, f < d, f < c, g < c]
+							// [c < x, (c, x) < d], [f < g, (f, g) < d, (f, g, d) < c]
+							| replace (d, c) with (c, d)
+							-> [c < x, x < d, c < d], [f < g, g < d, c < d, f < d, f < c, g < c]
+							// [c < x, (c, x) < d], [f < g, (f, g) < c, (f, g, c) < d]
+							// | sort-using-constraints
+							// -> [c, x, d], [f, g, c, d]
+							| concat | filter.unique
+							-> [c < x, x < d, c < d, f < g, g < d, f < d, f < c, g < c]
+							// [f < g, (f, g) < c, c < x, (f, g, c, x) < d]
+							| sort-using-constraints
+							-> [f, g, c, x, d]
+					resolve-ambiguous-constraints:
+						the order items are declared in a sub-groups might be different for each (re)declaration (of the list)
+						eg. this sub-group ([c, f, g, x, d]) comes from two declarations, which can be seen as sets of order constraints
+							- [c, x, d] // order constraints: (c < x, x < d) // intermediate: (c < d)
+							- [f, g, d, c] // order constraints: (f < g, g < d, d < c) // intermediate: (f < d, f < c, g < c)
+						an order constraint is an ordered pair of items
+							if a reversed pair ((c, d) -> (d, c)) from one declaration appears in another declaration:
+								the constraints are opposite, and therefore incompatible, which makes the merging ambiguous
+									to solve: replace both constraints with one using deterministic sort of the items (([d, c], [c, d]) -> sort (d, c) -> [c, d])
+					sort-using-constaints // simple sort using constraints as lookup for comparison operation
+				- [h]: (.count ≤ 1) -> same -> [h]
+			- concat sub-groups with ordered items: ([a, e], [b], [f, g, c, x, d], [h]) -> [a, e, b, f, g, c, x, d, h]
+
+	// ---
+	declarative-resolve list limitation: only additative + unique across declarations
+		to allow multiple, use insert{(before/after item)} // using eg. a.insert{before x}: (d, e) -> constraints ((x < d), d < e, (x < e))
+			' all inserts are treated as made before any usual declarations // to avoid ambiguous cases
+				ie. a: (b, c); a.insert: (b, d); a.insert: (d) -> a.insert: (b, d); a.insert: (d); a: (b, c) -> a.insert: (b, d, d); a: (b, c) -> a: (b, c, d, d)
+					(and not as a: (b, c); a.insert: (b, d, d), which could be interpreted as a: (b, b, c, d, d)) // note the lack of the extra b
+			' eg.
+				a: (g, e, g) // a: (g, e, g)
+				a: (e, e, f) // a: (g, e, e, f, g) // one e + one f added, f < g
+				a: (e, e, f) // a: (g, e, e, f, g) // nothing changed
+				a.insert: (e, e, f) // a: (g, e, e, f, g, e, e, f) // all appended
+				a: (f, e, g, g) // a: (g, e, e, f, g, g, e, e, f) // only one g added
+
