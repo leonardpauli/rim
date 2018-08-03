@@ -92,18 +92,240 @@ singleline
 	expression:
 		lexems: [content, {lexems: [space.one{optional}, content], repeat, optional}]
 		content.lexems{usingOr}:
-			- identifier, identifier.special
-			- number, string
+			- number, string // , string.raw
+			- identifier.special, identifier
 
 	identifier // no grouping
+		lexems: [start, tail{optional, repeat}]
+		start: end{except.append: r`0-9`}
+		tail.lexems: [middle{optional, repeat}, end{repeat}] // to allow `a-b-c` as identifier (sure? possibly ambiguous with a - b - c?)
+		middle: any{except: (..." (){}...", ...(identifier.special.chars.list - "-"))}
+		end: middle{except: (...identifier.special.chars.list)}
 	identifier.special
+		chars: ", . : ; - @ #"
+		// chars: "+ - * / = ≠ ≈ ! % < > ≤ ≥" // optionally space-separated, each stage can just append
+		chars.list: chars | remove{all} " " | split
+		any: r`[`(chars.list)`]+`
+		lexems{usingOr}: [any]
 
 	number{int, decimal{precision}}{spacer}
 		// 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
-	string
+		leading-zeros: r`0[0_]*`
+			' lint{options.use is Boolean: true}.cases:
+					- not Empty:
+						replacement: []
+						warn: "use no leading zeros"
+						// TODO: different for binary using Least Significant Bit (or reverse)?
+						// 	even ability to force fill up to 1, 4, 8, x*8, etc bits?
+		whole-part
+			lexems{usingOr}: [zero-only, zero-only-not]
+			zero-only: {regex: r`0(?=[^0-9])`}
+			zero-only-not
+				lexems: [leading-zeros{optional}, natural-number{optional{keep-unmatched}}]
+				' lint.cases
+						- [...first, natural-number{unmatched}]:
+							replacement: [...first, "0"]
+							warn: "missed something?"
+			natural-number: {regex: r`[1-9][0-9_]*`}
+		decimal-part
+			lexems: [decimal, digits]
+			decimal: r`\.`
+			digits: r`[0-9_]+`
+			// TODO: trailing zeros should be allowed in some cases as precision information
+			// TODO: lint to auto-detect when `,` was used instead of `.`
+		sign-negative: r`-`
+			// TODO: lint to auto-detect wrongly used space between sign and number (eg. diff? see other notes (- 5), (-5), (0- 5), (0 - 5), ((-) 5), etc)
+		lexems: [sign-negative{optional}, whole-part, decimal-part{optional}]
+		' lint{options.underscore-formatting is Enum(force-scientific-if-used, force-scientific-always, off)}.cases
+				- force-scientific-always or (((whole-part.natural-number or decimal-part.digits) contains "_") and force-scientific-if-used):
+					// TODO: ability to force use on decimal/whole-part separately
+					fix-delimiter{reverse-should: true}:| it.remove{all} "_"
+						| reverse if reverse-should
+						|> it + ("_" if ((index+1) mod 3 is 0) and index isn't last)
+						| reverse if reverse-should
+					replacement: [(it.natural-number | reverse | fix-delimiter | reverse), it.decimal-part.decimal, (it.decimal-part.digits | fix-delimiter)]
+					warn: "only add separator every third digit (scientific formatting?)" // only if replacement isn't same as original
 
-multiline
-	lexems: [singleline.start.pos, indentation, singleline]
+	string.syntax:
+		lexems{usingOr}: [default] //, string.raw
+		default:
+			(close, open): r`"`
+			' close.lint{options.force-close: false}.cases:
+				- [] and force-close:
+					replacement: `"`
+					warn: "forgot closing quote? (force-close enabled)"
+			lexems: [open, content{repeat, optional}, close{optional, keep-unmatched}]
+			content
+				lexems{usingOr}: [line, escaped, raw]
+				raw: any{except: (`"`)}
+			content.block is content{raw: any} // a quote inside subline doesn't close
 
-	comment.block
-	indentation + new line parsing
+			line:
+				lexems: [start, content.wrapper]
+				content.wrapper.lexems{usingOr}: [@1.line.spacer, content]
+
+				content.lexems: [indent, @1.content.block]
+				start.lexems{usingOr}: [escaped-new-line, new-line]
+					escaped-new-line: r`\\\n`
+				indent.lexems: [@2.multiline.line.indent.outside, @2.multiline.line.indent]
+
+			escaped
+				start: r`\\`
+				lexems: [start, content]
+				content.lexems{usingOr}: [start, any] // insert{after: start}: expression.paren
+	' string.raw.syntax:
+		(close, open): r```
+		lexems: [open, content{repeat, optional}, close]
+		content.lexems{usingOr}: [backtick, raw]
+		content.backtick: r"```"
+		content.raw: any{except: (`"`)}
+
+TODO
+	- multiline strings
+	- commit
+	- to lexems
+	- test
+
+
+multiline.syntax
+	lexems: [document]
+	document:
+		lexems: [document.line]
+		document.line{is line{depth: 0}}.lexems: [line.indent.inside]
+		' lint:
+			options
+				eof is Enum(new-line, new-line-not, off): new-line
+				line.spacer.max is Int{≥ 0}: 3
+			cases:
+				// - [(:...first), line.spacer.clean]: noop
+				- [(:...first), line.spacer.spaced] and options.eof is new-line:
+					replacement: [...first, line.spacer.clean]
+					warn: "use 'unix file endings', ie. keep an empty new line last (more consistent behavior when using tools like git, cat, editors, etc)"
+				- [(:...first), line.spacer.spaced] and options.eof is new-line-not:
+					replacement: [...first]
+					warn: "use no new lines at end of file"
+				- [(:...first), line.spacer{repeat ≤ options.line.spacer.max} (:...spacers-ok), line.spacer{repeat}, (:...last)]
+					replacement: [...first, ...spacers-ok, ...last]
+					warn: "formatting/structure: use max \(options.line.spacer.max) spacer lines"
+	
+	end.lexems{usingOr}: [new-line, EOF]
+
+	comment.block: // TODO: parse comment block as code + validate (though all errors as warns instead)?
+		lexems{usingOr}: [default, string]
+		default
+			lexems: [start, block-content{optional, keep-unmatched}]
+			' lint.cases:
+				- block-content.count is 0:
+					replacement{all}: []
+					warn: "empty block-comment"
+			start: [prim, space.one]
+			prim: r`'`
+			block-content:
+				lexems: [line{repeat}]
+				line.lexems{usingOr}: [@1.line.spacer, line.content.wrapper]
+				line.content.wrapper: [@1.line.indent.outside, line.content{optional}, end]
+				line.content: r`[^\n]+`
+		string.lexems: [prim, singleline.string]
+
+	// indentation + new line parsing
+	line{depth is Int}
+		lexems{usingOr}: [spacer, ghostwrapper]
+		
+		spacer // ( |\t)*n -> p
+			lexems: [whitespace-horizontal{repeat, optional}, end]
+			whitespace-horizontal: r` |\t`
+
+		ghostwrapper: // \t*c -> g.(...).g.c
+			lexems{usingOr}: [ghostline, line.inside]
+			ghostline.lexems: [indent, ghostwrapper]
+
+		inside.lexems: [content, subline{repeat, optional}]
+
+		subline.lexems: [indent.outside, line{depth += 1}]
+		indent.regex: r`  |\t`
+		indent.outside.matcher: js`({parents: [p], regex})=> p.depth==0? {matched}: regex(```indent{${p.depth}})```)`
+
+		content.lexems{usingOr}: [comment.block, singleline] 
+
+	' line:
+			' notes:
+				\SOF\thello\EOF -> match multiline.document ->
+					- ["\SOF", document.open -> line.open(depth: 1)]
+					- ["\t", (inner -> content.wrapped -> ghost-line){no retain}]
+					- ["\t", (inner -> content.wrapped -> subline -> line -> open(depth: 2))]
+					- ["hello", (inner -> content.wrapped -> content -> expression -> identifier)]
+					- ["\EOF", document.close(line.close(depth: 2 -> 1), line.close(depth: 1 -> 0))]
+			lexems: [open, inner{optional}, {lexems: [close-not, inner]}{repeat, optional}, close] // expect all initial indents to have been eaten
+			//
+			open.matcher: js`({parents: [p]})=> ({state.depth: (p.state.depth || 0) + 1 })`
+			//
+			close{retain: false}.regex: r{m}`(\n(\t|  ){`(state.depth)`}(?!(\t|  )))|$`
+			//
+			close-not{retain: false}.matcher: js`({parents: [p], regex})=> regex("(  |\\t){"+(parents[0].state.depth || 0)+"}(?=[^\t ])")`
+			//
+			inner.lexems{usingOr}: (spacer, content.wrapped)
+			//
+			spacer
+				lexems{usingOr}: [clean, spaced]
+				clean: r{m}`\n(?=\n|$)`
+				spaced: r{m}`\n(\t|  )*(?=\n|$)`
+			//
+			content
+				wrapped.lexems: [ghost-line, [close-not, content, subline{optional}]]
+				lexems: [expression{repeat}]
+				//
+				ghost-line: ... // detect too much indented subline (no retain) and lint-warn+fix by inserting enough lines inbetween with increasing indentation (ie. missing parents)
+				subline: (state.depth+=1, line)
+		
+		// regex m flag when matching with "\n" // ?
+		// matcher: js`({ctx, str, fullstr, parents})=> ({match.length is Int{default: 0}, matched is Boolean{default: true}, state: {}})` // ?
+		//
+		a
+			b
+		//
+		SOF line(depth: 0)
+		x indent -> x ghost-line(depth: x)
+		content -> content
+		(new-line or EOF) ->
+			only horizontal space -> space-line, back to new-line
+			0 rel. indent: close + line(depth: same)
+			1+ rel. indent: -> x indent
+			rel. indent < 0: close + line
+		// ----
+		//
+		document is line{depth: 0, depth.ghost-count: 0, indent.own.before.use: true}
+		//
+		line{depth is Int, depth.ghost-count is Int, indent.own.before.use: false}:
+			- indent.own.before if indent.own.before.use
+			- line.indent.own
+		//
+		line.indent
+			own.before: or:
+				- r`( |\t)*(?=$|\n)`: space-line, ...
+				- indents >= depth: (eat depth indents) -> indent.own
+				- indents < depth: close
+			own: or:
+				- depth is 0: depth-zero: or:
+					- indents > 0: indent.ghost
+					- indents = 0: indent.content
+				- else: depth-zero-non: or:
+					- indents > 1: indent.ghost
+					- indents = 1: indent.subline
+					- indents = 0: indent.content
+			// ghost: 0..(indents - 1) |> line{ghost, depth: depth + 1, depth.ghost-count: depth.ghost-count + 1} | list-to-nested-children -> mark
+			ghost: subline(eat 1 indent), -> line{depth: depth+1, depth.ghost-count: depth.ghost-count + 1, ghost}
+			subline: subline(eat 1 indent), -> line{depth: depth+1, depth.ghost-count: depth.ghost-count}
+			content: -> content	
+		//
+		line.content:
+			- ...
+			- "\n"
+		//
+		s SOF
+		t tab/indent
+		c line-content
+		n line-new
+		g line-ghost
+		p line-spacer
+		u line-sub
+		e EOF

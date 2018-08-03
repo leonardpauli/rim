@@ -7,6 +7,7 @@
 
 singleline
 	grouping // parens (a, b)
+		// TODO: multiline + in string
 
 	key-value // colon
 	
@@ -39,5 +40,6 @@ multiline
 			lexems: [{regex: `!`}, command, arguments{optional}]
 		install:
 			comment.top-level.syntax.content.lexems.insertBefore(default) hashbang
+	comment.eol{detect-block} // eg. multiple lines all starting with `//` is possibly eol-block
 
 	listitem-indicator
