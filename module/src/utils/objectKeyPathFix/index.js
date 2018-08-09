@@ -7,6 +7,7 @@
 import sfo, {log} from 'string-from-object'
 import {lexemExtendCopyClean1Level} from '../../parser/lexemUtils'
 import {evaluateStr as evaluateStr_} from '../../parser/evaluate'
+import {deepAssign} from '@leonardpauli/utils/lib/object'
 
 import root from './syntax'
 
@@ -39,17 +40,24 @@ export const patchesGet = (path, {vars = {}} = {})=> {
 	return ctx.lexem.evalValue
 }
 
+// TODO: implement recursive/deep
+// 	(eg. {a.b.c: 5, a: {b: {k: 5}}} -> {a:{b:{k: 5}}};
+// 		whole b is replaced with shallow; shallow should possibly resolve shallowly,
+// 			but merge/Object.assign deeply)
 export const applyPatch = (patch, object, value)=>
 	patch.path.reduce((o, k, i, all)=> {
 		const isLast = all.length-1===i
 		if (!o[k]) o[k] = {}
 		if (!isLast) return o[k]
+
 		const targetVal = patch.valuePlaceholder? value: patch.value
-		if (!(typeof targetVal==='object' && targetVal)) return o[k] = targetVal
-		if (Array.isArray(targetVal) && !Array.isArray(o[k]))
-			o[k] = Object.assign([], o[k])
-		if (Array.isArray(targetVal)) o[k].push(...targetVal)
-		return o[k] = Object.assign(o[k], targetVal)
+
+		return o[k] = deepAssign(o[k], targetVal, {
+			replaceEmpty: true,
+			replaceNonEmptyAllowed: false,
+			mergeInsteadOfReplace: true,
+			errorCtx: {p: 'applyPatch', patch},
+		})
 	}, object)
 export const applyPatches = (patches, {object, value})=> patches
 	.reduce((_, patch)=> applyPatch(patch, object, value), null)

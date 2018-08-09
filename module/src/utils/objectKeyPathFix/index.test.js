@@ -58,13 +58,14 @@ describe('evaluate / patchesGet', ()=> {
 	
 	describe('objectKeyPathFixedShallow', ()=> {
 
-		expect(objectKeyPathFixedShallow({
+		const fixed = objectKeyPathFixedShallow({
 			'space{optional}.lexems{usingOr}': [' '],
 			'space.tab': '\t',
 			b: 'b',
 			'cool{custom}.x': 'there',
 			'coola{custom}': {y: 'there'},
-		}, {vars: {custom: 'hello'}})).toEqual({
+		}, {vars: {custom: 'hello'}})
+		const target = {
 			space: {
 				optional: true,
 				lexems: (o=> (o.usingOr = true, o))([' ']),
@@ -79,7 +80,9 @@ describe('evaluate / patchesGet', ()=> {
 				custom: 'hello',
 				y: 'there',
 			},
-		})
+		}
+		// log({fixed, target})
+		expect(fixed).toEqual(target)
 
 		const testManyM = o=> Object.keys(o).map(k=> it(k, ()=> expect(
 			objectKeyPathFixedShallow({[k]: v})
@@ -93,6 +96,10 @@ describe('evaluate / patchesGet', ()=> {
 			'a{b}.c': {a: {b: true, c: v}},
 			'a{c}.b{f}.r': {a: {c: true, b: {f: true, r: v}}},
 		}))
+
+		it('handles object non Object', ()=> expect(
+			objectKeyPathFixedShallow({'a.regex': /^some/}).a
+		).toEqual({regex: /^some/}))
 
 	})
 
