@@ -1,0 +1,22 @@
+// created by Leonard Pauli, 31 jul 2018
+// based on https://www.youtube.com/watch?v=cgVVZMfLjEI
+
+CashRegister
+	Bill is Enum(1000, 500, 200, 50, 20, 10, 5, 1)
+	change.make with (bill is Bill, cost is Int):
+		to-change: bill - cost
+		expect to-change >= 0
+		be bills is Dictionary(Bill, count is Int):	Bill |>
+			bills.(it): it in (to-change - (if @prev: @prev * (@prev in max(@prev * 10, to-change))))
+
+CashRegister
+	Bill is Enum(1000, 500, 200, 50, 20, 10, 5, 1)
+	register is Dictionary(Bill, count is Int):
+		- 1000: 2, 500: 4, 200: 8, 50: 7, 20: 10, 10: 5, 5: 14, 1: 10
+	change.make with (bill is Bill, cost is Int):
+		to-change: bill - cost
+		expect to-change >= 0
+		be ...
+
+abs:| or: (is 0: 0, < 0: - it, > 0: it)
+abs:| it if >= 0 else (- it)

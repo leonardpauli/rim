@@ -1,0 +1,11 @@
+// created by Leonard Pauli, 27 jul 2018
+// based on https://framer.com/x?utm_source=youtube&utm_medium=launch_video&utm_campaign=framer_x_beta
+
+import.package.UI
+
+is Slider is View{with: 120, height: 44}
+	value: 50 // @control
+	
+	knob.size: 28
+	(knob, track, tint).color: (.white, b16`A4AAB3`, b16`007AFF`)
+	// @control{title: "Tint"} tint.color
