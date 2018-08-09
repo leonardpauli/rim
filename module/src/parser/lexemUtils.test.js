@@ -54,6 +54,11 @@ describe('lexem expand', ()=> {
 		expect(root.type.lexems[1].type.lexems[0].optional).toBe(true)
 	})
 	// TODO: use sticky match (regex flag y + regex.lastIndex) so "^" isn't needed all the time
+	
+	it('handles circular', ()=> {
+		const o = {regex: /main/}; o.copy = o
+		expand(o) // log(o)
+	})
 })
 
 

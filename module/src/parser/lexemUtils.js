@@ -88,7 +88,11 @@ const lexemTypeValidateFix = lt=> { // lexem type
 		`lexem(${lt.name}) has to have a matcher (.regex/.lexems)`)
 }
 
+export const _lexemProcessedSymbol = Symbol('lexem.processed')
 const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Set()})=> {
+	if (lexem[_lexemProcessedSymbol]) return lexem
+	lexem[_lexemProcessedSymbol] = true
+
 	lexem.type = lexem.type || lexem
 	const {type} = lexem
 
@@ -103,7 +107,7 @@ const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Se
 
 	// process children
 	const keysChildren = Object.keys(type).filter(k=> !keysReserved.includes(k))
-	keysChildren.forEach(k=> type[k] = _process(type[k], k, type, state))
+	keysChildren.forEach(k=> _process(type[k], k, type, state))
 
 	return lexem
 }
