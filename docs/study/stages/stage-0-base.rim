@@ -37,11 +37,9 @@ singleline
 	syntax:
 		lexems: [space.none, content.wrap]
 		content.wrap
-			after-space.lexems{usingOr}:
-				- comment.eol
-			alone.lexems{usingOr}:
-				- space.none
-			lexems{usingOr}: [[content, space.one{required}, after-space], alone]
+			lexems: [content, {type: tail.wrap, optional}]
+			tail.lexems{usingOr}: [comment.eol]
+			tail.wrap.lexems: [space.one{required}, tail]
 
 		content.lexems{usingOr}:
 			- comment.top-level

@@ -16,14 +16,17 @@
 import {log} from 'string-from-object'
 import {
 	stupidIterativeObjectDependencyResolve as declarative,
-	objectKeyDotNotationResolveShallow as keyfix,
+	// objectKeyDotNotationResolveShallow as keyfix,
 } from '@leonardpauli/utils/lib/object'
+import {objectKeyPathFixedShallow} from '../utils/objectKeyPathFix'
 
 import {flags, expand} from '../parser/lexemUtils'
 const {optional, repeat, usingOr} = flags
 
 
 // helpers
+const keyfix = o=> objectKeyPathFixedShallow(o, {vars: {optional, repeat, usingOr}})
+
 const regexCharsetEscape = xs=> {
 	const needsEscape = '[]^\\'
 	xs = xs.map(x=> needsEscape.indexOf(x)>=0?'\\'+x: x)
@@ -32,7 +35,7 @@ const regexCharsetEscape = xs=> {
 	return xs
 }
 
-const anyGet = ({except = ['\n'], m = false, i = false, ...rest} = {})=> ({
+export const anyGet = ({except = ['\n'], m = false, i = false, ...rest} = {})=> ({
 	regex: new RegExp(`[^${regexCharsetEscape(except).join('')}]`, (m?'m':'')+(i?'i':'')),
 	...rest,
 })
@@ -58,9 +61,9 @@ const singlelineGet = ({multiline})=> declarative(({
 	// syntax
 	lexems: [space.none, content.wrap],
 	'content.wrap': keyfix({
-		'after-space.lexems{usingOr}': [comment.eol],
-		'alone.lexems{usingOr}': [space.none],
-		'lexems{usingOr}': [[content, {type: space.one, required: true}, content.wrap['after-space']], content.wrap.alone],
+		lexems: [content, {type: content.wrap.tail, optional}],
+		'tail.wrapper.lexems': [{type: space.one, required: true}, content.wrap.tail],
+		'tail.lexems{usingOr}': [comment.eol],
 	}),
 
 	'content.lexems{usingOr}': [comment['top-level'], expression],
@@ -69,11 +72,11 @@ const singlelineGet = ({multiline})=> declarative(({
 	space: keyfix({
 		regex: /^ /,
 		'tab.regex': /^\t/,
-		indent: {
+		indent: keyfix({
 			'lexems{usingOr}': [space.indent, space.indent.space],
 			'space.regex': /^\t/,
 			'only.lexems{usingOr}': [space.indent, space],
-		},
+		}),
 		'any.lexems{usingOr}': [space, space.tab],
 		'none{optional}.lexems{repeat}': [space.any],
 		one: keyfix({
@@ -86,6 +89,7 @@ const singlelineGet = ({multiline})=> declarative(({
 
 	// comment
 	comment: keyfix({
+		regex: /WRAPPER/,
 		'initial-spacing': {
 			lexems: [{type: space.one, required: true}, {type: space.indent.only, optional, repeat}],
 		},
@@ -113,12 +117,12 @@ const singlelineGet = ({multiline})=> declarative(({
 	}),
 
 	// identifier
-	identifier: identifierGet,
+	identifier: identifierGet(),
 
 	// number
 	number: keyfix({
 		// 0, -7, 40.03, 1_000.005_300 (zeros at end are recorded for precision)
-		'leading-zeros': /^0[0_]*/,
+		'leading-zeros.regex': /^0[0_]*/,
 		'whole-part': keyfix({
 			'lexems{usingOr}': [number['whole-part']['zero-only'], number['whole-part']['zero-only-not']],
 			'zero-only.regex': /^0(?=[^0-9])/,
@@ -129,10 +133,10 @@ const singlelineGet = ({multiline})=> declarative(({
 		}),
 		'decimal-part': keyfix({
 			lexems: [number['decimal-part'].decimal, number['decimal-part'].digits],
-			decimal: /^\./,
-			digits: /^[0-9_]+/,
+			'decimal.regex': /^\./,
+			'digits.regex': /^[0-9_]+/,
 		}),
-		'sign-negative': /^-/,
+		'sign-negative.regex': /^-/,
 		lexems: [{type: number['sign-negative'], optional}, number['whole-part'], {type: number['decimal-part'], optional}],
 	}),
 
@@ -172,20 +176,21 @@ const identifierGet = ()=> {
 
 
 // string
-const stringGet = ({backslash, newline, multiline, any})=> declarative(({ string }, {
-	open, close, content, line, escaped,
+export const stringGet = ({backslash, newline, multiline, any})=> declarative(({ string }, {
+	open, close, content, escaped, // line,
 } = string.default)=> ({ string: keyfix({
 	'lexems{usingOr}': [string.default],
 	default: keyfix({
-		open: /^"/,
-		close: /^"/,
+		'open.regex': /^"/,
+		'close.regex': /^"/,
 		lexems: [open, {type: content, repeat, optional}, {type: close, optional: {'keep-unmatched': true}}],
 		content: keyfix({
-			'lexems{usingOr}': [line, escaped, content.raw],
+			'lexems{usingOr}': [escaped, content.raw], // TODO: [line, escaped, content.raw],
 			raw: anyGet({except: ['"']}),
 		}),
-		'content.block': {...content, raw: any},
+		'content.block': {...content, block: void 0, raw: any}, // TODO: circular causes issues (remove block: void 0)
 
+		/*
 		line: keyfix({
 			lexems: [line.start, line.content.wrapper],
 			'content.wrapper.lexems{usingOr}': [multiline.line.spacer, line.content],
@@ -197,9 +202,10 @@ const stringGet = ({backslash, newline, multiline, any})=> declarative(({ string
 			}),
 			'indent.lexems': [multiline.line.indent.outside, multiline.line.indent],
 		}),
+		*/
 
 		escaped: keyfix({
-			start: /^\\/,
+			'start.regex': /^\\/,
 			lexems: [escaped.start, escaped.content],
 			'content.lexems{usingOr}': [escaped.start, any], // insert{after: start}: expression.paren
 		}),
@@ -242,7 +248,7 @@ const multilineGet = ()=> declarative(({ multiline }, {
 // comment.block
 const multilineCommentGet = ({space, singleline, line, end})=> declarative(({ comment }, {
 	start, prim, content,
-} = comment.block.default)=> keyfix({ 'comment.block': keyfix({
+} = comment.block.default)=> keyfix({ 'comment.lexems{usingOr}': [comment.block], 'comment.block': keyfix({
 	
 	'lexems{usingOr}': [comment.block.default, comment.block.string],
 	default: keyfix({
@@ -253,7 +259,7 @@ const multilineCommentGet = ({space, singleline, line, end})=> declarative(({ co
 			lexems: [{type: content.line, repeat}],
 			'line.lexems{usingOr}': [line.spacer, content.line.content.wrapper],
 			'line.content.wrapper': [line.indent.outside, {type: content.line.content, optional}, end],
-			'line.content': /^[^\n]+/,
+			'line.content.regex': /^[^\n]+/,
 		}),
 	}),
 	'string.lexems': [prim, singleline.string],

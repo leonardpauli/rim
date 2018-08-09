@@ -43,7 +43,7 @@ describe('tokenize', ()=> {
 	})
 })
 
-describe('astify', ()=> {
+describe.skip('astify', ()=> {
 	const testMany = testManyGet((s, _, opt)=> {
 		const ctx = exprCtxDefaultGet()
 		// ctx.vars.name = 'Leo'
