@@ -1,0 +1,42 @@
+# study/migration
+' rim
+	Created by Leonard Pauli, 11 aug 2018
+	Copyright © Leonard Pauli 2018
+
+- every function has an inverse, or marked as destructive if inverse not available
+- when going from schema a to schema b, every field is either:
+	- removed
+	- added
+	- transformed (possibly into other field(s), eg. move/move-transformed/rename, etc)
+		destructiveness:
+			- destructively // eg. with migration function without an inverse
+			- non-destructively // eg. with migration function with inverse
+		location:
+			- in place // eg. rename
+			- to other fields
+- at every point is available:
+	- the origin schema
+	- the current schema
+	- for each field in the current schema:
+		- all the migration steps from the origin schema
+- at every point, a request to migrate to any other schema version can be made:
+	- the path latest common point between current and target schema is established
+		- if they don't even share origin, custom migration functions/mappings are necessary
+		- if it is current, the usual forward migration process is used
+			- add
+			- add copy of to-be transformed
+			- transform to new fields
+				- using functions
+			- (switch all apis to intermediate)
+			- move intermediate new to old + remove removed
+			- (switch all apis to final)
+			- remove intermediate new
+		- if it is behind put on path to origin, the backward/reverse migration process is used
+			- backward: like forward but for reversed + using the inverse functions
+				- if some inverse functions doesn't exist, they're required to be provided or migration will be destructive
+		- if it is branched out behind, backward migration will be used to branch point, followed by forward migration
+
+' notes
+	- för maximal Migrering förmåga borde ett program alltid befinna sig i ett fungerade stadium, likt evolutionen, varje komplext system i kroppen utvecklats
+	- om tillräckligt många mellanliggande steg är sparade kan precisa Migrering steg interpoleras (vilket sker om man använder visuella editorn eller watch script till vanlig kod editor), tillsammans med bättre förståelse genom tests reduceras mängden möjliga merge conflicts avsevärt.
+	- målet är den punkt där "editorn" kan förstå den bakomliggande logiska skillnaden mellan implementationer, urskilja dessa, peka ut dess praktiska skillnader (eg. A är 30% snabbare på nästan välsorterade listor, medan B är 20% mer minneseffektiv, A ger även annat resultat än B med indata av numer (exempel) ...), själv sätta ihop nytt alternativ med de bästa delarna för det specifika caset, alternativt fråga utvecklaren om ambiguous / too little info.

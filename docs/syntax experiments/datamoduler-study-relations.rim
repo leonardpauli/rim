@@ -1,0 +1,100 @@
+// datamoduler-study-relations
+// created by Leonard Pauli, 10 aug 2018
+// using example schema based on a schema created by @eweilow
+// towards rim
+
+' notes:
+	Weight is Float
+	Length is Float
+	Speed is Float
+	Text is String
+
+
+Vehicle:
+	identifiers:
+		vin is String
+		registrationNumber is String
+
+	model is Vehicle.Model // if modified, extend previous/base model
+		name is String
+		physical:
+			mass is Weight
+			length is Length
+			width is Length
+		operation
+			speed.average is Speed
+			speed.max is Speed
+
+	type is Vehicle.Type is Enum:
+		- electric
+		- fossil
+		- hydrogen
+		- other
+	
+	registration:
+		owner is Organisation through ref.ownedVehicles
+		operatingFor is Organisation through ref.operatingVehicles
+		manufacturedAt is Site
+		inUse is Boolean
+
+	bio:
+		name is String
+			short is String
+		pictures is many Picture
+		description is Text
+		roles is many String // other or more specific than type
+
+	pool is many Pool: // car sharing
+		title is String
+		vehicles is many Vehicle
+
+
+# backrefs // similar to relations, but more one-sided
+
+Vehicle.registration:
+	owner is Organisation // @backref .ownedVehicles
+	operatingFor is Organisation // @backref .operatingVehicles
+
+Organisation:
+	ownedVehicles is Vehicle(registration.owner = self)  // @backref.synced
+	operatingVehicles is Vehicle(registration.operatingFor = self) // @backref.synced
+
+
+# relations
+
+Vehicle.registration:
+	owner is Organisation // @relation{through .ownedVehicles}
+	owner is Organisation // @relation{through .ownedVehicles}
+	operatingFor is Organisation // @relation{through .operatingVehicles}
+
+Organisation:
+	ownedVehicles is Vehicle // @relation{through .registration.owner}
+	operatingVehicles is Vehicle // @relation{through .registration.operatingFor}
+
+' alt:
+	owner is Organisation // @relation{through .ownedVehicles}
+	owner is Organisation@r .ownedVehicles
+	owner is Organisation through .ownedVehicles // <-- sweet sugar, no need to switch case when writing, etc
+
+
+# cascading deletes or set to Empty
+
+// Package.vehicle is Vehicle through .primaryPackage // on self delete: set .primaryPackage to Empty
+// Vehicle.primaryPackage is Package through .vehicle // on self delete, cascade delete package
+
+// explicit
+
+Package.vehicle is Vehicle through{set-null} .primaryPackage // or rather, weak ref
+Vehicle.primaryPackage is Package through{cascade-delete} .vehicle // or rather, strong ref
+
+// refs
+
+Package.vehicle is weak Vehicle through .primaryPackage
+Vehicle.primaryPackage is Package through .vehicle
+
+// moslty same as: (using "automatic reference couting"?)
+// 	(not if other refs to .vehicle exists, might prevent cascading delete not prevented when explicit?)
+
+// TODO: reverse?
+Package.vehicle is Vehicle // @backref .primaryPackage
+Vehicle.primaryPackage is Package(vehicle = self)  // @backref.synced
