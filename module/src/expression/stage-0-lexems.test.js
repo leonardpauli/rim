@@ -22,11 +22,15 @@ const keyfix = o=> objectKeyPathFixedShallow(o)
 
 
 describe('prepare', ()=> {
-	it('TODO', ()=> {
+	it('singleline', ()=> {
 		const s = root.singleline
 		expect(s.lexems[1]).toBe(s.content.wrap)
-		expand(s) // log(s)
-		log(s, 5)
+		// expand(s)
+		// log(s, 5)
+	})
+	it('TODO - multiline', ()=> {
+		expand(root)
+		log(root, 5)
 	})
 })
 

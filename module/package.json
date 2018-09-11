@@ -1,6 +1,6 @@
 {
 	"name": "@leonardpauli/rim",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Declarative + reactive language, parser + WIP eval",
 	"main": "index.js",
 	"scripts": {
