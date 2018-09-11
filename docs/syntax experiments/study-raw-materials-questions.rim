@@ -1,0 +1,28 @@
+// study-raw-materials-questions
+// rim
+// created by Leonard Pauli, 13 aug 2018
+// using questions from https://www.hillelwayne.com/post/raw-materials/
+
+- "The lift car can’t move from the nth to the n+2th floor without passing the n+1th floor."
+	Lift.car.floor.on change: expect dist(it, current) <= 1
+- "No class has more than one teacher unless it has more than ten pupils."
+	Class.teachers.count{max: 1 if .pupils < 10}
+- "The pipes and switches of the package routing machine form a binary tree."
+	Graph.Tree.Binary{node is Switch, edge is Pipe}
+- "If you lift the receiver when the phone is ringing that’s an answer-call event; if it’s not ringing it’s a request-service event."
+	Receiver.on lift: do answer if is ringing else do required-service
+- "The system is required to prevent two trains from occupying the same track segment at the same time."
+	Track.Segment.trains{max: 1}
+- "An ancestor of a person P is a natural parent of P or a natural parent of an ancestor of P."
+	Person.ancestors: (...(.parents), ...(.parents.ancestors))
+	// Person.ancestor with p: it in .ancestors
+	// a is ancestor of p
+	// TODO: always use singular..?? yes, everything is lists anyhow?
+- "When a button is pressed, the machine should turn the lamp on within 250 milliseconds."
+	Button.on press: on lamp.change or timeout 250ms: expect lamp is active
+- "The vending machine can prevent a coin-insertion event, but only the customer can cause it."
+	VendingMachine{on coin-insertion: (expect author is Customer; return if prevented; ...)}.prevented.on change: expect author is VendingMachine
+- "A student who passes the examination becomes a graduate."
+	Student is graduate if examination is passed
+- "An account can only be closed by the person who opened it."
+	Account.on close: expect currentUser is .owner

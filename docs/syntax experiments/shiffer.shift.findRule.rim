@@ -1,0 +1,24 @@
+// shiffer.shift.findRule.rim
+// created by Leonard Pauli, 15 aug 2018
+
+alphabet: "a".."z"
+shiffer.shift.findRule with (raw, encoded):
+	zip (raw and encoded) |> objectify |> addHlsOk | format
+		- objectify:
+			index: it@index
+			raw: it.0
+			encoded: it.1
+			dist: (encoded.charCode-raw.charCode) % alphabet.count // TODO: neg?
+			vl: raw.charCode
+			hl: Expression:
+				terms:
+					- encoded.charCode
+					- dist
+					- index
+				coefficients: Empty
+		- addHls: it
+			hlsOk: coefficientAlts |> hl{coefficients: it} | filter (vl is it.evaluated)
+		- format: histogram with .hlsOk // | .max.entry as{terms.use.names} String
+	CoefficientAlt is Enum(0, 1, -1)
+	coefficientAlts: CoefficientAlt.permutate{3}
+
