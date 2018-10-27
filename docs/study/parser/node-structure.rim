@@ -27,18 +27,27 @@
 # Notes / scratchpad
 
 Node
-	token
+	lexem is Lexem // see parser/lexem-structure
 
 	value
-		raw
-		set with val
-		cache?
-		dependents // see parser/declarative-resolve
+		raw is Binary // binary data; bytearray eg. number, string, etc
+		on set with val{is Binary}
+			' allow plugins middlewares
+				- do value.cache: preprocess raw
+				- do output.node.update with modifier.fn (input, value)
+				- plugin.declarative to update dependents
 
-	input
-	modifier.fn
-	output
+		cache is Object // processed raw
+			' eg. indexes over larger string for faster find?
+				for plugins and custom types to utilise until standardised way
+					(/namespace structure) for their specific need is fixed
+		
+	propertiesList is many Property
+	properties: propertiesList |> {(it.key): it} | merge
 
-	properties
-
-	query.fn
+	' TODO:
+		input
+		modifier.fn
+		output
+			node is Node
+		query.fn

@@ -85,32 +85,21 @@ step.fn.alt.1:
 // js parser node
 // see parser/node-structure
 Node
-	value
-		raw
-		set with val
+	input: // IO input?
+		enabled: false
+		pull:
+			enabled: false
+			trottle
+				enabled: false
+				frequency.max: 100
+		fn: ...
 
+	value
 		' input/output on node or just use modifier function + impure flag?
 			also, instead of trottle, just update on second value changes
 				which can be eg a (timer | ms | /16 | floor) + if value changes?
-		input:
-			enabled: false
-			pull:
-				enabled: false
-				trottle
-					enabled: false
-					frequency.max: 100
-			fn: ...
-		output:
-			enabled: false
-			push:
-				enabled: false
-				trottle
-					enabled: false
-					frequency.max: 100
-			fn: ...
-			
-		cache: 5
-		dependents: [c, d]
+		cache is Data
+		dependents is many Node: [c, d]
 			on update: reorder for optimum update value tree update later on, eg. shortest dependents tree first?
 		// re-eval dependents
 		// defer their dependents valueSet
@@ -130,7 +119,15 @@ Node
 				so if only output is the screen with 60Hz, the accelerometer will only be queried at 60Hz...
 				though velocity calculation needs intermediate values... so it is triggered by a timed "sink" outlet at 120Hz
 				...
-
+	
+	output: // IO output
+		enabled: false
+		push:
+			enabled: false
+			trottle
+				enabled: false
+				frequency.max: 100
+		fn: ...
 
 
 lists:
