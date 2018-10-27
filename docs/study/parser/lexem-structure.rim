@@ -1,0 +1,73 @@
+# study/parser/lexem-structure
+' LeonardPauli/rim
+	Created by Leonard Pauli, sep 2018
+	Copyright © Leonard Pauli 2018
+
+' a common way to build a language parser is:
+		code as raw text
+			-> tokenize -> many Token{text, location, tokenId}
+			-> astify -> Ast is AbstractSyntaxTree is Trie of (Token, Token)
+			-> ...passes -> Ast // eg. pass.validate-x, pass.garbage-collection.insert, pass.optimise, etc
+			-> to IR -> IR is ImmediateRepresentation // close to assembly
+			// -> ...passes -> to ASM is AssemblyCode -> MachineCode
+	tokenizer can bea different program than the aster (connected through eg. pipes)
+		- gives modularity
+		- though each step then has to recreate some tree structure
+			(eg. both tokenizer + aster keeps track on parens)
+	following the normalisation principle, rim has one type
+		the "Lexem"; "abstract unit om meaning" // TODO: english "lexeme" fix?
+		- token, ast
+		has one type, which is another Lexem, eg.
+			- token lexem references lexem with token definition
+		has references to other lexems, eg.
+			- paren token lexem references all containing tokens
+			- binary expression ast lexem references the lhs/rhs lexems
+				which references their token lexems
+			- during script evaluation (ast tree folding),
+				the active expression lexems are referenced (eg. 1 of 2 for if/else expression)
+
+Ctx
+	lexem is Lexem
+	vars is {String: Any}
+	errors is many Error
+	value is Any
+	restStr is String
+
+Lexem
+	type is Type:
+		name is String: "keyPathFix"
+		type is Lexem.Type: self
+
+		...or:
+			- lexems{usingOr is Boolean} is many Lexem
+			- ...:
+				regex is Regex
+				retain is Boolean or Int
+
+		repeat is Boolean
+		optional is Boolean
+
+		// subs is many Lexem
+		...: subs |> {(it.type.name): it} | merge
+
+		astValueGet (ctx, t):
+			(aster.astify(ctx, t.tokens.0); t.tokens.0)
+			// astValueGet (ctx, t): t.match.0
+
+		evaluate (ctx, t, args)
+			evaluate.evaluate(ctx, t.astValue)
+
+	matched is Boolean
+	match is Regex.Match or Empty
+	location is Location
+		s is Int // start
+		e is Int // end // TODO: rename from single letter to full name
+
+	tokens is many Lexem
+	lexems is many Lexem
+	astTokens is many Lexem
+	astValue is Object
+	astId is Ast.Id
+		name is String
+		...
+	evalValue is Any
