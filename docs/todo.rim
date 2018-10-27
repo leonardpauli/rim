@@ -52,6 +52,9 @@ version 0.2.0 - declarative package
 	convert study structure using @sync and 0.2.0 // install 0.2.0 separately, update development readme with `development setup` section, setup different views (eg. syntax: examples per char/stage/feature-category, etc, etc)
 	use rim file for lexem setup, etc
 
+	// TODO: do system wide replace of "Lexem" -> "Lexeme", "lexem" -> "lexeme"?
+		// lexem looks better but not english spelling.... possibly argue custom meaning but nah..
+
 adapters (UI, DB) - outline
 	create study/adapter/adapter.rim // plugin is for parser/syntax/linting/etc (rim source -> data structure), adapter is for compiling/exporting/etc (usually includes plugin(s) and libs) (data structure -> target)
 	create study/adapter/adapters.rim // UI using view-moduler, DB using data-moduler, js-eval, wasm, llvm

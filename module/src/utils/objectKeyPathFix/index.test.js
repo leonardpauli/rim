@@ -39,7 +39,9 @@ describe('evaluate / patchesGet', ()=> {
 	const v = {v: 'value'}
 	const testMany = testManyGet(s=> {
 		const ctx = exprCtxDefaultGet({vars: {}})
-		return evaluateStr(s, ctx)
+		const a = evaluateStr(s, ctx)
+		// log(a, 10)
+		return a
 	})
 
 	const patchesPath = 'a{c}.b{f, g}.r'

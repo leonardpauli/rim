@@ -34,7 +34,7 @@ export const astidFlags = {
 
 // lexems example
 const keysMeta = 'name,description,type'.split(',') // on .type
-const keysMatch = 'regex,retain,lexems,usingOr'.split(',') // on .type
+const keysMatch = 'regex,regexAllowMatchingEmpty,retain,lexems,usingOr,state'.split(',') // on .type
 const keysTokenizerReserved = 'matched,match,location,tokens,lexems'.split(',')
 const keysAst = 'astValueGet,lexemsAstTypes,astValue,astTokens,astId,astTokenWrapperIs,astTokenNot'.split(',')
 export const keysReserved = concat([keysMeta, keysMatch, keysTokenizerReserved, keysAst, Object.keys(flags)])
@@ -44,6 +44,7 @@ export const keysReserved = concat([keysMeta, keysMatch, keysTokenizerReserved, 
 const lexem = {}
 const lexemMatch = {
 	regex: /^((g1)|(g2))/,
+	regexAllowMatchingEmpty: false,
 	retain: true, // true (all), n (retain n chars), -n (retain match.length-n chars), false | 0 (retain no chars)
 } || {
 	...{usingOr: true}||{lexemsModeAnd: false}, // match one of them || match all of them after each other (default)
@@ -75,8 +76,8 @@ const lexemTypeValidateFix = lt=> { // lexem type
 	if (lt.regex) {
 		if (!(lt.regex instanceof RegExp)) throw new Error(
 			`lexem(${lt.name}).regex (should be) instanceof RegExp (was ${lt.regex})`)
-		if (''.match(lt.regex)) throw new Error(
-			`lexem(${lt.name}).regex(${lt.regex}) matches zero length, please fix (or mod tokenizer, see TODO in tests)`)
+		if (''.match(lt.regex) && !lt.regexAllowMatchingEmpty) throw new Error(
+			`lexem(${lt.name}).regex(${lt.regex}) matches zero length, please fix (or set lexem.regexAllowMatchingEmpty (tmp), or mod tokenizer, see TODO in tests)`)
 		lt.retain = lt.retain === void 0? true: lt.retain===false? 0: lt.retain
 	} else if (lt.lexems) {
 		if (!Array.isArray(lt.lexems)) throw new Error(

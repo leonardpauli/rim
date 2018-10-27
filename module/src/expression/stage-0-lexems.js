@@ -6,10 +6,11 @@
 
 // OBS: see study/stages/stage-0-base.rim // current file should be a derivative from that canonical one
 
-// TODO: keyfix{flags} `'a{c}.b{f}.r': v` -> a.c = true; a.b.f = true; a.b.r = v;
+// TODO{done}: keyfix{flags} `'a{c}.b{f}.r': v` -> a.c = true; a.b.f = true; a.b.r = v;
 // TODO: `a.lexems: [...]; a.lexems.usingOr = true;` instead of just `a.lexems: [...]; a.usingOr = true`
 // TODO: optional = {'keep-unmatched': true}
 // TODO: lexem.(matcher{+ parents, regex}, state), etc
+// TODO: use matcher instead of regexAllowMatchingEmpty
 // TODO: lexem.stateGet // {type: line, stateGet: ({parents: [p]})=> ({depth: p.state.depth + 1}) }
 
 
@@ -220,7 +221,7 @@ const multilineGet = ()=> declarative(({ multiline }, {
 } = multiline)=> ({ multiline: keyfix({
 
 	// misc
-	EOF: {optional: {'keep-unmatched': true}, regex: /^$/},
+	EOF: {optional: {'keep-unmatched': true}, regex: /^$/, regexAllowMatchingEmpty: true},
 	'end.lexems{usingOr}': [singleline.newline, EOF],
 	
 	// entrypoint
