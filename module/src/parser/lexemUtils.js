@@ -82,7 +82,7 @@ const lexemTypeValidateFix = lt=> { // lexem type
 	} else if (lt.lexems) {
 		if (!Array.isArray(lt.lexems)) throw new Error(
 			`lexem(${lt.name}).lexems has to be array`)
-		lt.usingOr = lt.usingOr || false
+		lt.usingOr = lt.usingOr || lt.lexems.usingOr || false
 		if (lt.usingOr && lt.lexems.some(l=> l.optional)) throw new Error(
 			`lexem(${lt.name}).lexems has one optional, not allowed + ambiguos/doesn't make sense when usingOr`)
 	} else throw new Error(

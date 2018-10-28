@@ -7,7 +7,8 @@
 // OBS: see study/stages/stage-0-base.rim // current file should be a derivative from that canonical one
 
 // TODO{done}: keyfix{flags} `'a{c}.b{f}.r': v` -> a.c = true; a.b.f = true; a.b.r = v;
-// TODO: `a.lexems: [...]; a.lexems.usingOr = true;` instead of just `a.lexems: [...]; a.usingOr = true`
+// TODO{done}: `a.lexems: [...]; a.lexems.usingOr = true;` instead of just `a.lexems: [...]; a.usingOr = true`
+// TODO{later}: disallow a.usingOr in favour of a.lexems.usingOr
 // TODO: optional = {'keep-unmatched': true}
 // TODO: lexem.(matcher{+ parents, regex}, state), etc
 // TODO: use matcher instead of regexAllowMatchingEmpty
