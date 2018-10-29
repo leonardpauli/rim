@@ -47,11 +47,12 @@ export const patchesGet = (path, {vars = {}} = {})=> {
 export const applyPatch = (patch, object, value)=>
 	patch.path.reduce((o, k, i, all)=> {
 		const isLast = all.length-1===i
-		if (!o[k]) o[k] = {}
-		if (!isLast) return o[k]
+		const okEmpty = o[k]===null || o[k]===void 0
+		if (!isLast) return okEmpty? (o[k] = {}): o[k]
 
 		const targetVal = patch.valuePlaceholder? value: patch.value
 
+		if (okEmpty) return (o[k] = targetVal)
 		return o[k] = deepAssign(o[k], targetVal, {
 			replaceEmpty: true,
 			replaceNonEmptyAllowed: false,

@@ -103,15 +103,17 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 		l.location.e = se
 
 		// log({al: l})
+		const keepUnmatched = l.optional && l.optional['keep-unmatched']
 		const match = str.substring(l.location.s, l.location.e).match(l.type.regex)
-		if (!match) {
+		if (!match && !keepUnmatched) {
 			l.location.e = l.location.s
 			l.tokens = []
 			l.matched = false; handleMatch(bs, lis); continue
 		}
 
 		const retainLength =
-				l.type.retain===true ? match[0].length
+				!match && keepUnmatched ? 0
+			: l.type.retain===true ? match[0].length
 			: l.type.retain>=0 ? l.type.retain
 			: Math.max(0, match[0].length + l.type.retain)
 		// TODO: validate that expand has been run before loop instead?

@@ -58,7 +58,8 @@
 		"not ie <= 8"
 	],
 	"dependencies": {
-		"@leonardpauli/utils": "^0.1.4",
+		"@leonardpauli/utils": "^0.1.5",
+		"ramda": "^0.25.0",
 		"string-from-object": "^1.1.2"
 	}
 }
