@@ -99,32 +99,22 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			continue
 		}
 
-		l.location.s = b.location.e
-		l.location.e = se
-
-		// log({al: l})
-		const keepUnmatched = l.optional && l.optional['keep-unmatched']
-		const match = str.substring(l.location.s, l.location.e).match(l.type.regex)
-		if (!match && !keepUnmatched) {
-			l.location.e = l.location.s
-			l.tokens = []
-			l.matched = false; handleMatch(bs, lis); continue
+		const location = {
+			s: b.location.e,
+			e: se,
 		}
 
-		const retainLength =
-				!match && keepUnmatched ? 0
-			: l.type.retain===true ? match[0].length
-			: l.type.retain>=0 ? l.type.retain
-			: Math.max(0, match[0].length + l.type.retain)
-		// TODO: validate that expand has been run before loop instead?
-		if (isNaN(retainLength)) throw new Error(
-			`invalid lexem, forgot to run root through lexemUtils.expand?`)
-		l.location.e = l.location.s + retainLength
-		// log({lo:l.location.s, retainLength, match, r: l.retain})
+		const substr = str.substring(location.s, location.e)
 
-		l.match = match
-		l.tokens = []
-		l.matched = true; handleMatch(bs, lis); continue
+		const matchRes = matcherRegex({
+			substr, location,
+			regex: l.type.regex,
+			retain: l.type.retain,
+			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
+		})
+		Object.assign(l, matchRes)
+
+ 		handleMatch(bs, lis)
 	}
 }
 
@@ -144,6 +134,35 @@ const extractMatchTokens = l=> l.matched? [l, ...concat(
 // const safeToYieldGet = bs=> !bs
 // 	.filter((v, i)=> i <= bs.length-1)
 // 	.some(b=> !b.type.usingOr) // TODO: should also be ok if rest lexems in an usingAnd is optional
+
+
+const matcherMatch = ({match, location, keepUnmatched, retain})=> {
+	const matched = !!(match || keepUnmatched)
+	const retainLength = !matched? 0: retainLengthGet({
+		str: match && match[0], keepUnmatched, retain })
+
+	return {
+		matched,
+		match: matched? match: null,
+		location: {
+			s: location.s,
+			e: location.s + retainLength,
+		},
+		tokens: [],
+	}
+}
+const matcherRegex = ({substr, regex, ...opt})=>
+	matcherMatch({match: substr.match(regex), ...opt})
+
+const lexemOptionalKeepUnmatchedGet = l=>
+	l.optional && l.optional['keep-unmatched']
+
+const retainLengthGet = ({retain, str, keepUnmatched})=>
+		!str && keepUnmatched ? 0
+	: retain===true ? str.length
+	: retain>=0 ? retain
+	: Math.max(0, str.length + retain) // negative regain, cut from end of matched
+
 
 
 // logic subs

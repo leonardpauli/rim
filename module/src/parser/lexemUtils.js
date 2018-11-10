@@ -34,7 +34,7 @@ export const astidFlags = {
 
 // lexems example
 const keysMeta = 'name,description,type'.split(',') // on .type
-const keysMatch = 'regex,regexAllowMatchingEmpty,retain,lexems,usingOr,state'.split(',') // on .type
+const keysMatch = 'matcher,regex,regexAllowMatchingEmpty,retain,lexems,usingOr,state'.split(',') // on .type
 const keysTokenizerReserved = 'matched,match,location,tokens,lexems'.split(',')
 const keysAst = 'astValueGet,lexemsAstTypes,astValue,astTokens,astId,astTokenWrapperIs,astTokenNot'.split(',')
 export const keysReserved = concat([keysMeta, keysMatch, keysTokenizerReserved, keysAst, Object.keys(flags)])
@@ -85,6 +85,10 @@ const lexemTypeValidateFix = lt=> { // lexem type
 		lt.usingOr = lt.usingOr || lt.lexems.usingOr || false
 		if (lt.usingOr && lt.lexems.some(l=> l.optional)) throw new Error(
 			`lexem(${lt.name}).lexems has one optional, not allowed + ambiguos/doesn't make sense when usingOr`)
+	} else if (lt.matcher) {
+		// TODO: if matcher is regex or array, use regex/lexems matcher util
+		if (typeof mather != 'function') throw new Error(
+			`lexem(${lt.name}).matcher is defined but not a function`)
 	} else throw new Error(
 		`lexem(${lt.name}) has to have a matcher (.regex/.lexems)`)
 }
