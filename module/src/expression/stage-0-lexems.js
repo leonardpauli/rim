@@ -9,7 +9,7 @@
 // TODO{done}: keyfix{flags} `'a{c}.b{f}.r': v` -> a.c = true; a.b.f = true; a.b.r = v;
 // TODO{done}: `a.lexems: [...]; a.lexems.usingOr = true;` instead of just `a.lexems: [...]; a.usingOr = true`
 // TODO{later}: disallow a.usingOr in favour of a.lexems.usingOr
-// TODO: optional = {'keep-unmatched': true}
+// TODO{done}: optional = {'keep-unmatched': true}
 // TODO: lexem.(matcher{+ parents, regex}, state), etc
 // TODO: use matcher instead of regexAllowMatchingEmpty
 // TODO: lexem.stateGet // {type: line, stateGet: ({parents: [p]})=> ({depth: p.state.depth + 1}) }
