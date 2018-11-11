@@ -62,7 +62,7 @@ export const lexemIs = v=> !!(v && v.type) // TODO: use symbol instead? (add in 
 
 export const lexemExtendCopyClean1Level = l=> ({
 	...l.type===l? {type: l}: {...l},
-	matched: void 0, match: void 0, location: {s: 0, e: 0}, // s=start, e=end
+	matched: void 0, match: void 0, location: {s: void 0, e: void 0}, // s=start, e=end
 	tokens: void 0, lexems: void 0,
 	astTokens: void 0, astValue: void 0,
 })
@@ -79,18 +79,40 @@ const lexemTypeValidateFix = lt=> { // lexem type
 		if (''.match(lt.regex) && !lt.regexAllowMatchingEmpty) throw new Error(
 			`lexem(${lt.name}).regex(${lt.regex}) matches zero length, please fix (or set lexem.regexAllowMatchingEmpty (tmp), or mod tokenizer, see TODO in tests)`)
 		lt.retain = lt.retain === void 0? true: lt.retain===false? 0: lt.retain
+
+		lt.matcher = lt.regex
+		lt.regex = void 0
+	}
+	
+	if (lt.matcher instanceof RegExp) {
+		const regex = lt.matcher
+		lt.matcher = input=> input.utils.matcherRegex({
+			...input, regex })
+		lt.matcher.regex = regex
+	}
+
+	if (lt.matcher) {
+		// TODO: if matcher is regex or array, use regex/lexems matcher util
+		if (typeof lt.matcher != 'function') throw new Error(
+			`lexem(${lt.name}).matcher is defined but not a function`)
+
+		/* TODO: validate matcher result?
+		const matcherResultKeysRequired = 'matched,match,location,tokens'.split(',')
+		const res = lt.matcher({})
+		const keys = Object.keys(res)
+		const missed = matcherResultKeysRequired.filter(k=> !keys.includes(k))
+		if (missed.length > 0) throw new Error(
+			`lexem(${lt.name}).matcher result misses some keys (${missed})`)
+		*/
+			
 	} else if (lt.lexems) {
 		if (!Array.isArray(lt.lexems)) throw new Error(
 			`lexem(${lt.name}).lexems has to be array`)
 		lt.usingOr = lt.usingOr || lt.lexems.usingOr || false
 		if (lt.usingOr && lt.lexems.some(l=> l.optional)) throw new Error(
 			`lexem(${lt.name}).lexems has one optional, not allowed + ambiguos/doesn't make sense when usingOr`)
-	} else if (lt.matcher) {
-		// TODO: if matcher is regex or array, use regex/lexems matcher util
-		if (typeof mather != 'function') throw new Error(
-			`lexem(${lt.name}).matcher is defined but not a function`)
 	} else throw new Error(
-		`lexem(${lt.name}) has to have a matcher (.regex/.lexems)`)
+		`lexem(${lt.name}) has to have a matcher (.matcher/.lexems)`)
 }
 
 export const _lexemProcessedSymbol = Symbol('lexem.processed')

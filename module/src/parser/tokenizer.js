@@ -43,8 +43,12 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 	// b.location.(s, e) // start, end; index in str
 
 	const baseLexem = ctx.lexem
-	baseLexem.location = {s: 0, e: 0}
-	const se = str.length // string end, possibly take from baseLexem.location.e
+	baseLexem.location = {}
+	// if (!baseLexem.location) baseLexem.location = {}
+	if (baseLexem.location.s===void 0) baseLexem.location.s = 0
+	if (baseLexem.location.e===void 0) baseLexem.location.e = str.length
+	const se = baseLexem.location.e
+
 	const bs = [baseLexem]
 	const lis = []
 
@@ -99,19 +103,23 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			continue
 		}
 
-		const location = {
-			s: b.location.e,
-			e: se,
+		const matcherInput = {
+			ctx,
+			location: {
+				s: b.location.e,
+				e: se,
+			},
+			str,
+			get substr () { return this.str.substring(this.location.s, this.location.e) },
+			utils: {
+				matcherRegex, matcherMatch, matcherTokenize,
+				lexemOptionalKeepUnmatchedGet,
+			},
+			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
+			retain: l.type.retain,
 		}
 
-		const substr = str.substring(location.s, location.e)
-
-		const matchRes = matcherRegex({
-			substr, location,
-			regex: l.type.regex,
-			retain: l.type.retain,
-			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
-		})
+		const matchRes = l.type.matcher(matcherInput)
 		Object.assign(l, matchRes)
 
  		handleMatch(bs, lis)
@@ -124,6 +132,11 @@ export const tokenizeNext = (ctx, str)=> {
 	// TODO: don't return anything to signal that baseLexem has been changed?
 	return extractMatchTokens(baseLexem)
 }
+
+export const tokenizeCtxGet = ({lexem})=> ({
+	lexem: lexemExtendCopyClean1Level(lexem),
+	errors: [],
+})
 
 
 // helpers
@@ -152,7 +165,23 @@ const matcherMatch = ({match, location, keepUnmatched, retain})=> {
 	}
 }
 const matcherRegex = ({substr, regex, ...opt})=>
-	matcherMatch({match: substr.match(regex), ...opt})
+	matcherMatch({match: substr.match(regex), substr, ...opt})
+
+const matcherTokenize = ({lexem, location, ctx: _ctx, str, ...opt})=> {
+	const ctx = {
+		..._ctx,
+		lexem: Object.assign(lexemExtendCopyClean1Level(lexem), {
+			location,
+		}),
+	}
+	tokenizeNextCore(ctx, str, {location})
+	return {
+		matched: ctx.lexem.matched,
+		match: ctx.lexem.match,
+		location: ctx.lexem.location,
+		tokens: extractMatchTokens(ctx.lexem),
+	}
+}
 
 const lexemOptionalKeepUnmatchedGet = l=>
 	l.optional && l.optional['keep-unmatched']

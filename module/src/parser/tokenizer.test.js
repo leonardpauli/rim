@@ -6,8 +6,8 @@
 
 import {log} from 'string-from-object'
 import {stupidIterativeObjectDependencyResolve as objr} from '@leonardpauli/utils/lib/object'
-import {tokenizeNext} from './tokenizer'
-import {flags, expand} from './lexemUtils'
+import {tokenizeNext, tokenizeCtxGet} from './tokenizer'
+import {flags, expand, lexemExtendCopyClean1Level} from './lexemUtils'
 
 const {autoInsertIfNeeded, optional, repeat, usingOr} = flags
 
@@ -30,8 +30,9 @@ const testTokens = (tokens, targets, extra = {})=> {
 	} catch (err) { log({tokens, targets, ...extra}); throw err }
 }
 const testTokensL = (lexem, str, targets, {matched = !!targets.length} = {})=> {
-	testTokens(tokenizeNext({lexem}, str), targets, {str, lexem})
-	expect(lexem.matched).toBe(matched)
+	const ctx = tokenizeCtxGet({lexem})
+	testTokens(tokenizeNext(ctx, str), targets, {str, ctx})
+	expect(ctx.lexem.matched).toBe(matched)
 }
 const gs = s=> s.split('').map(s=> [s])
 const testTokensS = (root, s)=> testTokensL(root, s, gs(s))
