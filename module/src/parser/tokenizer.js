@@ -43,8 +43,7 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 	// b.location.(s, e) // start, end; index in str
 
 	const baseLexem = ctx.lexem
-	baseLexem.location = {}
-	// if (!baseLexem.location) baseLexem.location = {}
+	if (!baseLexem.location) baseLexem.location = {}
 	if (baseLexem.location.s===void 0) baseLexem.location.s = 0
 	if (baseLexem.location.e===void 0) baseLexem.location.e = str.length
 	const se = baseLexem.location.e
@@ -72,7 +71,7 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			lis.push(0)
 			
 			const bPrev = bi>0? bs[bi-1]: null
-			b.location.s = bPrev? bPrev.location.e: 0
+			b.location.s = bPrev? bPrev.location.e: baseLexem.location.s
 			b.location.e = b.location.s
 
 			b.tokens = []
@@ -112,7 +111,7 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			str,
 			get substr () { return this.str.substring(this.location.s, this.location.e) },
 			utils: {
-				matcherRegex, matcherMatch, matcherTokenize,
+				matcherNone, matcherMatch, matcherRegex, matcherTokens, matcherTokenize,
 				lexemOptionalKeepUnmatchedGet,
 			},
 			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
@@ -141,13 +140,38 @@ export const tokenizeCtxGet = ({lexem})=> ({
 
 // helpers
 
-const extractMatchTokens = l=> l.matched? [l, ...concat(
-	l.tokens.map(t=> extractMatchTokens(t)))]: []
+const extractMatchTokens = l=> l.matched
+	? [l, ...concat(l.tokens.map(t=> extractMatchTokens(t)))]
+	: []
 
 // const safeToYieldGet = bs=> !bs
 // 	.filter((v, i)=> i <= bs.length-1)
 // 	.some(b=> !b.type.usingOr) // TODO: should also be ok if rest lexems in an usingAnd is optional
 
+
+const matcherNone = ({
+	location = {s: 0},
+} = {})=> ({
+	matched: false,
+	match: null,
+	location: {
+		s: location.s,
+		e: location.s + 0,
+	},
+	tokens: [],
+})
+
+const matcherTokens = ({
+	tokens,
+} = {})=> ({
+	matched: true,
+	match: null,
+	location: {
+		s: tokens[0].location.s,
+		e: tokens[tokens.length-1].location.e,
+	},
+	tokens,
+})
 
 const matcherMatch = ({match, location, keepUnmatched, retain})=> {
 	const matched = !!(match || keepUnmatched)
@@ -174,12 +198,12 @@ const matcherTokenize = ({lexem, location, ctx: _ctx, str, ...opt})=> {
 			location,
 		}),
 	}
-	tokenizeNextCore(ctx, str, {location})
+	tokenizeNextCore(ctx, str)
 	return {
 		matched: ctx.lexem.matched,
 		match: ctx.lexem.match,
 		location: ctx.lexem.location,
-		tokens: extractMatchTokens(ctx.lexem),
+		tokens: [ctx.lexem],
 	}
 }
 

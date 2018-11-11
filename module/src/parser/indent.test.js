@@ -34,11 +34,11 @@ describe('matcher', ()=> {
 	const testOne = ({syntax, str, expected})=> {
 		const v = evaluateStr({lexem: {...syntax}, errors: []}, str)
 		v.errors.map(e=> log(e))
-		expect(v.value).toMatchObject(expected)
+		expect(v.value).toBe(expected)
 	}
 
 
-	it.skip('custom (using matcherMatch)', ()=> {
+	it('custom (using matcherMatch)', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
 				const {substr} = input
@@ -58,37 +58,40 @@ describe('matcher', ()=> {
 		testOne({syntax, str: '3abcd', expected: '3abc'})
 	})
 
-	it.skip('custom (using matcherTokenize)', ()=> {
-		const syntax = declarative(({main, a, b, r})=> keyfix({
+	it('custom (using matcherTokenize)', ()=> {
+		const syntax = declarative(({main, a, b})=> keyfix({
 			'a.regex': /^a/,
 			'b.regex': /^b/,
-			'r.lexems{usingOr}': [a, b],
+			'a.container.lexems': [a],
+			'b.container.lexems': [b],
+			'initial.lexems{usingOr}': [a, b],
 			'main.matcher': input=> {
-				log('lalal')
-				// log(input)
-				// const res1 = input.utils.matcherTokenize({...input, lexem: syntax.r})
-				// log({r1l: res1.location.e})
-				// const res = input.utils.matcherTokenize({...input, location: {
-				// 	s: res1.location.e,
-				// 	e: input.location.e,
-				// }, lexem: syntax.r})
-				// log(res1.tokens[0].tokens[0].match)
-				// log(res)
-				// const {substr} = input
-				// const d = substr.match(/^\d/)
-				// const match = d? substr.match(new RegExp(`^(${d})(.{${parseInt(d, 10)}})`)): null
-				// return input.utils.matcherMatch({match, ...input})
+				const res0 = input.utils.matcherTokenize({...input, lexem: syntax.initial})
+				if (!res0.matched) return input.utils.matcherNone(input)
+
+				const next = res0.tokens[0].tokens[0].type == syntax.a? syntax.b.container: syntax.a.container
+
+				const res1 = input.utils.matcherTokenize({...input, lexem: next, location: {s: res0.location.e}})
+				if (!res1.matched) return input.utils.matcherNone(input)
+
+				return input.utils.matcherTokens({tokens: [...res0.tokens, ...res1.tokens]})
 			},
 			lexems: [main],
 		}))
 		expand(syntax)
 		
 		syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.main.astValueGet = (ctx, t)=> t.match[0]
+		syntax.main.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t)).join(' ')
+		syntax.initial.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
+		syntax.a.container.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
+		syntax.b.container.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
+		syntax.a.astValueGet = (ctx, t)=> t.match[0]
+		syntax.b.astValueGet = (ctx, t)=> t.match[0]
 		syntax.evaluate = (ctx, t)=> t.astValue
 
-		testOne({syntax, str: 'ab2abcd', expected: '2ab'})
-		testOne({syntax, str: '3abcd', expected: '3abc'})
+		testOne({syntax, str: 'ab', expected: 'a b'})
+		testOne({syntax, str: 'ba', expected: 'b a'})
+		testOne({syntax, str: 'aa', expected: void 0})
 	})
 
 	it.skip('state', ()=> {
