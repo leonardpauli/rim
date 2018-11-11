@@ -50,6 +50,7 @@
 		"pre-commit": "lint-staged"
 	},
 	"jest": {
+		"testPathIgnorePatterns": ["/lib/*"],
 		"verbose": true
 	},
 	"browserslist": [
