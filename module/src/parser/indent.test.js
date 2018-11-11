@@ -80,14 +80,7 @@ describe('matcher', ()=> {
 		}))
 		expand(syntax)
 		
-		syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
 		syntax.main.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t)).join(' ')
-		syntax.initial.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.a.container.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.b.container.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.a.astValueGet = (ctx, t)=> t.match[0]
-		syntax.b.astValueGet = (ctx, t)=> t.match[0]
-		syntax.evaluate = (ctx, t)=> t.astValue
 
 		testOne({syntax, str: 'ab', expected: 'a b'})
 		testOne({syntax, str: 'ba', expected: 'b a'})

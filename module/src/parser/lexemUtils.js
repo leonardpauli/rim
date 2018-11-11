@@ -10,6 +10,8 @@ import sfo, {log} from 'string-from-object'
 import {objectMapRecursive} from '@leonardpauli/utils/lib/object'
 const concat = xxs=> xxs.reduce((a, xs)=> (a.push(...xs), a), [])
 
+import {astify} from './aster'
+
 
 // Philosofy:
 // 	- expressions should always parse, syntax errors reported back + skipped gracefully, warnings auto fixed (+ reported back)
@@ -69,7 +71,7 @@ export const lexemExtendCopyClean1Level = l=> ({
 
 
 // process lexems
-const lexemTypeValidateFix = lt=> { // lexem type
+const lexemTypeValidateFix = (lt, opt)=> { // lexem type
 	if (!lt.name) throw new Error(
 		`lexem(${sfo(lt, 2)}).name not set`)
 
@@ -113,10 +115,20 @@ const lexemTypeValidateFix = lt=> { // lexem type
 			`lexem(${lt.name}).lexems has one optional, not allowed + ambiguos/doesn't make sense when usingOr`)
 	} else throw new Error(
 		`lexem(${lt.name}) has to have a matcher (.matcher/.lexems)`)
+
+	if (opt.autofixAstify) lexemTypeFieldAstifyAutoFix(lt)
+}
+
+const lexemTypeFieldAstifyAutoFix = lt=> {
+	if (lt.astValueGet) return
+	if (lt.matcher && lt.matcher.regex) return (lt.astValueGet = astify.match)
+	if (lt.lexems) return lt.lexems.length==1 || lt.lexems.usingOr
+		? (lt.astValueGet = astify.tokens.first)
+		: (lt.astValueGet = astify.tokens)
 }
 
 export const _lexemProcessedSymbol = Symbol('lexem.processed')
-const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Set()})=> {
+const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Set()}, opt)=> {
 	if (lexem[_lexemProcessedSymbol]) return lexem
 	lexem[_lexemProcessedSymbol] = true
 
@@ -128,38 +140,40 @@ const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Se
 	state.named.add(type)
 
 	// validate matcher + set defaults
-	lexemTypeValidateFix(type)
+	lexemTypeValidateFix(type, opt)
 	if (type.lexems) type.lexems.forEach((l, k)=>
 		!l.name && state.noname.add([l, k, type]))
 
 	// process children
 	const keysChildren = Object.keys(type).filter(k=> !keysReserved.includes(k))
-	keysChildren.forEach(k=> _process(type[k], k, type, state))
+	keysChildren.forEach(k=> _process(type[k], k, type, state, opt))
 
 	return lexem
 }
 
-const recursivelyFixNestedLexems = ([lexem, k, parent])=> {
+const recursivelyFixNestedLexems = ([lexem, k, parent], opt)=> {
 	lexem.type = lexem.type || lexem
 	const {type} = lexem
-
+	if (!opt) throw new Error('no opt!')
 	if (!type.name) {
 		type.name = (parent && parent.name+'.' || '')+k
-		type.lexems && type.lexems.forEach((l, k)=> type.lexems[k] = recursivelyFixNestedLexems([l, k, type]))
+		type.lexems && type.lexems.forEach((l, k)=> type.lexems[k] = recursivelyFixNestedLexems([l, k, type], opt))
 	}
-	lexemTypeValidateFix(type)
+	lexemTypeValidateFix(type, opt)
 	return lexem
 }
 
-export const expand = root=> {
+export const expand = (root, {autofixAstify = true, autofixEvaluate = true} = {})=> {
 	if (Array.isArray(root)) throw new Error(
 		`expand got array lexem, expected object, please wrap like {lexems: [<array-lexem>]}`)
 	const state = {named: new Set(), noname: new Set()}
-	_process(root, root.name || '@', null, state)
+	_process(root, root.name || '@', null, state, {autofixAstify})
 	state.noname.forEach(([lexem, k, parent])=> parent.lexems[k] =
-		recursivelyFixNestedLexems([lexem, k, parent]))
+		recursivelyFixNestedLexems([lexem, k, parent], {autofixAstify}))
 	// intermediate lexems = named through recursivelyAddNameToLexems
 	// all lexems = state.named + intermediate lexems
+
+	if (autofixEvaluate) root.evaluate = (ctx, t)=> t.astValue
 }
 
 
