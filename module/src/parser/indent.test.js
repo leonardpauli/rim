@@ -12,7 +12,7 @@ import {
 import {objectKeyPathFixedShallow} from '../utils/objectKeyPathFix'
 
 import {expand} from './lexemUtils'
-import {tokenizeNext} from './tokenizer'
+import {tokenizeNext, tokenizeCtxGet} from './tokenizer'
 import {evaluateStr} from './evaluate'
 import {astify} from './aster'
 
@@ -32,7 +32,7 @@ const keyfix = o=> objectKeyPathFixedShallow(o)
 
 describe('matcher', ()=> {
 	const testOne = ({syntax, str, expected})=> {
-		const v = evaluateStr({lexem: {...syntax}, errors: []}, str)
+		const v = evaluateStr(tokenizeCtxGet({lexem: syntax}), str)
 		v.errors.map(e=> log(e))
 		expect(v.value).toBe(expected)
 	}
@@ -87,25 +87,39 @@ describe('matcher', ()=> {
 		testOne({syntax, str: 'aa', expected: void 0})
 	})
 
-	it.skip('state', ()=> {
+	it('state', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
-				const {substr} = input
-				const d = substr.match(/^\d/)
-				const match = d? substr.match(new RegExp(`^(${d})(.{${parseInt(d, 10)}})`)): null
-				return input.utils.matcherMatch({match, ...input})
+				const count = (input.ctx.state.count || 0) + 1
+				const res = input.utils.matcherRegex({
+					...input, regex: new RegExp(`^(a{${count}}|b{${count}})`),
+				})
+				res.type = {astValueGet: astify.match}
+				if (!res.matched) return res
+				// log({count, e: res.location.e})
+
+				const ressub = input.utils.matcherTokenize({
+					...input,
+					ctx: {...input.ctx, state: {...input.ctx.state, count}},
+					lexem: syntax.main.container, location: {s: res.location.e},
+				})
+				const ret = input.utils.matcherTokens({
+					tokens: [res, ...!ressub.matched?[]:ressub.tokens]})
+				return ret
 			},
-			'main.state': ()=> ({count: 1}),
+			'main.container.lexems': [main],
 			lexems: [main],
 		}))
 		expand(syntax)
 		
-		syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.main.astValueGet = (ctx, t)=> t.match[0]
-		syntax.evaluate = (ctx, t)=> t.astValue
+		const unwrap = a=> a[1] && Array.isArray(a[1])
+			? [a[0], ...a[1].length > 1?unwrap(a[1]):a[1]]
+			: a
+		syntax.main.astValueGet = (ctx, t)=> unwrap(astify.tokens(ctx, t)).join(' ')
 
-		testOne({syntax, str: 'abbaaabbbbbbbbbbbbb', expect: 'abbaaabbbb'})
-		testOne({syntax, str: 'bbbaaaab', expect: 'bbbaaaa'})
+		// testOne({syntax, str: 'abbaaa', expected: 'abbaaabbbb'})
+		testOne({syntax, str: 'abbaaabbbbbb', expected: 'a bb aaa bbbb'})
+		testOne({syntax, str: 'baabbbaaaab', expected: 'b aa bbb aaaa'})
 	})
 
 	it.skip('custom', ()=> {

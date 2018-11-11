@@ -135,6 +135,7 @@ export const tokenizeNext = (ctx, str)=> {
 export const tokenizeCtxGet = ({lexem})=> ({
 	lexem: lexemExtendCopyClean1Level(lexem),
 	errors: [],
+	state: {},
 })
 
 
@@ -210,7 +211,7 @@ const matcherTokenize = ({lexem, location, ctx: _ctx, str, ...opt})=> {
 const lexemOptionalKeepUnmatchedGet = l=>
 	l.optional && l.optional['keep-unmatched']
 
-const retainLengthGet = ({retain, str, keepUnmatched})=>
+const retainLengthGet = ({retain = true, str, keepUnmatched = false})=>
 		!str && keepUnmatched ? 0
 	: retain===true ? str.length
 	: retain>=0 ? retain

@@ -154,7 +154,7 @@ const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Se
 const recursivelyFixNestedLexems = ([lexem, k, parent], opt)=> {
 	lexem.type = lexem.type || lexem
 	const {type} = lexem
-	if (!opt) throw new Error('no opt!')
+
 	if (!type.name) {
 		type.name = (parent && parent.name+'.' || '')+k
 		type.lexems && type.lexems.forEach((l, k)=> type.lexems[k] = recursivelyFixNestedLexems([l, k, type], opt))
