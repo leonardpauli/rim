@@ -13,7 +13,7 @@ import {
 import {objectKeyPathFixedShallow} from '../utils/objectKeyPathFix'
 
 import {expand} from './lexemUtils'
-import {tokenizeNext, tokenizeCtxGet} from './tokenizer'
+import {tokenizeNext, tokenizeCtxGet, matcher} from './tokenizer'
 import {evaluateStr} from './evaluate'
 import {astify} from './aster'
 
@@ -46,7 +46,7 @@ describe('matcher', ()=> {
 				const {substr} = input
 				const d = substr.match(/^\d/)
 				const match = d? substr.match(new RegExp(`^(${d})(.{${parseInt(d, 10)}})`)): null
-				return input.utils.matcherMatch({match, ...input})
+				return matcher.match(match)(input)
 			},
 			lexems: [main],
 		}))
@@ -68,15 +68,15 @@ describe('matcher', ()=> {
 			'b.container.lexems': [b],
 			'initial.lexems{usingOr}': [a, b],
 			'main.matcher': input=> {
-				const res0 = input.utils.matcherTokenize({...input, lexem: syntax.initial})
-				if (!res0.matched) return input.utils.matcherNone(input)
+				const res0 = matcher.tokenize({lexem: syntax.initial})(input)
+				if (!res0.matched) return matcher.none()(input)
 
 				const next = res0.tokens[0].tokens[0].type == syntax.a? syntax.b.container: syntax.a.container
 
-				const res1 = input.utils.matcherTokenize({...input, lexem: next, location: {s: res0.location.e}})
-				if (!res1.matched) return input.utils.matcherNone(input)
+				const res1 = matcher.tokenize({lexem: next})({...input, location: {s: res0.location.e}})
+				if (!res1.matched) return matcher.none()(input)
 
-				return input.utils.matcherTokens({tokens: [...res0.tokens, ...res1.tokens]})
+				return matcher.tokens([...res0.tokens, ...res1.tokens])(input)
 			},
 			lexems: [main],
 		}))
@@ -90,12 +90,8 @@ describe('matcher', ()=> {
 	})
 
 	it('state simple', ()=> {
-		const matcher = {}
-		matcher.regex = regexStrGet=> input=> input.utils.matcherRegex({
-			...input, regex: new RegExp(regexStrGet(input)) })
-
 		const syntax = declarative(({main})=> keyfix({
-			'main.matcher': matcher.regex(({state})=> `^a{${state.count}}`),
+			'main.matcher': matcher.regex.dynamic(({state})=> `^a{${state.count}}`),
 			'main.state': ({ctx: {state}})=> ({count: 1, ...state}),
 			lexems: [main],
 		}))
@@ -112,21 +108,16 @@ describe('matcher', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
 				const count = (input.ctx.state.count || 0) + 1
-				const res = input.utils.matcherRegex({
-					...input, regex: new RegExp(`^(a{${count}}|b{${count}})`),
-				})
+				const res = matcher.regex.str(`^(a{${count}}|b{${count}})`)(input)
 				res.type = {astValueGet: astify.match}
 				if (!res.matched) return res
-				// log({count, e: res.location.e})
 
-				const ressub = input.utils.matcherTokenize({
-					...input,
-					ctx: {...input.ctx, state: {...input.ctx.state, count}},
-					lexem: syntax.main.container, location: {s: res.location.e},
-				})
-				const ret = input.utils.matcherTokens({
-					tokens: [res, ...!ressub.matched?[]:ressub.tokens]})
-				return ret
+				const ressub = matcher.tokenize({
+					state: {count},
+					lexem: syntax.main.container,
+				})({...input, location: {s: res.location.e}})
+
+				return matcher.tokens([res, ...!ressub.matched?[]:ressub.tokens])(input)
 			},
 			'main.container.lexems': [main],
 			lexems: [main],

@@ -110,10 +110,7 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			},
 			str,
 			get substr () { return this.str.substring(this.location.s, this.location.e) },
-			utils: {
-				matcherNone, matcherMatch, matcherRegex, matcherTokens, matcherTokenize,
-				lexemOptionalKeepUnmatchedGet,
-			},
+			matcher,
 			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
 			retain: l.type.retain,
 			get state () { return l.type.state ? l.type.state({ctx}): ctx.state },
@@ -151,10 +148,15 @@ const extractMatchTokens = l=> l.matched
 // 	.some(b=> !b.type.usingOr) // TODO: should also be ok if rest lexems in an usingAnd is optional
 
 
-const matcherNone = ({
+
+// matcher
+
+export const matcher = {}
+
+matcher.none = ({matched = false} = {})=> ({
 	location = {s: 0},
 } = {})=> ({
-	matched: false,
+	matched,
 	match: null,
 	location: {
 		s: location.s,
@@ -163,9 +165,7 @@ const matcherNone = ({
 	tokens: [],
 })
 
-const matcherTokens = ({
-	tokens,
-} = {})=> ({
+matcher.tokens = tokens=> _input=> ({
 	matched: true,
 	match: null,
 	location: {
@@ -175,7 +175,7 @@ const matcherTokens = ({
 	tokens,
 })
 
-const matcherMatch = ({match, location, keepUnmatched, retain})=> {
+matcher.match = match=> ({location, keepUnmatched, retain})=> {
 	const matched = !!(match || keepUnmatched)
 	const retainLength = !matched? 0: retainLengthGet({
 		str: match && match[0], keepUnmatched, retain })
@@ -190,16 +190,21 @@ const matcherMatch = ({match, location, keepUnmatched, retain})=> {
 		tokens: [],
 	}
 }
-const matcherRegex = ({substr, regex, ...opt})=>
-	matcherMatch({match: substr.match(regex), substr, ...opt})
 
-const matcherTokenize = ({lexem, location, ctx: _ctx, str, ...opt})=> {
-	const ctx = {
-		..._ctx,
-		lexem: Object.assign(lexemExtendCopyClean1Level(lexem), {
-			location,
-		}),
-	}
+matcher.regex = regex=> {
+	const fn = input=> matcher.match(input.substr.match(regex))(input)
+	fn.regex = regex
+	return fn
+}
+matcher.regex.str = regexStr=> matcher.regex(new RegExp(regexStr))
+matcher.regex.dynamic = regexStrGet=> input=> matcher.regex.str(regexStrGet(input))(input)
+
+matcher.tokenize = ctx=> ({location, ctx: inputCtx, str})=> {
+	ctx.lexem = Object.assign(lexemExtendCopyClean1Level(ctx.lexem), {
+		location,
+	}),
+	Object.assign(ctx, Object.assign({}, inputCtx, ctx))
+
 	tokenizeNextCore(ctx, str)
 	return {
 		matched: ctx.lexem.matched,
@@ -208,6 +213,10 @@ const matcherTokenize = ({lexem, location, ctx: _ctx, str, ...opt})=> {
 		tokens: [ctx.lexem],
 	}
 }
+
+
+
+// getters
 
 const lexemOptionalKeepUnmatchedGet = l=>
 	l.optional && l.optional['keep-unmatched']

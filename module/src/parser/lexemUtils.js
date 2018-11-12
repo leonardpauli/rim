@@ -11,6 +11,7 @@ import {objectMapRecursive} from '@leonardpauli/utils/lib/object'
 const concat = xxs=> xxs.reduce((a, xs)=> (a.push(...xs), a), [])
 
 import {astify} from './aster'
+import {matcher} from './tokenizer'
 
 
 // Philosofy:
@@ -89,9 +90,7 @@ const lexemTypeValidateFix = (lt, opt)=> { // lexem type
 	
 	if (lt.matcher instanceof RegExp) {
 		const regex = lt.matcher
-		lt.matcher = input=> input.utils.matcherRegex({
-			...input, regex })
-		lt.matcher.regex = regex
+		lt.matcher = matcher.regex(regex)
 	}
 
 	if (lt.matcher) {
