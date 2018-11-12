@@ -8,6 +8,7 @@ import * as R from 'ramda'
 import sfo, {log} from 'string-from-object'
 import {
 	stupidIterativeObjectDependencyResolve as declarative, P,
+	deepAssign,
 } from '@leonardpauli/utils/lib/object'
 import {objectKeyPathFixedShallow} from '../utils/objectKeyPathFix'
 
@@ -31,8 +32,9 @@ const keyfix = o=> objectKeyPathFixedShallow(o)
 
 
 describe('matcher', ()=> {
-	const testOne = ({syntax, str, expected})=> {
-		const v = evaluateStr(tokenizeCtxGet({lexem: syntax}), str)
+	const testOne = ({syntax, ctx = {}, str, expected})=> {
+		deepAssign(ctx, tokenizeCtxGet({lexem: syntax}))
+		const v = evaluateStr(ctx, str)
 		v.errors.map(e=> log(e))
 		expect(v.value).toBe(expected)
 	}
@@ -87,6 +89,25 @@ describe('matcher', ()=> {
 		testOne({syntax, str: 'aa', expected: void 0})
 	})
 
+	it('state simple', ()=> {
+		const matcher = {}
+		matcher.regex = regexStrGet=> input=> input.utils.matcherRegex({
+			...input, regex: new RegExp(regexStrGet(input)) })
+
+		const syntax = declarative(({main})=> keyfix({
+			'main.matcher': matcher.regex(({state})=> `^a{${state.count}}`),
+			'main.state': ({ctx: {state}})=> ({count: 1, ...state}),
+			lexems: [main],
+		}))
+		expand(syntax)
+		syntax.main.astValueGet = astify.match
+
+		// testOne({syntax, str: 'abbaaa', expected: 'abbaaabbbb'})
+		testOne({syntax, str: 'aaaa', expected: 'a'})
+		testOne({syntax, ctx: {state: {count: 2}}, str: 'aaaa', expected: 'aa'})
+		testOne({syntax, ctx: {state: {count: 2}}, str: 'aaaa', expected: 'aa'})
+	})
+
 	it('state', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
@@ -122,6 +143,7 @@ describe('matcher', ()=> {
 		testOne({syntax, str: 'baabbbaaaab', expected: 'b aa bbb aaaa'})
 	})
 
+	/*
 	it.skip('custom', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
@@ -178,11 +200,13 @@ describe('matcher', ()=> {
 		log(ctx.value)
 		// expect(ctx.value).toMatchObject(['{', 'hello', 'there', '}'])
 	})
+	*/
+
 })
 
 
-describe('indent', ()=> {
-	it.skip('basic', ()=> {
+describe.skip('indent', ()=> {
+	it('basic', ()=> {
 
 		const syntax = declarative(({block, indent})=> keyfix({
 			indent: keyfix({
@@ -201,12 +225,12 @@ describe('indent', ()=> {
 						: indent.dentOut
 				},
 			}),
-			block: {
-				state: ()=> ({depth: 0}),
+			block: keyfix({
+				'content.regex': 11,
 				matcher: ({state})=> {
 
 				},
-			},
+			}),
 			lexems: [{type: block, state: ()=> ({depth: 0})}],
 		}))
 

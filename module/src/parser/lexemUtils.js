@@ -64,7 +64,8 @@ export const lexemIs = v=> !!(v && v.type) // TODO: use symbol instead? (add in 
 
 export const lexemExtendCopyClean1Level = l=> ({
 	...l.type===l? {type: l}: {...l},
-	matched: void 0, match: void 0, location: {s: void 0, e: void 0}, // s=start, e=end
+	matched: void 0, match: void 0, state: void 0,
+	location: {s: void 0, e: void 0}, // s=start, e=end
 	tokens: void 0, lexems: void 0,
 	astTokens: void 0, astValue: void 0,
 })

@@ -116,6 +116,7 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			},
 			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
 			retain: l.type.retain,
+			get state () { return l.type.state ? l.type.state({ctx}): ctx.state },
 		}
 
 		const matchRes = l.type.matcher(matcherInput)
