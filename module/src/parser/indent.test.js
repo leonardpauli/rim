@@ -31,19 +31,21 @@ const keyfix = o=> objectKeyPathFixedShallow(o)
  */
 
 
-describe('matcher', ()=> {
-	const testOne = ({syntax, ctx = {}, str, expected})=> {
-		deepAssign(ctx, tokenizeCtxGet({lexem: syntax}))
-		const v = evaluateStr(ctx, str)
-		v.errors.map(e=> log(e))
-		expect(v.value).toBe(expected)
-	}
+const testOne = ({syntax, ctx = {}, str, expected})=> {
+	deepAssign(ctx, tokenizeCtxGet({lexem: syntax}))
+	const v = evaluateStr(ctx, str)
+	v.errors.map(e=> log(e))
+	expect(v.value).toBe(expected)
+}
 
+
+
+describe('matcher', ()=> {
 
 	it('custom (using matcherMatch)', ()=> {
 		const syntax = declarative(({main})=> keyfix({
 			'main.matcher': input=> {
-				const {substr} = input
+				const substr = input.substr()
 				const d = substr.match(/^\d/)
 				const match = d? substr.match(new RegExp(`^(${d})(.{${parseInt(d, 10)}})`)): null
 				return matcher.match(match)(input)
@@ -196,34 +198,75 @@ describe('matcher', ()=> {
 })
 
 
-describe.skip('indent', ()=> {
+describe.only('indent', ()=> {
 	it('basic', ()=> {
 
-		const syntax = declarative(({block, indent})=> keyfix({
-			indent: keyfix({
-				'lineEmpty.regex': /^N-A$/,
-				'dentSame.regex': /^N-A$/,
-				'dentIn.regex': /^N-A$/,
-				'dentOut.regex': /^N-A$/,
-				state: ()=> ({depth: 0}),
-				matcher: ({state, str})=> {
-					const match = str.match(/^(\t*)(\n|$)?/)
-					const indents = match[1].length
-					const eol = !!match[2]
-					return eol ? indent.lineEmpty
-						: indents == state.depth ? indent.dentSame
-						: indents > state.depth ? indent.dentIn
-						: indent.dentOut
-				},
-			}),
+		const syntax = declarative(({block, eol, emptyLine})=> keyfix({
+			// indent: keyfix({
+			// 	'lineEmpty.regex': /^N-A$/,
+			// 	'dentSame.regex': /^N-A$/,
+			// 	'dentIn.regex': /^N-A$/,
+			// 	'dentOut.regex': /^N-A$/,
+			// 	state: ()=> ({depth: 0}),
+			// 	matcher: ({state, str})=> {
+			// 		const match = str.match(/^(\t*)(\n|$)?/)
+			// 		const indents = match[1].length
+			// 		const eol = !!match[2]
+			// 		return eol ? indent.lineEmpty
+			// 			: indents == state.depth ? indent.dentSame
+			// 			: indents > state.depth ? indent.dentIn
+			// 			: indent.dentOut
+			// 	},
+			// }),
+			'emptyLine.inner{regexAllowMatchingEmpty}.regex': /^[ \t]*/,
+			'emptyLine.lexems': [emptyLine.inner, eol],
+			'eol{regexAllowMatchingEmpty}.regex': /^(\n|$)/,
 			block: keyfix({
-				'content.regex': 11,
-				matcher: ({state})=> {
+				'content.inner.regex': /^\w+/,
+				'content.lexems': [block.content.inner, eol],
+				'content.container.lexems': [
+					// {type: emptyLine, repeat: true, optional: true},
+					block.content,
+					{type: emptyLine, optional: true},
+					{type: block, state: ({ctx})=> ({depth: ctx.state.depth}), optional: true}],
+				matcher: input=> {
+					if (input.substr().length==0) return matcher.none()(input)
 
+					const {depth} = input.state
+					const depthIndent = R.range(0, depth).map(_=> '⇥').join('')
+					if (depth>5) return matcher.none()(input)
+					
+					const emptyLine = matcher.regex(/^[\t ]*(\n|$)/)(input)
+					emptyLine.astValueGet = ()=> depthIndent+'(empty line)'
+					if (emptyLine.matched) return emptyLine
+
+					const pre = matcher.regex.str(`^(\t|  ){${depth}}`)(input)
+					if (!pre.matched) return matcher.none()(input)
+
+					const indent = matcher.regex.str(`^(\t|  )`)({...input, location: {s: pre.location.e}})
+					indent.astValueGet = ()=> depthIndent+'(extra indent)'
+					if (indent.matched) return indent
+
+					const content = matcher.tokenize({
+						lexem: syntax.block.content.container,
+						state: {depth: depth+1},
+					})({...input, location: {s: pre.location.e}})
+					content.astValueGet = astify.tokens
+					// log({content})
+					// log({content, input})
+					return content
 				},
+				state: ()=> ({depth: 0}),
 			}),
-			lexems: [{type: block, state: ()=> ({depth: 0})}],
+			lexems: [{type: block, state: ()=> ({depth: 0}), repeat: true}],
 		}))
+		expand(syntax)
+
+		syntax.eol.astValueGet = ()=> 'EOL'
+		syntax.block.astValueGet = (c, t)=> t.astValueGet(c, t)
+		syntax.evaluate = (ctx, t)=> log(t.astValue, 10, {singlelineLengthMax: 0})
+
+		testOne({syntax, str: 'agg\n\t\n\tbhhh\nc', expected: 'aa'})
 
 		;`
 		a

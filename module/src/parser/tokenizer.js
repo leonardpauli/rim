@@ -109,11 +109,11 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 				e: se,
 			},
 			str,
-			get substr () { return this.str.substring(this.location.s, this.location.e) },
+			substr () { return this.str.substring(this.location.s, this.location.e) },
 			matcher,
 			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
 			retain: l.type.retain,
-			get state () { return l.type.state ? l.type.state({ctx}): ctx.state },
+			get state () { return l.state? l.state({ctx, type: l.type}): l.type.state ? l.type.state({ctx}): ctx.state },
 		}
 
 		const matchRes = l.type.matcher(matcherInput)
@@ -192,7 +192,7 @@ matcher.match = match=> ({location, keepUnmatched, retain})=> {
 }
 
 matcher.regex = regex=> {
-	const fn = input=> matcher.match(input.substr.match(regex))(input)
+	const fn = input=> matcher.match(input.substr().match(regex))(input)
 	fn.regex = regex
 	return fn
 }

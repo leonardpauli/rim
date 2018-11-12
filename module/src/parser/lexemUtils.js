@@ -65,7 +65,7 @@ export const lexemIs = v=> !!(v && v.type) // TODO: use symbol instead? (add in 
 
 export const lexemExtendCopyClean1Level = l=> ({
 	...l.type===l? {type: l}: {...l},
-	matched: void 0, match: void 0, state: void 0,
+	matched: void 0, match: void 0, // state: void 0,
 	location: {s: void 0, e: void 0}, // s=start, e=end
 	tokens: void 0, lexems: void 0,
 	astTokens: void 0, astValue: void 0,
@@ -122,7 +122,7 @@ const lexemTypeValidateFix = (lt, opt)=> { // lexem type
 const lexemTypeFieldAstifyAutoFix = lt=> {
 	if (lt.astValueGet) return
 	if (lt.matcher && lt.matcher.regex) return (lt.astValueGet = astify.match)
-	if (lt.lexems) return lt.lexems.length==1 || lt.lexems.usingOr
+	if (lt.lexems) return (lt.lexems.length==1 || lt.lexems.usingOr) && !lt.lexems.some(l=> l.repeat)
 		? (lt.astValueGet = astify.tokens.first)
 		: (lt.astValueGet = astify.tokens)
 }
