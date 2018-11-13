@@ -13,7 +13,7 @@ import {
 import {objectKeyPathFixedShallow} from '../utils/objectKeyPathFix'
 
 import {expand} from './lexemUtils'
-import {tokenizeNext, tokenizeCtxGet, matcher} from './tokenizer'
+import {tokenizeNext, tokenizeCtxGet, matcher, config as tokenizerConfig} from './tokenizer'
 import {evaluateStr} from './evaluate'
 import {astify} from './aster'
 
@@ -198,10 +198,10 @@ describe('matcher', ()=> {
 })
 
 
-describe.only('indent', ()=> {
+describe('indent', ()=> {
 	it('basic', ()=> {
 
-		const syntax = declarative(({block, eol, emptyLine})=> keyfix({
+		const syntax = declarative(({block, eol, lineEmpty})=> keyfix({
 			// indent: keyfix({
 			// 	'lineEmpty.regex': /^N-A$/,
 			// 	'dentSame.regex': /^N-A$/,
@@ -218,55 +218,53 @@ describe.only('indent', ()=> {
 			// 			: indent.dentOut
 			// 	},
 			// }),
-			'emptyLine.inner{regexAllowMatchingEmpty}.regex': /^[ \t]*/,
-			'emptyLine.lexems': [emptyLine.inner, eol],
+			'lineEmpty.inner{regexAllowMatchingEmpty}.regex': /^([ \t]*(?=\n)|[ \t]+(?=$))/,
+			'lineEmpty.lexems': [lineEmpty.inner, eol],
 			'eol{regexAllowMatchingEmpty}.regex': /^(\n|$)/,
 			block: keyfix({
-				'content.inner.regex': /^\w+/,
-				'content.lexems': [block.content.inner, eol],
-				'content.container.lexems': [
-					// {type: emptyLine, repeat: true, optional: true},
-					block.content,
-					{type: emptyLine, optional: true},
-					{type: block, state: ({ctx})=> ({depth: ctx.state.depth}), optional: true}],
-				matcher: input=> {
-					if (input.substr().length==0) return matcher.none()(input)
+				'nested.inner': {type: block, state: ({state})=> ({depth: state.depth + 1, k: 'nested.inner'})},
+				'nested.indent.regex': /^(\t|  )/,
+				'nested.lexems': [{type: block.nested.indent, retain: 0}, block.nested.inner],
 
-					const {depth} = input.state
-					const depthIndent = R.range(0, depth).map(_=> '⇥').join('')
-					if (depth>5) return matcher.none()(input)
-					
-					const emptyLine = matcher.regex(/^[\t ]*(\n|$)/)(input)
-					emptyLine.astValueGet = ()=> depthIndent+'(empty line)'
-					if (emptyLine.matched) return emptyLine
+				'indentation.matcher': input=> matcher.regex.dynamic(({state})=>
+					// log({state, location: input.location, l: {a: input.ctx.lexem.type}}, 2) ||
+					`^(\t|  ){${state.depth}}`)(input),
+				
+				'content.word.regex': /^\w+/,
+				'content.line.lexems': [block.indentation, block.content.word, eol],
 
-					const pre = matcher.regex.str(`^(\t|  ){${depth}}`)(input)
-					if (!pre.matched) return matcher.none()(input)
-
-					const indent = matcher.regex.str(`^(\t|  )`)({...input, location: {s: pre.location.e}})
-					indent.astValueGet = ()=> depthIndent+'(extra indent)'
-					if (indent.matched) return indent
-
-					const content = matcher.tokenize({
-						lexem: syntax.block.content.container,
-						state: {depth: depth+1},
-					})({...input, location: {s: pre.location.e}})
-					content.astValueGet = astify.tokens
-					// log({content})
-					// log({content, input})
-					return content
-				},
+				'content.lexems{usingOr}': [
+					lineEmpty,
+					block.content.line,
+					block.nested,
+				],
+				lexems: [{type: block.content, repeat: true}],
 				state: ()=> ({depth: 0}),
 			}),
-			lexems: [{type: block, state: ()=> ({depth: 0}), repeat: true}],
+			lexems: [{type: block, state: ()=> ({depth: 0})}],
 		}))
 		expand(syntax)
 
-		syntax.eol.astValueGet = ()=> 'EOL'
-		syntax.block.astValueGet = (c, t)=> t.astValueGet(c, t)
-		syntax.evaluate = (ctx, t)=> log(t.astValue, 10, {singlelineLengthMax: 0})
+		syntax.eol.astValueGet = ()=> 'eol'
+		syntax.lineEmpty.astValueGet = ()=> 'line.empty'
+		syntax.block.content.astValueGet = (ctx, t)=> `block.content(${astify.tokens.first(ctx, t)})`
+		syntax.block.content.line.astValueGet = (ctx, t)=> `.line(${astify.tokens(ctx, t)})`
+		syntax.block.nested.astValueGet = (ctx, t)=> `.nested(${astify(ctx, t.tokens[1])})`
+		syntax.block.indentation.astValueGet = (c, t)=> 'indent('+t.match[0].replace(/(\t|  )/g, '>').length+')'
+		syntax.astValueGet = (ctx, t)=> astify.tokens.first(ctx, t).join('\n')
+		syntax.evaluate = (ctx, t)=> t.astValue
 
-		testOne({syntax, str: 'agg\n\t\n\tbhhh\nc', expected: 'aa'})
+		// tokenizerConfig.debug = true
+		testOne({syntax, str: 'agg\n\t\n\n\tbhhh\nc', expected:
+				'block.content(.line(indent(0),agg,eol))'
+			+ '\nblock.content(line.empty)'
+			+ '\nblock.content(line.empty)'
+			+ '\nblock.content(.nested(block.content(.line(indent(1),bhhh,eol))))'
+			+ '\nblock.content(.line(indent(0),c,eol))',
+		})
+		// '\t' || '\ta' || 'a\n\tb\n'
+		// tokenizerConfig.debug = false
+
 
 		;`
 		a

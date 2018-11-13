@@ -24,7 +24,11 @@ const concat = xxs=> xxs.reduce((a, xs)=> (a.push(...xs), a), [])
 // 	return state.restStr
 // }
 
-export const config = {tokenizeNextMaxIterations: 100000}
+// TODO: if str/substr is empty, tokenizing is probably done
+// 	(could be some matchEmpty tokens left though) -> skip skippable tokens left
+
+
+export const config = {tokenizeNextMaxIterations: 100000, debug: false}
 // eslint-disable-next-line max-statements
 export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 	// assumes ctx.lexem has gone through lexemUtils.expand for validation etc
@@ -97,6 +101,8 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 		// 	(eg. not inside usingAnd block, or rest is optional)
 		// 	const safeToYield = safeToYieldGet(bs)
 
+		if (config.debug) log({t: l.type}, 1)
+
 		if (l.type.lexems) { // add + goto new block
 			bs.push(l)
 			continue
@@ -112,12 +118,20 @@ export const tokenizeNextCore = (ctx, str)=> { // ctx = {lexem}
 			substr () { return this.str.substring(this.location.s, this.location.e) },
 			matcher,
 			keepUnmatched: lexemOptionalKeepUnmatchedGet(l),
-			retain: l.type.retain,
-			get state () { return l.state? l.state({ctx, type: l.type}): l.type.state ? l.type.state({ctx}): ctx.state },
+			retain: l.retain!==void 0? l.retain: l.type.retain,
+			get state () {
+				const fn = l.state || l.type.state
+				const parents = bs.slice().reverse()
+				return fn
+					? fn(stateGetOptGet({ctx, type: l.type, parents}))
+					: stateParentFn({ctx, parents})
+			},
 		}
 
 		const matchRes = l.type.matcher(matcherInput)
 		Object.assign(l, matchRes)
+		
+		if (config.debug) log({matchRes}, 3)
 
  		handleMatch(bs, lis)
 	}
@@ -146,6 +160,20 @@ const extractMatchTokens = l=> l.matched
 // const safeToYieldGet = bs=> !bs
 // 	.filter((v, i)=> i <= bs.length-1)
 // 	.some(b=> !b.type.usingOr) // TODO: should also be ok if rest lexems in an usingAnd is optional
+
+const stateParentFn = ({ctx, parents})=> {
+	const stateParentFnIdx = parents.findIndex(p=> p.state)
+	return stateParentFnIdx!=-1
+		? parents[stateParentFnIdx].state(stateGetOptGet({
+			ctx, type: parents[stateParentFnIdx],
+			parents: parents.slice(stateParentFnIdx+1),
+		}))
+		: ctx.state
+}
+const stateGetOptGet = ({ctx, type, parents})=> ({
+	ctx, type, parents,
+	get state () { return stateParentFn({ctx, parents}) },
+})
 
 
 
@@ -222,7 +250,7 @@ const lexemOptionalKeepUnmatchedGet = l=>
 	l.optional && l.optional['keep-unmatched']
 
 const retainLengthGet = ({retain = true, str, keepUnmatched = false})=>
-		!str && keepUnmatched ? 0
+		(!str && keepUnmatched) || retain===false ? 0
 	: retain===true ? str.length
 	: retain>=0 ? retain
 	: Math.max(0, str.length + retain) // negative regain, cut from end of matched
