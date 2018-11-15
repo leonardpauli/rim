@@ -138,66 +138,6 @@ describe('matcher', ()=> {
 		testOne({syntax, str: 'abbaaabbbbbb', expected: 'a bb aaa bbbb'})
 		testOne({syntax, str: 'baabbbaaaab', expected: 'b aa bbb aaaa'})
 	})
-
-	/*
-	it.skip('custom', ()=> {
-		const syntax = declarative(({main})=> keyfix({
-			'main.matcher': input=> {
-				const {substr} = input
-				const d = substr.match(/^\d/)
-				const match = d? substr.match(new RegExp(`^(${d})(.{${parseInt(d, 10)}})`)): null
-				return input.utils.matcherMatch({match, ...input})
-			},
-			lexems: [main],
-		}))
-		expand(syntax)
-		// log(syntax)
-
-		syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.main.astValueGet = (ctx, t)=> t.match[0]
-		syntax.evaluate = (ctx, t)=> t.astValue
-		// log(str)
-		// tokenizeNext(ctx, str)
-		// log(ctx.lexem.tokens[0])
-		// const astVal = astify(ctx, ctx.lexem)
-		// log(astVal)
-		expect(evaluateStr({lexem: {...syntax}, errors: []}, '2abcd')).toMatchObject({value: '2ab', errors: []})
-		expect(evaluateStr({lexem: {...syntax}, errors: []}, '3abcd').value).toBe('3abc')
-	})
-
-	it.skip('matcher as', ()=> {
-		const syntax = declarative(({theOther})=> keyfix({
-			theOther: {
-				state: ()=> ({
-					last: 'b',
-					get toMatch () { return this.last=='a'? 'b': 'a' },
-				}),
-				matcher: ({state, str, utils: {returnMatch}})=>
-					returnMatch(str.match(new RegExp(`^${state.toMatch}`))),
-			},
-			lexems: [{type: theOther, repeat: true}],
-		}))
-		expand(syntax)
-		log(syntax)
-
-		syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		syntax.theOther.astValueGet = (ctx, t)=> t.match[0]
-		
-		syntax.evaluate = (ctx, t)=> t.astValue
-
-		const ctx = {lexem: syntax, errors: []}
-		const str = 'abab'
-		log(str)
-		// tokenizeNext(ctx, str)
-		// log(ctx.lexem.tokens[0])
-		// const astVal = astify(ctx, ctx.lexem)
-		// log(astVal)
-		evaluateStr(ctx, str)
-		log(ctx.value)
-		// expect(ctx.value).toMatchObject(['{', 'hello', 'there', '}'])
-	})
-	*/
-
 })
 
 
@@ -215,9 +155,10 @@ describe('indent', ()=> {
 				'line.lexems': [block.head, block.line.block],
 
 				'indentation.matcher': matcher.regex.dynamic(({state})=> `^(\t|  ){${state.depth}}`),
+				'indentation.faulty.regex': /^(\t|  )+/,
 
 				'head.word.regex': /^\w+/,
-				'head.lexems': [block.indentation, block.head.word, line.end],
+				'head.lexems': [block.indentation, {type: block.indentation.faulty, optional: true}, block.head.word, line.end],
 
 				'content.lexems{usingOr}': [line.empty, block.line],
 				lexems: [{type: block.content, repeat: true}],
@@ -235,9 +176,11 @@ describe('indent', ()=> {
 
 		syntax.block.content.astValueGet = (ctx, t)=> astify.tokens.first(ctx, t)
 		syntax.block.indentation.astValueGet = (c, t)=> t.match[0].replace(/(\t|  )/g, '>').length
+		syntax.block.indentation.faulty.astValueGet = syntax.block.indentation.astValueGet
 		syntax.block.head.astValueGet = (ctx, t)=> ({
 			indent: astify(ctx, t.tokens[0]),
-			content: astify(ctx, t.tokens[1]),
+			indentfaulty: t.tokens.length>3?astify(ctx, t.tokens[1]):0,
+			content: astify(ctx, t.tokens[t.tokens.length-2]),
 		})
 		syntax.block.line.astValueGet = (ctx, t)=> named('line', {
 			head: astify(ctx, t.tokens[0]),
@@ -251,7 +194,7 @@ describe('indent', ()=> {
 
 		const simplifyBlock = b=> b.name == 'line.empty'
 			? null
-			: [(b.head || {}).content, ...b.block? simplify(b.block):[]]
+			: [b.head? (b.head.indentfaulty? b.head.indentfaulty: '')+b.head.content: null, ...b.block? simplify(b.block):[]]
 		const simplify = t=> Array.isArray(t)? t.map(b=> simplifyBlock(b)): t
 		const checker = ({ctx, expected})=> expect(simplify(ctx.value)).toMatchObject(expected)
 
@@ -265,7 +208,8 @@ describe('indent', ()=> {
 			}],
 		}, {
 			head: {indent: 0, content: 'a'},
-		}])).toMatchObject([ [ "r", [ "k", null ], [ "l" ] ], [ "a" ] ])
+		}])).toMatchObject([['r', ['k', null], ['l']], ['a']])
+
 
 		testOne({checker, syntax, str:
 `r
@@ -273,7 +217,9 @@ describe('indent', ()=> {
 
 	l
 a
-`, expected: [ [ "r", [ "k", null ], [ "l" ] ], [ "a" ] ]})
+`, expected: [['r', ['k', null], ['l']], ['a']]})
+
+
 		testOne({checker, syntax, str:
 `a
 	aa
@@ -282,6 +228,7 @@ a
 	ab
 b
 c
+		k
 	ca
 `, expected: [
 			['a',
@@ -289,328 +236,9 @@ c
 				['ab']],
 			['b'],
 			['c',
+				['1k'],
 				['ca']]],
 		})
 
-/*
-		testOne({checker, syntax, str:
-
-`r
-	k
-	l
-a
-`
-
-||`a
-	
-
-	aa
-
-	aa
-b`
-
-|| `a
-	aa
-		aaa
-		aab
-	ab
-b
-c
-	ca`
-		|| 'dagg\n\t\n\n\tbhhh\nc', expected: ' '
-				|| 'block.content(.line(indent(0),agg,eol))'
-			+ '\nblock.content(line.empty)'
-			+ '\nblock.content(line.empty)'
-			+ '\nblock.content(.nested(block.content(.line(indent(1),bhhh,eol))))'
-			+ '\nblock.content(.line(indent(0),c,eol))',
-		})
-		// '\t' || '\ta' || 'a\n\tb\n'
-		// tokenizerConfig.debug = false
-
-
-		;`
-		a
-			aa
-				aaa
-				aab
-			ab
-		b
-		c
-			ca
-		`*/
-
-
 	})
-
 })
-
-
-/*
-see expression/stage-0-lexems.test.js
-
-
-
-'content.lexems': [block.content.inner, eol],
-'content.container.lexems': [
-	// {type: lineEmpty, repeat: true, optional: true},
-	block.content,
-	{type: lineEmpty, optional: true},
-	{type: block, state: ({ctx})=> ({depth: ctx.state.depth}), optional: true}],
-matcher: input=> {
-	if (input.substr().length==0) return matcher.none()(input)
-
-	const {depth} = input.state
-	const depthIndent = R.range(0, depth).map(_=> '⇥').join('')
-	if (depth>5) return matcher.none()(input)
-	
-	const lineEmpty = matcher.regex(/^[\t ]*(\n|$)/)(input)
-	lineEmpty.astValueGet = ()=> depthIndent+'(empty line)'
-	if (lineEmpty.matched) return lineEmpty
-
-	const pre = matcher.regex.str(`^(\t|  ){${depth}}`)(input)
-	if (!pre.matched) return matcher.none()(input)
-
-	const indent = matcher.regex.str(`^(\t|  )`)({...input, location: {s: pre.location.e}})
-	indent.astValueGet = ()=> depthIndent+'(extra indent)'
-	if (indent.matched) return indent
-
-	const content = matcher.tokenize({
-		lexem: syntax.block.content.container,
-		state: {depth: depth+1},
-	})({...input, location: {s: pre.location.e}})
-	content.astValueGet = astify.tokens
-	
-	return content
-},
-
-
-
-it('using matcher', ()=> {
-
-	// TODO: inefficient - better calculate indents count once then act, eg. using custom matcher?
-	const syntax = declarative(({indent, expression, block, lineTerminator})=> keyfix({
-		'indent.regex': /^(\t|  )/,
-		'expression.regex': /^a/,
-		'lineTerminator.regex': /^\n/,
-		block: keyfix({
-			indent: {
-				matcher: ({str})=> {
-					str.
-				},
-			}
-			state: ()=> ({depth: 0}),
-			'content.lexems': [expression, {type: lineTerminator, optional: {'keep-unmatched': true}}],
-			ghost: indenterGet(keyfix({
-				indent,
-				'on0.regex': /^N-A break/,
-				'on1.lexems{usingOr}': [block.content, block.ghost],
-			})),
-			lex: indenterGet(keyfix({
-				indent,
-				'on0.regex': /^N-A break/,
-				'on1.lexems{usingOr}': [block.content, block.ghost],
-			})),
-			lexems: [block.lex],
-		}),
-		lexems: [{type: block, state: ()=> ({depth: 0})}],
-	}))
-	expand(syntax)
-	log(syntax)
-
-	syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.indent.astValueGet = ()=> '⇥'
-	syntax.expression.astValueGet = (ctx, t)=> t.match[0]
-	syntax.lineTerminator.astValueGet = ()=> '\n'
-	syntax.block.first.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.block.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.block.content.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t))
-	
-	const fixindenterastvg = l=> {
-		l.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		l.lexems[0].astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t))
-		l.lexems[0].lexems[1].astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	}
-	fixindenterastvg(syntax.block.lex)
-	fixindenterastvg(syntax.block.ghost)
-
-	syntax.evaluate = (ctx, t)=> t.astValue
-
-	const blockstr = ([s])=> s.replace(new RegExp(`\n\t{${s.match(/^\n+(\t*)/)[1].length}}`, 'g'), '\n').slice(1)
-	const ctx = {lexem: syntax, errors: []}
-	const str = blockstr`
-	a
-		b
-	`
-	log(str)
-	// tokenizeNext(ctx, str)
-	// log(ctx.lexem.tokens[0])
-	// const astVal = astify(ctx, ctx.lexem)
-	// log(astVal)
-	evaluateStr(ctx, str)
-	log(ctx.value)
-	// expect(ctx.value).toMatchObject(['{', 'hello', 'there', '}'])
-})
-
-
-
-it('base case', ()=> {
-
-	const indenterGet = ({indent, on0, on1})=> declarative(()=> keyfix({
-		'lexems{usingOr}': [{lexems: [indent, on1]}, on0],
-	}))
-
-	// TODO: inefficient - better calculate indents count once then act, eg. using custom matcher?
-	const syntax = declarative(({indent, expression, block, lineTerminator})=> keyfix({
-		'indent.regex': /^(\t|  )/,
-		'expression.regex': /^a/,
-		'lineTerminator.regex': /^\n/,
-		block: keyfix({
-			'content.lexems': [expression, {type: lineTerminator, optional: {'keep-unmatched': true}}, ],
-			ghost: indenterGet(keyfix({
-				indent,
-				'on0.regex': /^N-A break/,
-				'on1.lexems{usingOr}': [block.content, block.ghost],
-			})),
-			lex: indenterGet(keyfix({
-				indent,
-				'on0.regex': /^N-A break/,
-				'on1.lexems{usingOr}': [block.content, block.ghost],
-			})),
-			'first.lexems': [block.content],
-			lexems: [block.lex],
-		}),
-		lexems: [block.first],
-	}))
-	expand(syntax)
-	log(syntax)
-
-	syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.indent.astValueGet = ()=> '⇥'
-	syntax.expression.astValueGet = (ctx, t)=> t.match[0]
-	syntax.lineTerminator.astValueGet = ()=> '\n'
-	syntax.block.first.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.block.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.block.content.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t))
-	
-	const fixindenterastvg = l=> {
-		l.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-		l.lexems[0].astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t))
-		l.lexems[0].lexems[1].astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	}
-	fixindenterastvg(syntax.block.lex)
-	fixindenterastvg(syntax.block.ghost)
-
-	syntax.evaluate = (ctx, t)=> t.astValue
-
-	const blockstr = ([s])=> s.replace(new RegExp(`\n\t{${s.match(/^\n+(\t*)/)[1].length}}`, 'g'), '\n').slice(1)
-	const ctx = {lexem: syntax, errors: []}
-	const str = blockstr`
-	a
-		b
-	`
-	log(str)
-	// tokenizeNext(ctx, str)
-	// log(ctx.lexem.tokens[0])
-	// const astVal = astify(ctx, ctx.lexem)
-	// log(astVal)
-	evaluateStr(ctx, str)
-	log(ctx.value)
-	// expect(ctx.value).toMatchObject(['{', 'hello', 'there', '}'])
-})
-
-
-
-	const syntax = declarative(({indent, expression, block})=> keyfix({
-		'indent.regex': /^(\t|  )/,
-		'expression.regex': /^a/,
-		block: {
-			state: ()=> ({depth: 0}),
-			pre: ({state})=> ({lexems: R.range(0, state.depth).map(()=> indent)}),
-			'content.lexems': [
-				expression,
-				{type: block, state: ({state})=> ({depth: state.depth+1}), optional: true},
-			],
-			lexems: [block.pre, block.content],
-		},
-	}))
-
-it('base case', ()=> {
-	const syntax = declarative(({indent, expression, block})=> keyfix({
-		indent: {
-			regex: /^(\t|  )/,
-			inner: {
-
-			},
-			outer: {
-				state: ()=> ({depth: 0}),
-				// matcher: ({p, helpers: {lexemMatch, range}})=> s=> lexemMatch({lexems: range(p.state.depth).map(i=> indent)})(s),
-				lexems: [p=> ({type: indent, repeat: p.state.depth})],
-			},
-		},
-		'expression.regex': /^a/,
-		block: keyfix({
-			state: ()=> ({depth: 0}),
-			prefix: {type: indent.outer, state: p=> ({depth: p.state.depth})},
-			sub: {type: block, state: p=> ({depth: p.state.depth+1}), optional: true},
-			'content.lexems': [expression, block.sub],
-			'lexems{usingOr}': [block.prefix, indent.inner, block.content],
-		}),
-	}))
-	expand(syntax)
-
-	syntax.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.paren.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t)).filter(Boolean)
-	syntax.paren.open.astValueGet = (ctx, t)=> '{'
-	syntax.paren.close.astValueGet = (ctx, t)=> '}'
-	syntax.part.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.word.astValueGet = (ctx, t)=> t.match[0]
-	syntax.space.astValueGet = (ctx, t)=> null
-
-	syntax.evaluate = (ctx, t)=> t.astValue
-
-	const ctx = {lexem: syntax, errors: []}
-	const str = '(hello there)'
-	// tokenizeNext(ctx, str)
-	// log(ctx.lexem.tokens[0])
-	// const astVal = astify(ctx, ctx.lexem)
-	// log(astVal)
-	evaluateStr(ctx, str)
-	expect(ctx.value).toMatchObject(['{', 'hello', 'there', '}'])
-})
-
-it('using it', ()=> {
-	const syntax = declarative(({space, word, part, words, paren})=> keyfix({
-		'space.regex': /^ +/,
-		'word.regex': /^[^ ()]+/,
-		'part.lexems{usingOr}': [space, word],
-		words: {type: part, repeat: true},
-		paren: keyfix({
-			'open.regex': /^\(/,
-			'close.regex': /^\)/,
-			lexems: [paren.open, words, {type: paren.close, optional: {'keep-unmatched': true}}],
-		}),
-		lexems: [{type: paren, repeat: true}],
-	}), {n: 8})
-	expand(syntax)
-
-	syntax.astValueGet = (ctx, t)=> R.concat([], t.tokens.map(t=> astify(ctx, t)))
-	syntax.paren.astValueGet = (ctx, t)=> t.tokens.map(t=> astify(ctx, t)).filter(Boolean)
-	syntax.paren.open.astValueGet = (ctx, t)=> '{'
-	syntax.paren.close.astValueGet = (ctx, t)=> '}'
-	syntax.part.astValueGet = (ctx, t)=> astify(ctx, t.tokens[0])
-	syntax.word.astValueGet = (ctx, t)=> t.match[0]
-	syntax.space.astValueGet = (ctx, t)=> null
-
-	syntax.evaluate = (ctx, t)=> t.astValue
-
-	const ctx = {lexem: syntax, errors: []}
-	const str = '(hello there ohh (mee'
-	// tokenizeNext(ctx, str)
-	// log(ctx.lexem.tokens[0])
-	// const astVal = astify(ctx, ctx.lexem)
-	// log(astVal)
-	evaluateStr(ctx, str)
-	log(ctx.value)
-	expect(ctx.value).toMatchObject([['{', 'hello', 'there', 'ohh', '}'], ['{', 'mee', '}']])
-})
-*/
