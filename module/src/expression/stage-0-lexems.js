@@ -37,15 +37,15 @@ const regexCharsetEscape = xs=> {
 	return xs
 }
 
-export const anyGet = ({except = ['\n'], m = false, i = false, ...rest} = {})=> ({
-	regex: new RegExp(`[^${regexCharsetEscape(except).join('')}]`, (m?'m':'')+(i?'i':'')),
+export const anyGet = ({except = ['\n'], m = false, i = false, repeat = false, ...rest} = {})=> ({
+	regex: new RegExp(`^[^${regexCharsetEscape(except).join('')}]${repeat?'+':''}`, (m?'m':'')+(i?'i':'')),
 	...rest,
 })
 
 
 
 // singleline
-const singlelineGet = ({multiline})=> declarative(({
+export const singlelineGet = ({multiline = {}} = {})=> declarative(({
 	// lexems, paren, num, sp, spo, expr, text, dot, comma, id,
 	any, newline, backslash,
 
@@ -152,7 +152,7 @@ const singlelineGet = ({multiline})=> declarative(({
 // singleline subs
 
 // identifier
-const identifierGet = ()=> {
+export const identifierGet = ()=> {
 	const identifierSpecialChars = ', . : ; - @ #'.split(' ')
 	const middleList = [...' (){}.'.split(''), ...identifierSpecialChars.filter(x=> x!='-')]
 	const endList = [...new Set([...middleList, ...identifierSpecialChars])]
@@ -163,11 +163,11 @@ const identifierGet = ()=> {
 	} = identifier)=> keyfix({
 		identifier: keyfix({
 			lexems: [start, {type: tail, optional, repeat}],
-			start: anyGet({except: startList}),
+			start: anyGet({except: startList, repeat}),
 			// to allow `a-b-c` as identifier (sure? possibly ambiguous with a - b - c?)
-			'tail.lexems': [{type: middle, optional, repeat}, {type: end, repeat}],
-			middle: anyGet({except: middleList}),
-			end: anyGet({except: endList}),
+			'tail.lexems': [{type: middle, optional}, {type: end, optional}],
+			middle: anyGet({except: middleList, repeat}),
+			end: anyGet({except: endList, repeat}),
 		}),
 		'identifier.special': keyfix({
 			'any.regex': new RegExp(`[${regexCharsetEscape(identifierSpecialChars).join('')}]+`),
@@ -178,7 +178,7 @@ const identifierGet = ()=> {
 
 
 // string
-export const stringGet = ({backslash, newline, multiline, any})=> declarative(({ string }, {
+export const stringGet = ({backslash, newline, multiline, any = anyGet()} = {})=> declarative(({ string }, {
 	open, close, content, escaped, // line,
 } = string.default)=> ({ string: keyfix({
 	'lexems{usingOr}': [string.default],
@@ -188,9 +188,9 @@ export const stringGet = ({backslash, newline, multiline, any})=> declarative(({
 		lexems: [open, {type: content, repeat, optional}, {type: close, optional: {'keep-unmatched': true}}],
 		content: keyfix({
 			'lexems{usingOr}': [escaped, content.raw], // TODO: [line, escaped, content.raw],
-			raw: anyGet({except: ['"']}),
+			raw: anyGet({except: ['"', '\\'], repeat: true}),
 		}),
-		'content.block': {...content, block: void 0, raw: any}, // TODO: circular causes issues (remove block: void 0)
+		'content.block': {...content, raw: any}, // TODO: circular causes issues (remove block: void 0)
 
 		/*
 		line: keyfix({
@@ -217,6 +217,8 @@ export const stringGet = ({backslash, newline, multiline, any})=> declarative(({
 
 
 // multiline
+
+
 const multilineGet = ()=> declarative(({ multiline }, {
 	document, singleline, EOF, line, end, comment,
 } = multiline)=> ({ multiline: keyfix({
@@ -297,5 +299,5 @@ const multilineLineGet = ({singleline, end, comment})=> declarative(({ line }, {
 
 }) }), {n: 3}).line
 
-const multiline = multilineGet()
-export default multiline
+// const multiline = multilineGet()
+// export default multiline

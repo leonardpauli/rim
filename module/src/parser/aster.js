@@ -94,4 +94,4 @@ export const astify = (ctx, token)=> {
 
 astify.tokens = (ctx, t)=> t.tokens.map(t=> astify(ctx, t))
 astify.tokens.first = (ctx, t)=> astify(ctx, t.tokens[0])
-astify.match = (ctx, t)=> t.match[0]
+astify.match = (ctx, t)=> t.match && t.match[0]

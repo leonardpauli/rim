@@ -130,6 +130,7 @@ const lexemTypeFieldAstifyAutoFix = lt=> {
 
 export const _lexemProcessedSymbol = Symbol('lexem.processed')
 const _process = (lexem, k, parent=null, state={named: new Set(), noname: new Set()}, opt)=> {
+	if (!lexem) throw new Error(`${sfo({name: 'lexem is empty', lexem, k, parent}, 2)}`)
 	if (lexem[_lexemProcessedSymbol]) return lexem
 	lexem[_lexemProcessedSymbol] = true
 

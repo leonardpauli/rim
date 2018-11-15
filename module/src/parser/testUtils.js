@@ -12,7 +12,8 @@ import {objectMapRecursive} from '@leonardpauli/utils/lib/object'
 import {expectDeepSubsetMatch} from '@leonardpauli/utils/lib/testUtils'
 
 import {lexemSimplifyForView, lexemAstValueToPlain} from './lexemUtils'
-import {tokenizeNext} from './tokenizer'
+import {tokenizeNext, tokenizeCtxGet} from './tokenizer'
+import {evaluateStr} from './evaluate'
 
 
 export const testTokenizeStr = (ctx, str, tasexp)=> it(str, ()=> {
@@ -30,8 +31,20 @@ export const testTokenizeStr = (ctx, str, tasexp)=> it(str, ()=> {
 })
 
 
-export const testManyGet = (evaluateStr, {testAst = false} = {})=> tests=> Object.keys(tests).forEach(k=> it(k, ()=> {
-	const ctx = evaluateStr(k, void 0, {stopAfterAstify: testAst})
+/* usage:
+	const testMany = testManyGet(lexem, {testAst: true})
+	testMany({
+		'a+b': {astValue: ['a', '+', 'b'], restStr: ''},
+		'x': void 0,
+	})
+*/
+export const testManyGet = (evaluateStrOrLexem, {testAst = false} = {})=> tests=> Object.keys(tests).forEach(k=> it(k, ()=> {
+	const _evaluateStr = typeof evaluateStrOrLexem === 'function'? evaluateStrOrLexem: (str, _, opt)=> {
+		const ctx = tokenizeCtxGet({lexem: evaluateStrOrLexem})
+		evaluateStr(ctx, str, opt)
+		return ctx
+	}
+	const ctx = _evaluateStr(k, void 0, {stopAfterAstify: testAst})
 	
 	if (tests[k] && tests[k].toerror) {
 		const {toerror} = tests[k]
@@ -41,6 +54,8 @@ export const testManyGet = (evaluateStr, {testAst = false} = {})=> tests=> Objec
 	}
 
 	if (testAst) {
+		if (tests[k] === void 0)
+			return expect(ctx.lexem.astValue).toBe(void 0)
 		try {
 			expectDeepSubsetMatch(
 				lexemSimplifyForView(ctx.lexem),
