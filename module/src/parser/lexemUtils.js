@@ -113,8 +113,9 @@ const lexemTypeValidateFix = (lt, opt)=> { // lexem type
 		lt.usingOr = lt.usingOr || lt.lexems.usingOr || false
 		if (lt.usingOr && lt.lexems.some(l=> l.optional)) throw new Error(
 			`lexem(${lt.name}).lexems has one optional, not allowed + ambiguos/doesn't make sense when usingOr`)
-	} else throw new Error(
-		`lexem(${lt.name}) has to have a matcher (.matcher/.lexems)`)
+	} else if (lt.matcher!==null) throw new Error(
+		// TODO: only require matcher if used as lexem (eg. in other lexem or is syntax root)
+		`lexem(${lt.name}) has to have a matcher (.matcher/.lexems) (or set .matcher to null to dismiss)`)
 
 	if (opt.autofixAstify) lexemTypeFieldAstifyAutoFix(lt)
 }

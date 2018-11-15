@@ -31,11 +31,14 @@ const keyfix = o=> objectKeyPathFixedShallow(o)
  */
 
 
-const testOne = ({syntax, ctx = {}, str, expected})=> {
+const testOne = ({
+	syntax, ctx = {}, str, expected,
+	checker = ({ctx, expected})=> expect(ctx.value).toBe(expected),
+})=> {
 	deepAssign(ctx, tokenizeCtxGet({lexem: syntax}))
 	const v = evaluateStr(ctx, str)
 	v.errors.map(e=> log(e))
-	expect(v.value).toBe(expected)
+	checker({ctx: v, expected})
 }
 
 
@@ -201,26 +204,22 @@ describe('matcher', ()=> {
 describe('indent', ()=> {
 	it('basic', ()=> {
 
-		const syntax = declarative(({block, eol, lineEmpty})=> keyfix({
-			'lineEmpty.inner{regexAllowMatchingEmpty}.regex': /^([ \t]*(?=\n)|[ \t]+(?=$))/,
-			'lineEmpty.lexems': [lineEmpty.inner, eol],
-			'eol{regexAllowMatchingEmpty}.regex': /^(\n|$)/,
+		const syntax = declarative(({block, line})=> keyfix({
+			'line.matcher': null,
+			'line.empty.inner{regexAllowMatchingEmpty}.regex': /^([ \t]*(?=\n)|[ \t]+(?=$))/,
+			'line.empty.lexems': [line.empty.inner, line.end],
+			'line.end{regexAllowMatchingEmpty}.regex': /^(\n|$)/,
 			block: keyfix({
-				'nested.inner': {type: block, state: ({state})=> ({depth: state.depth + 1, k: 'nested.inner'}), optional: true},
-				'nested.indent.regex': /^(\t|  )/,
-				'nested.lexems': [block.content.line, block.nested.inner],
+				// TODO: resolve {type: {type: lexem...}}, eg. so `optional: true` can be moved to line.lexems
+				'line.block': {type: block, state: ({state})=> ({depth: state.depth + 1}), optional: true},
+				'line.lexems': [block.head, block.line.block],
 
-				'indentation.matcher': input=> matcher.regex.dynamic(({state})=>
-					// log({state, location: input.location, l: {a: input.ctx.lexem.type}}, 2) ||
-					`^(\t|  ){${state.depth}}`)(input),
-				
-				'content.word.regex': /^\w+/,
-				'content.line.lexems': [block.indentation, block.content.word, eol],
+				'indentation.matcher': matcher.regex.dynamic(({state})=> `^(\t|  ){${state.depth}}`),
 
-				'content.lexems{usingOr}': [
-					lineEmpty,
-					block.nested,
-				],
+				'head.word.regex': /^\w+/,
+				'head.lexems': [block.indentation, block.head.word, line.end],
+
+				'content.lexems{usingOr}': [line.empty, block.line],
 				lexems: [{type: block.content, repeat: true}],
 				state: ()=> ({depth: 0}),
 			}),
@@ -230,18 +229,71 @@ describe('indent', ()=> {
 
 		const named = (name, v)=> { v.name = name; return v }
 
-		syntax.eol.astValueGet = ()=> ({name: 'eol'})
-		syntax.lineEmpty.astValueGet = ()=> ({name: 'line.empty'})
+		syntax.line.end.astValueGet = ()=> ({name: 'line.end'})
+		syntax.line.empty.astValueGet = ()=> ({name: 'line.empty'})
 		syntax.block.astValueGet = (ctx, t)=> named('block', astify.tokens(ctx, t))
+
 		syntax.block.content.astValueGet = (ctx, t)=> astify.tokens.first(ctx, t)
-		syntax.block.content.line.astValueGet = (ctx, t)=> named('head', astify.tokens(ctx, t))
-		syntax.block.nested.astValueGet = (ctx, t)=> named('line', astify.tokens(ctx, t))
-		syntax.block.indentation.astValueGet = (c, t)=> ({indent: t.match[0].replace(/(\t|  )/g, '>').length})
+		syntax.block.indentation.astValueGet = (c, t)=> t.match[0].replace(/(\t|  )/g, '>').length
+		syntax.block.head.astValueGet = (ctx, t)=> ({
+			indent: astify(ctx, t.tokens[0]),
+			content: astify(ctx, t.tokens[1]),
+		})
+		syntax.block.line.astValueGet = (ctx, t)=> named('line', {
+			head: astify(ctx, t.tokens[0]),
+			block: t.tokens.length>1? astify(ctx, t.tokens[1]): null,
+		})
+
 		syntax.astValueGet = (ctx, t)=> astify.tokens.first(ctx, t)
-		syntax.evaluate = (ctx, t)=> log(t.astValue)
+		syntax.evaluate = (ctx, t)=> t.astValue
 
 		// tokenizerConfig.debug = true
-		testOne({syntax, str: 
+
+		const simplifyBlock = b=> b.name == 'line.empty'
+			? null
+			: [(b.head || {}).content, ...b.block? simplify(b.block):[]]
+		const simplify = t=> Array.isArray(t)? t.map(b=> simplifyBlock(b)): t
+		const checker = ({ctx, expected})=> expect(simplify(ctx.value)).toMatchObject(expected)
+
+		expect(simplify([{
+			head: {indent: 0, content: 'r'},
+			block: [{
+				head: {indent: 1, content: 'k'},
+				block: [{name: 'line.empty'}],
+			}, {
+				head: {indent: 1, content: 'l'},
+			}],
+		}, {
+			head: {indent: 0, content: 'a'},
+		}])).toMatchObject([ [ "r", [ "k", null ], [ "l" ] ], [ "a" ] ])
+
+		testOne({checker, syntax, str:
+`r
+	k
+
+	l
+a
+`, expected: [ [ "r", [ "k", null ], [ "l" ] ], [ "a" ] ]})
+		testOne({checker, syntax, str:
+`a
+	aa
+		aaa
+		aab
+	ab
+b
+c
+	ca
+`, expected: [
+			['a',
+				['aa', ['aaa'], ['aab']],
+				['ab']],
+			['b'],
+			['c',
+				['ca']]],
+		})
+
+/*
+		testOne({checker, syntax, str:
 
 `r
 	k
@@ -249,8 +301,7 @@ describe('indent', ()=> {
 a
 `
 
-||
-`a
+||`a
 	
 
 	aa
@@ -266,8 +317,8 @@ b`
 b
 c
 	ca`
-		|| 'dagg\n\t\n\n\tbhhh\nc', expected: ' ' ||
-				'block.content(.line(indent(0),agg,eol))'
+		|| 'dagg\n\t\n\n\tbhhh\nc', expected: ' '
+				|| 'block.content(.line(indent(0),agg,eol))'
 			+ '\nblock.content(line.empty)'
 			+ '\nblock.content(line.empty)'
 			+ '\nblock.content(.nested(block.content(.line(indent(1),bhhh,eol))))'
@@ -286,7 +337,7 @@ c
 		b
 		c
 			ca
-		`
+		`*/
 
 
 	})
