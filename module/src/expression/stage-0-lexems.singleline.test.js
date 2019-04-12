@@ -66,7 +66,7 @@ describe('singleline', ()=> {
 			'9a': void 0,
 			'a-b': {astValue: ['a', ['-b']]},
 			'-a': void 0,
-			'.': void 0,
+			'.': void 0, // see identifier.special
 			// '.': {astValue: ['.']},
 			// '...': {astValue: ['...']},
 			// '|>': {astValue: ['|>']},
