@@ -69,8 +69,21 @@ class Node():
 class NodeContext():
 	def tokenize(self, line):
 		tokens = []
+		# use lib/tokenizer
+		# #,//,' ,id,.,:
 		return tokens
 	def parse(self, line):
+		"""
+			use lib/aster
+			tokens -> ast nodes: TopComment, LineComment, BlockComment, Id, IdDotPath, KeyValue
+			ast nodes -> rim nodes:
+				- Node(kind: Comment{variant: top, line, block})
+				- Node(id: str)
+				- Node{kind: keyvalue}
+					key: Node{kind: idstrip}(Node(kind: id, name: str), ...)
+					value: Node{display: block}(...)
+					
+		"""
 		node = Node(line, NodeContext())
 		fail_subtree = False
 		return (node, fail_subtree)
