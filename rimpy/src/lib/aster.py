@@ -43,7 +43,7 @@ class Id(Node):
 class Operator(Node):
 	@classmethod
 	def setup(cls):
-		cls.node = Or([Literal("+"), Literal("-")])
+		cls.node = Or(Literal("+"), Literal("-"))
 	def astify(self, tokens):
 		(val, resttokens, ok) = self.__class__.node.astify(tokens)
 		if not ok: return (None, tokens, False)
@@ -53,7 +53,7 @@ class Operator(Node):
 class Expression(Node):
 	@classmethod
 	def setup(cls):
-		cls.node = And([Id(), Repeat(And([Operator(), Id()]), 0, inf)])
+		cls.node = And(Id(), Repeat(0, inf, And(Operator(), Id())))
 	def astify(self, tokens):
 		(val, resttokens, ok) = self.__class__.node.astify(tokens)
 		if not ok: return (None, tokens, False)
@@ -124,7 +124,7 @@ class Token(Node):
 		return (None, tokens, False)
 
 class Repeat(Node):
-	def __init__(self, node, repeatCountMin = 1, repeatCountMax = 1):
+	def __init__(self, repeatCountMin = 1, repeatCountMax = 1, node):
 		self.node = node
 		self.repeatCountMin = repeatCountMin
 		self.repeatCountMax = repeatCountMax
@@ -150,7 +150,7 @@ class Optional(Node):
 		return (val, resttokens, True)
 
 class And(Node):
-	def __init__(self, nodes):
+	def __init__(self, *nodes):
 		self.nodes = nodes
 	def astify(self, tokens):
 		matches = []
@@ -165,7 +165,7 @@ class And(Node):
 		return (matches, resttokens, True)
 
 class Or(Node):
-	def __init__(self, nodes):
+	def __init__(self, *nodes):
 		self.nodes = nodes
 	def astify(self, tokens):
 		matches = []
