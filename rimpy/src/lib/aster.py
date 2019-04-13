@@ -6,28 +6,28 @@
 """ # usage example
 # myaster.py
 from math import inf
-from aster import * # ASTNode, ASTLiteral, ASTToken, ASTRepeat, ASTOptional, ASTAnd, ASTOr
+from aster import * # Node, Literal, Token, Repeat, Optional, And, Or
 from mytokenizer import *
 
 
 # ast value nodes
 
-class ASTValueId():
+class ValueId():
 	def __init__(self, name):
 		self.name = name
 
-class ASTValueOperator():
+class ValueOperator():
 	def __init__(self, isminus = False):
 		self.isminus = isminus
 
-class ASTValueOperation():
+class ValueOperation():
 	def __init__(self, operator, left, right):
 		self.operator = operator
 		self.left = left
 		self.right = right
 	def eval(self):
-		left = self.left.eval() if isinstance(self.left, ASTValueOperation) else self.left
-		right = self.right.eval() if isinstance(self.right, ASTValueOperation) else self.right
+		left = self.left.eval() if isinstance(self.left, ValueOperation) else self.left
+		right = self.right.eval() if isinstance(self.right, ValueOperation) else self.right
 		if self.operator.isminus:
 			return left-right
 		else:
@@ -36,24 +36,24 @@ class ASTValueOperation():
 
 # ast nodes custom
 
-class ASTId(ASTNode):
+class Id(Node):
 	def astify(self, tokens):
-		return ASTToken(TokenId).astify(tokens)
+		return Token(TokenId).astify(tokens)
 
-class ASTOperator(ASTNode):
+class Operator(Node):
 	@classmethod
 	def setup(cls):
-		cls.node = ASTOr([ASTLiteral("+"), ASTLiteral("-")])
+		cls.node = Or([Literal("+"), Literal("-")])
 	def astify(self, tokens):
 		(val, resttokens, ok) = self.__class__.node.astify(tokens)
 		if not ok: return (None, tokens, False)
-		val = ASTValueOperator(isminus=val=='-')
+		val = ValueOperator(isminus=val=='-')
 		return (val, resttokens, True)
 
-class ASTExpression(ASTNode):
+class Expression(Node):
 	@classmethod
 	def setup(cls):
-		cls.node = ASTAnd([ASTId(), ASTRepeat(ASTAnd([ASTOperator(), ASTId()]), 0, inf)])
+		cls.node = And([Id(), Repeat(And([Operator(), Id()]), 0, inf)])
 	def astify(self, tokens):
 		(val, resttokens, ok) = self.__class__.node.astify(tokens)
 		if not ok: return (None, tokens, False)
@@ -61,29 +61,29 @@ class ASTExpression(ASTNode):
 		node = head
 		if tail:
 			for operator, right in tail:
-				node = ASTValueOperation(operator, node, right)
+				node = ValueOperation(operator, node, right)
 		return node
 	
 
 # setup cross-dependencies
-ASTOperator.setup()
-ASTExpression.setup()
+Operator.setup()
+Expression.setup()
 
 
 # myparser
 from mytokenizer import tokenizeExpression as tokenize
-from myaster import ASTExpression
+from myaster import Expression
 
 def parse(text, data):
 	tokens = list(tokenize())
-	(ast, resttokens, ok) = ASTExpression().astify(tokens)
+	(ast, resttokens, ok) = Expression().astify(tokens)
 	if not ok: raise ValueError(f'not matching the tokens {ast} {tokens}')
 	if len(resttokens): raise SyntaxError(f'got resttokens:\n{resttokens}')
 	return astToInt(ast, data)
 
 def astToInt(ast, data):
-	if not isinstance(ast, ASTExpression):
-		raise ValueError('expected ASTExpression')
+	if not isinstance(ast, Expression):
+		raise ValueError('expected Expression')
 	return ast.node.eval()
 
 parse("a +sum -  b", {'a': 1, 'sum': 7, 'b': 3}) # 5
@@ -95,7 +95,7 @@ from .tokenizer import TokenLiteral
 
 # ast node bases
 
-class ASTNode():
+class Node():
 	def astify(self, tokens):
 		(val, resttokens, ok) = self.__class__.node.astify(tokens)
 		if not ok: return (None, tokens, False)
@@ -104,7 +104,7 @@ class ASTNode():
 	# 	raise ValueError(f'{self.__class__.__name__}.astify not implemented')
 		# return (self/None, restTokens/[], matched/True/False) // eg. (None, ..., True) if optional but no match
 
-class ASTLiteral(ASTNode):
+class Literal(Node):
 	def __init__(self, char):
 		self.char = char
 	def astify(self, tokens):
@@ -114,7 +114,7 @@ class ASTLiteral(ASTNode):
 			return (t.raw, tokens[1:], True)
 		return (None, tokens, False)
 
-class ASTToken(ASTNode):
+class Token(Node):
 	def __init__(self, tokenType):
 		self.tokenType = tokenType
 	def astify(self, tokens):
@@ -123,7 +123,7 @@ class ASTToken(ASTNode):
 			return (t.raw, tokens[1:], True)
 		return (None, tokens, False)
 
-class ASTRepeat(ASTNode):
+class Repeat(Node):
 	def __init__(self, node, repeatCountMin = 1, repeatCountMax = 1):
 		self.node = node
 		self.repeatCountMin = repeatCountMin
@@ -141,7 +141,7 @@ class ASTRepeat(ASTNode):
 			return (matches, resttokens, True)
 		return (None, tokens, False)
 
-class ASTOptional(ASTNode):
+class Optional(Node):
 	def __init__(self, node):
 		self.node = node
 	def astify(self, tokens):
@@ -149,7 +149,7 @@ class ASTOptional(ASTNode):
 		if not ok: return (None, tokens, True)
 		return (val, resttokens, True)
 
-class ASTAnd(ASTNode):
+class And(Node):
 	def __init__(self, nodes):
 		self.nodes = nodes
 	def astify(self, tokens):
@@ -164,7 +164,7 @@ class ASTAnd(ASTNode):
 			return (None, tokens, False)
 		return (matches, resttokens, True)
 
-class ASTOr(ASTNode):
+class Or(Node):
 	def __init__(self, nodes):
 		self.nodes = nodes
 	def astify(self, tokens):
