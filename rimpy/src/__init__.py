@@ -6,7 +6,7 @@ import os
 import re
 import json
 
-from .Line import text_to_line, LineJSONEncoder
+from .Line import file_to_node, LineJSONEncoder
 
 def cli(args):
 
@@ -43,14 +43,15 @@ def cli(args):
 
 	# parse
 
-	(lines, parent_line) = text_to_line(text, sourcepath)
-	print(lines)
+	(node, all_lines, all_nodes) = file_to_node(sourcepath)
+
 
 	# process + write
 
 	if 'gantt-json' in out_formats:
 		outpath = re.sub(r'\.\w+$', '.json', sourcepath)
-		outtext = json.dumps(lines, sort_keys=False, cls=LineJSONEncoder, indent=2)
+		obj = {'root': node, 'lines': all_lines, 'nodes': all_nodes}
+		outtext = json.dumps(obj, sort_keys=False, cls=LineJSONEncoder, indent=2)
 		print(outtext)
 		return
 		if verbose:
