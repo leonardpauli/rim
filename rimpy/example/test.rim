@@ -1,0 +1,10 @@
+# example/test
+' rimpy
+	Created by Leonard Pauli, 13 apr 2019
+
+school.course:
+	analog:
+		elkrets
+	digital:
+		digdes
+		datasys

@@ -1,0 +1,10 @@
+#!/usr/bin/env python3.7
+import os
+import sys
+
+repopath = os.path.realpath(os.path.join(__file__, '../..'))
+sys.path.append(repopath)
+
+from src import cli
+
+cli(sys.argv[1:])
