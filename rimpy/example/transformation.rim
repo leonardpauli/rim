@@ -1,0 +1,25 @@
+# transformation
+' rimpy
+	created by Leonard Pauli, 14 apr 2019 
+	
+transformation:
+	Repository as Directory -> File -> Text
+	-> Line (-> Block, (line.top -> Token -> AST -> child ctx) + line.children (recurse))
+	-> Line as Block w AST(w token)
+		- syntax issues, linting issues
+	-> Node
+		- identifier table construction
+	- identifier resolution, identifier issues
+	->
+		- -> VisualProxy(Text)
+		- -> VisualProxy(GUI)
+			-> presentation.target specific: ViewModel -> View
+			' interaction in View
+				-> ViewModel -> action
+				-> VisualProxy -> action
+				-> Node (modifies node)
+					- client
+						-> VisualProxy -> ViewModel reacts to change, updates View
+					- server
+						-> VisualProxy -> ViewModel (AST) reacts to change, updates View (text file)
+							+ itself (eg. sets linenr to dirty to trigger lazy recalculation when needed)
