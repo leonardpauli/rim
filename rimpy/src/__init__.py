@@ -6,7 +6,7 @@ import os
 import re
 import json
 
-from .Line import file_to_node, LineJSONEncoder
+from .Line import file_to_node, LineJSONEncoder, text_lines_to_node
 
 def cli(args):
 
@@ -25,7 +25,7 @@ def cli(args):
 
 	out_formats_valid = ['gantt-json']
 
-	if len(args) or len(dflags.keys()) or not sourcepath or not len(out_formats):
+	if len(args) or len(dflags.keys()) or not len(out_formats):
 		print(f"usage: rimpy [-v|-vv] --out={','.join(out_formats_valid)} rel-or-abs/path/to/file.rim")
 		return
 	out_formats_invalid = [f for f in out_formats if f not in out_formats_valid]
@@ -34,6 +34,9 @@ def cli(args):
 
 	pathv = lambda p: os.path.realpath(p) if verbose > 1 else p
 
+
+	if not sourcepath:
+		return repl()
 
 	# read
 	
@@ -50,10 +53,27 @@ def cli(args):
 
 	if 'gantt-json' in out_formats:
 		outpath = re.sub(r'\.\w+$', '.json', sourcepath)
-		obj = {'root': node, 'lines': all_lines, 'nodes': all_nodes}
+		obj = {'root': {'id': node.id}, 'lines': [node.line, *all_lines], 'nodes': [node, *all_nodes]}
 		outtext = json.dumps(obj, sort_keys=False, cls=LineJSONEncoder, indent=2)
 		print(outtext)
 		return
 		if verbose:
 			print(f'compiles {pathv(sourcepath)} -> {pathv(outpath)}')
 
+
+def repl():
+	try:
+		while True:
+			val = input('> ')
+			# todo: use stream mode, eg. each new line is delta parsed
+			(node, all_lines, all_nodes) = text_lines_to_node(val.replace('\\t', '\t').split('\\n'))
+			print(node)
+			print(all_lines)
+			print(all_nodes)
+			obj = {'root': {'id': node.id}, 'lines': [node.line, *all_lines], 'nodes': [node, *all_nodes]}
+			outtext = json.dumps(obj, sort_keys=False, cls=LineJSONEncoder, indent=2)
+			print(outtext)
+	except EOFError:
+		print("bye")
+	except KeyboardInterrupt:
+		print(" bye")

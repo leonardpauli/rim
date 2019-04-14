@@ -3,12 +3,19 @@
 	created by Leonard Pauli, 14 apr 2019 
 	
 transformation:
-	Repository as Directory -> File -> Text
-	-> Line (-> Block, (line.top -> Token -> AST -> child ctx) + line.children (recurse))
-	-> Line as Block w AST(w token)
-		- syntax issues, linting issues
+	Repository as Directory -> File -> StringLines
+	-> Line
+	-(resolve_children)> Block
+		- line.top
+			-(tokenize)> Token
+			-(astify)> Lexeme
+			-> child_ctx
+		-	child_ctx + line.children -(recurse)> Block
+	-> Line as Block w Lexeme(w Token)
 	-> Node
-		- identifier table construction
+	-> SyntaxPackage
+		- build Node, syntax issues, linting issues // logic issues?
+	- identifier table construction
 	- identifier resolution, identifier issues
 	->
 		- -> VisualProxy(Text)
@@ -23,3 +30,145 @@ transformation:
 					- server
 						-> VisualProxy -> ViewModel (AST) reacts to change, updates View (text file)
 							+ itself (eg. sets linenr to dirty to trigger lazy recalculation when needed)
+
+
+Repository
+Directory is Repository
+	path is String // url?
+File
+	// parent is Directory
+	name is String
+	line is many String // without lineendings
+Line
+	file is File
+	nr is Int
+	indent
+		depth is Int
+		raw is String
+		// count (\t|  ), if ^[ \t] after that, trigger Issue.Syntax.Indent
+		// if ' ' in raw, trigger Issue.Lint.Indent
+	text
+		raw is String // inc. indent, useful when parsing string block and raw indent wanted
+		value is String // part after indent
+	child is many Line
+	token is many Token // eg. [Id, ".", String.Start, String.Raw, String.End, ".", Id, ":", Space, "(", Id, Id, ")"]
+	lexeme is many Lexeme
+	' lexeme:
+		' output from aster, named lexeme instead of ast node because:
+			using the aster more like a tokeniser of tokens;
+			the resulting structure is mostly flat (vs. tree like, though still a tree ...),
+				list of items consiting of tokens that together form some sort of meaning
+					that could be described with a different set of tokens, ie. lexemes
+			eg. Id.Strip could be replaced with a direct Id
+			eg. keyvalue is a construct in a later pass
+			parens and strings form inline blocks, these are also taken during this "astify" process
+		- Id.Strip
+			part
+				- id
+					token: Id
+				- string
+					part
+						- raw
+							token: String.Raw
+					token.start: String.Start // to know AST node bounds, eg. for when replacing
+					token.end String.End
+				- id
+					token: Id
+			token.start: Id
+			token.end: Id
+		- Id.Special
+			token: ":"
+		- Space
+			token: space
+		- Group.Paren
+			- Id
+				token: id
+			- Id
+				token: id
+
+Token
+	type is Type
+		regex is Regex
+		match (String, start_index) is Empty or (token, start_index_new)
+		Comment.Top.Hashbang "^#!(.*)$"
+		Comment.Top "^#( ?)([^/]+|/[^/])*"
+		Comment.Block "^'( ?)([^/]+|/[^/])*"
+		Id: "^[^ \t.,:;\"'()\[\]{}@#0-9-][^ \t.,:;\"'()\[\]{}@#-]*" // everything that isn't something else, though only guaranteed for [A-Za-z](_?[A-Za-z0-9])*, eg. '$' is not guaranteed to be treated as part of identifier
+		Space: "^[ \t]+"
+		String.Start: "^\""
+			push: String.Ctx
+				tokens:
+					String.End: "^\""
+						pop: 1
+					String.End.Unfinished: "^$"
+						pop: 1
+					String.Escape.Start: "^\\"
+						push: String.Escape.Ctx
+							tokens:
+								String.Escape.Char: "^."
+									pop: 1
+								String.Escape.Line: "^$"
+									pop: 1
+					String.Raw: "^[^\\]"
+		...
+		Literal: ".,:;\"'()[]{}@#-"
+	index
+		start is Int
+		end is Int
+		length is Int
+			value:
+				if line is token.dirty and line.token.dirty.start <= self.start:
+					do recalculate index for tokens(lind.token.dirty..self)
+					if self is last, do line.token.dirty = false
+				be end - start
+			on update:
+				do end = start + length
+				if self isn't last, do line.token.dirty = self
+	group is many (group_name_or_index: String)
+
+AST
+
+Lexeme
+	Space
+	Id
+		Strip
+		Special
+	String
+	Comment
+		Top
+		Line
+		Block
+	Group
+		Paren
+		Brace
+		Bracket
+
+Node
+	line is Line
+	line_child_context is ParseContext
+	subnode is many Node
+	cache ...
+
+SyntaxPackage
+	- KeyValue
+	- ListItem
+	- CommaList
+	- Range
+
+Connection
+	source is Node
+	target is Node
+	order is Float
+
+VisualProxy
+	node is Node
+	...
+
+ViewModel
+	node is VisualProxy
+	...
+
+View
+	model is ViewModel
+	render: ...
+	on interaction: ...

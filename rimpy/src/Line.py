@@ -49,7 +49,8 @@ class LineJSONEncoder(JSONEncoder):
 		if isinstance(obj, Node):
 			return {
 				'id': obj.id,
-				'line': self.default(obj.line),
+				# 'line': self.default(obj.line),
+				'line': {'id': obj.line.id},
 				# 'children': [self.default(c) for c in obj.children],
 				'children': [{'id': c.id} for c in obj.children]
 			}
@@ -118,12 +119,19 @@ class Queue():
 	def run(self):
 		yield from self._process()
 
+
+
 def file_to_node(filepath):
+	return text_lines_to_node(file_to_text_lines(filepath), filepath)
+
+def text_lines_to_node(text_lines, filepath="anon"):
 	root = root_node_plain_with_filepath(filepath)
-	lines = list(file_to_lines(filepath))
+	lines = list(text_lines_to_lines(text_lines, filepath))
+	return lines_to_node(root, lines)
+
+def lines_to_node(root, lines):
 	topnodes = list(parse_to_topnodes(root, lines))
 	
-
 	def assemble_processed(items):
 		for parent, node in items:
 			parent.children.append(node)
@@ -157,12 +165,15 @@ def parse_to_topnodes(root, lines):
 		yield (node, fail_subtree)
 
 
-clean_line_end_re = re.compile(r'[\n\r]+$')
-def file_to_lines(filepath):
+def file_to_text_lines(filepath):
 	with open(filepath, 'r') as f:
-		for linenr, raw in enumerate(f):
-			raw = clean_line_end_re.sub('', raw)
-			yield Line(raw, linenr+1, filepath)
+		yield from f
+
+clean_line_end_re = re.compile(r'[\n\r]+$')
+def text_lines_to_lines(lines, filepath):
+	for linenr, raw in enumerate(lines):
+		raw = clean_line_end_re.sub('', raw)
+		yield Line(raw, linenr+1, filepath)
 
 
 def resolve_children(parent_line, lines):

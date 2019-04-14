@@ -24,6 +24,21 @@ list(tokenizeExpression("a +sum -  b")) # [<TokenId raw: a>, <TokenLiteral raw: 
 
 """
 
+""" TODO: tokenize contexts
+
+Context
+	tokenTypes
+	tokenTypesDiscard
+
+Token
+	match (text, start_index): Empty or (Token, start_index_new, ctx_to_pop_len, ctx_to_push)
+	raw is String
+	
+
+
+"""
+
+
 
 def tokenize(text, tokenTypes, tokenTypesDiscard):
 	while len(text):
