@@ -1,0 +1,85 @@
+# keyvalue-is-a-construct
+' rimpy
+	created by Leonard Pauli, 14 apr 2019 
+
+
+VisualNode
+	// fields are computed based on .node
+	title is String: ""
+	expanded is Boolean: false
+	topnodes is many VisualNode
+	subnodes is many VisualNode
+	listitem is Boolean: false
+	position is Position: 0, 0 // used when presented as topnode
+	node is RimNode
+
+
+
+# example
+
+a.c: b
+
+VisualNode
+	title: "a.c: b"
+	subnodes:
+		- VisualNode
+			title: "key: a.c"
+			- VisualNode // listitems form idstrip path
+				title: "a"
+				listitem
+				node: StringNode
+			- VisualNode
+				title: "c"
+				listitem
+				node: StringNode
+			node: KeyNode
+		- VisualNode // subnodes(is listitem) are values
+			title: "b"
+			listitem
+			node: StringNode
+	node: KeyValueNode
+		id: ...
+		binaryValue: Empty
+		cache:
+			connections_inherit: ...
+			connections_kv_str:
+				key:
+					- KeyNode
+						cache.connections_listitem:
+							- StringNode
+								binaryValue: "a"
+							- StringNode
+								binaryValue: "c"
+			connections_listitem:
+				- StringNode
+					binaryValue: "b"
+
+
+"a.c: b"
+	[inherit]
+	- KeyValue
+	[subnode]
+	- "key: a.c"
+		[inherit]
+		- Key
+		[listitem]
+		- "a"
+			[inherit]
+			- String
+			[binaryValue]
+			- 65
+		- "c"
+			[inherit]: String
+			[binaryValue]: 67
+	[listitem]
+	- "b"
+		[inherit]: String
+		[binaryValue]: 66
+
+
+
+
+// KeyValue is a construct! only from binaryValue + listitem
+
+
+

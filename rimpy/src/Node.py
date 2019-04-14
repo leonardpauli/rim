@@ -14,6 +14,8 @@ examplefile:
 		- b
 
 data:
+	visualnodes:
+		- ...
 	nodes:
 		- {id: 0, kind: file, line: {id: 0}}
 		- {id: 1, kind: comment{variant: block}}
