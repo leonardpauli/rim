@@ -1,8 +1,9 @@
 # transformation
 ' rimpy
 	created by Leonard Pauli, 14 apr 2019 
-	
+
 transformation:
+	// TODO: unify Directory, File under one type Module (directory exports its children?)
 	Repository as Directory -> File -> StringLines
 	-> Line
 	-(resolve_children)> Block
@@ -32,13 +33,28 @@ transformation:
 							+ itself (eg. sets linenr to dirty to trigger lazy recalculation when needed)
 
 
+repository = Directory "some/path"
+ctx = Node.Context
+root = repository as Node with ctx
+do root.load with ctx
+do log ctx as Normalized as Json
+
+
+
 Repository
 Directory is Repository
 	path is String // url?
+	list is many (Directory or File)
+	as Node with ctx as Node.Context:
+		do ctx.directory[self].node |= Node.Loadable.Directory
+			directory: self
 File
 	// parent is Directory
 	name is String
-	line is many String // without lineendings
+	line is many String // text lines without line-endings
+	as Node with ctx as Node.Context:
+		do ctx.file[self].node |= Node.Loadable.File
+			file: self
 Line
 	file is File
 	nr is Int
@@ -85,11 +101,54 @@ Line
 				token: id
 			- Id
 				token: id
+	many from file as File: file.line |> Self{nr: .index + 1, file, raw: it}
+	as Node with ctx is {parse is ParseContext, main is Node.Context}:
+
+		self.token: do or Self.tokenize{ctx: ctx.parse} self:
+			- Empty or {rest_string not Empty}:
+				' TODO
+					ctx.issue.syntax.add Error ...
+					mark node as failed, return
+			- else: .token
+
+		self.lexeme: do or Self.astify{ctx: ctx.parse} token:
+			- Empty or {rest_token not Empty}:
+				' TODO
+					ctx.issue.syntax.add Error ...
+					mark node as failed, return
+			- else: .val
+
+		be node: Node{line: self}
+			line_child_context: self.lexeme.line_child_context{parent_ctx: ctx.parse}
+		
+		' TODO:
+			- identifier table construction
+				node.identifier."self": node // but only in certain cases..?
+			- partial identifier resolution (upstream), keep track of unresolved
+
+		ctx.main.node.add node // register + to prevent cyclic infinite (though not for file lines, just for files/(dirs/repos)?)
+		node.subnode: line.child |> as Node with {ctx.parse: node.line_child_context, ctx.main} // walk the tree
+
+		' TODO:
+			- partial identifier resolution (child downstream/subtree + child siblings), keep track of unresolved
+
+		' TODO: SyntaxPackage?
+			keyvalue?
+
+
+	ParseContext
+		flag:
+			comment.top.warn: "Top level comments (#) are reserved for depth 0, ie. no indentation, to mark larger sections of a file"
+		FileRoot
+			flag:
+				comment.top.warn: false
+
 
 Token
 	type is Type
 		regex is Regex
 		match (String, start_index) is Empty or (token, start_index_new)
+
 		Comment.Top.Hashbang "^#!(.*)$"
 		Comment.Top "^#( ?)([^/]+|/[^/])*"
 		Comment.Block "^'( ?)([^/]+|/[^/])*"
@@ -118,7 +177,7 @@ Token
 		length is Int
 			value:
 				if line is token.dirty and line.token.dirty.start <= self.start:
-					do recalculate index for tokens(lind.token.dirty..self)
+					do recalculate index for tokens(line.token.dirty..self)
 					if self is last, do line.token.dirty = false
 				be end - start
 			on update:
@@ -129,6 +188,11 @@ Token
 AST
 
 Lexeme
+	line_child_context{parent_ctx is Line.ParseContext} is Line.ParseContext:
+		' TODO:
+			find lexeme corresponding to last line token,
+				if finished, return parent context,
+				else, if open, (eg. string not closed, return string parse context with parent context)
 	Space
 	Id
 		Strip
@@ -145,9 +209,50 @@ Lexeme
 
 Node
 	line is Line
-	line_child_context is ParseContext
+	line_child_context is Line.ParseContext
 	subnode is many Node
 	cache ...
+	identifier is many (name: Identifier)
+	--
+	Loadable is Self // Loadable{inherit: Node} ie. // Self = Node
+		loaded is Boolean: false
+		on load{ctx is Context}: ...
+		Directory is Self
+			directory is use.file.Directory
+			on load{ctx is Context}:
+				do subnode = directory.list |> as Node with ctx
+		File is Self
+			file is use.file.File
+			line: Line{nr: 0, file, raw: Empty}
+			line_child_context: Line.ParseContext.FileRoot
+			on load{ctx is Context}:
+				line: file as many Line
+				topline: Line.resolve_child line
+				subnode: topline |> as Node with {ctx} // tokenize, astify, child_ctx, recurse/walk tree down
+					ctx.parse: self.line_child_context
+					ctx.main: use.parent.ctx
+				do self.subnode = subnode
+
+	--
+	Context
+		' scratch memory for when building/processing Node
+			eg. hashmaps for memoization / to prevent cyclic infinity (see Dynamic Programming)
+			eg. index of values to prevent need for full-search
+				eg. to rename an identifier
+					- ctx.identifier.(name-old).node |> .line |> .lexeme.token.start [> do .change name-new
+						// TODO: detect computed names + type detect if name-old is a possible value, if so, warn
+		// id could be some sort of hash, or just added index
+		repository is many (id: Repository)
+		directory is many (id: Directory)
+		file is many (id: File)
+		line is many (id: Line)
+		node is many (id: Node)
+		node.unloaded is many (id: Node.Loadable)
+		connection is many (id: Connection)
+		identifier is many (id: Identifier)
+		identifier.unresolved is many (id: Identifier)
+		issue.{syntax, lint, identifier, type, logic} is many (id: Issue)
+		is Normalizable
 
 SyntaxPackage
 	- KeyValue
@@ -172,3 +277,30 @@ View
 	model is ViewModel
 	render: ...
 	on interaction: ...
+
+
+' note
+	- no special treatment of eg. index files
+		directory has index file anon created with all contents public
+		keyword "use" (like rust) instead of import/include
+		by convention, `use.local.token.Token; Token...` (dot syntax like python)
+			in src/main.rim, if src/token.rim exists with `Token: ...` at top level
+			`use src.main`
+		// TODO: to be determined
+		{Token}: use.dir.token // destructuring + "use" is just a node (imported by default, aka in the "prelude" (see rust)), with dynamic keyvalue management; "use.dir.some-file" = file node of "some-file.rim" in same dir as current file
+		{main}: use.repo // "use.repo.some-file" = file node of repository/some-file.rim
+			// no default use of src folder as common in other languages
+			// convention: a main.rim at top-level in repo
+			// 	it can use.dir.src.some-file.some-node if wanted
+
+
+
+Normalizable
+	as Normalized
+		... fields |> or it.@type:
+			- is many: |> normalize
+			- else: | normalize
+		normalize: or it.@type:
+			- is (id: value is Normalizable): (.key): (.value as Normalized)
+			- is ({id, ...} is Normalizable): {id}
+		fields: use.parent.@fields
