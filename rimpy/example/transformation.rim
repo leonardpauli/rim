@@ -10,6 +10,7 @@ transformation:
 		- line.top
 			-(tokenize)> Token
 			-(astify)> Lexeme
+			-(nodify)> Node
 			-> child_ctx
 		-	child_ctx + line.children -(recurse)> Block
 	-> Line as Block w Lexeme(w Token)
@@ -38,6 +39,58 @@ ctx = Node.Context
 root = repository as Node with ctx
 do root.load with ctx
 do log ctx as Normalized as Json
+
+
+' Todo: outline: (OUTDATED, see groupify)
+	- identifier register step 1, Lexeme type id only
+	- tokenizing
+	- parsing to lexemes
+	- identifier resolve step 1.1, Lexeme type paren w id (sibling)
+	- identifier resolve step 1.2, Lexeme type paren w id (upstream)
+	- identifier resolve step 1.3, Lexeme type paren w id.strip (sibling, downstream)
+		- upstream downstream order resolve / resolve unresolved afterwards?
+	- listitem syntax package (-)
+		- identifier register list index?
+		- how to save lists?
+	- keyvalue syntax package
+		- grouping, left? a: b: c -> a: (b: (c)) -> ((:) a ((:) b c))
+			- ohh, see lpasm notes about how to do this more generally!
+		- identifier register key?
+		- handle linting
+		- handle lint.autofix flag; add to ctx possible lint fixes list
+			- when apply is invoked, update token + set position to dirty
+			- in separate step? Node.File -> lines -> indented + raw text from lexems w tokens -> write back
+	- simpler interface.dot from normalized connections + nodes (+ identifier resolve)
+	- start python coding
+	- simpler interface.timeflow.dot based on prev but added dependency list
+		// - dot draw w fixed position
+	- simpler interface.terminal.full
+		- add fixed time
+		- config available timeslots
+		- assume 1hr def/task,
+		- layout/suggest time (1 char / timeslot, timeline to right, indented list to left), print to file
+		- shadoww
+	- start python coding
+	- start planning
+	// - comma list building operator
+	// - semicolon statement list building operator (eg in paren, braces)
+	// - strings, for now throw error for interpolation + skip handle escape + unicode
+
+' 
+	identifier_table_construction:
+			// register_self: ...
+			or self.lexeme:
+				- .count is 1 and is Lexeme.Id:
+					...
+				// - .count is 1 and is Lexeme.Id.Strip: ...
+				// ...
+				- else: ... // TODO: raise unhanded identifier lexeme case
+		identifier_resolution_partial: // (upstream), keep track of unresolved
+			// TODO
+	' TODO:
+			- partial identifier resolution (child downstream/subtree + child siblings), keep track of unresolved
+	' TODO: SyntaxPackage?
+		keyvalue?
 
 
 
@@ -101,6 +154,14 @@ Line
 				token: id
 			- Id
 				token: id
+	' many lexeme as Node:
+		// Id.Strip, Id.Special(":"), Space, Group.Paren, Id.Special(","), Id, Group.Paren, Group.Brace
+		
+			- Id.Special(":") Id.Strip, (Space, Group.Paren, Id.Special(","), Id, Group.Paren, Group.Brace)
+			- Id.Special(":") Id.Strip, (Space, Group.Paren, Id.Special(","), Id, Group.Paren, Group.Brace)
+			- SyntaxPackage
+				- KeyValue.colon
+
 	many from file as File: file.line |> Self{nr: .index + 1, file, raw: it}
 	as Node with ctx is {parse is ParseContext, main is Node.Context}:
 
@@ -118,22 +179,12 @@ Line
 					mark node as failed, return
 			- else: .val
 
-		be node: Node{line: self}
-			line_child_context: self.lexeme.line_child_context{parent_ctx: ctx.parse}
+		be node: self.lexeme as Node.Line{line: self} with {ctx: ctx.main}
 		
-		' TODO:
-			- identifier table construction
-				node.identifier."self": node // but only in certain cases..?
-			- partial identifier resolution (upstream), keep track of unresolved
-
 		ctx.main.node.add node // register + to prevent cyclic infinite (though not for file lines, just for files/(dirs/repos)?)
 		node.subnode: line.child |> as Node with {ctx.parse: node.line_child_context, ctx.main} // walk the tree
 
-		' TODO:
-			- partial identifier resolution (child downstream/subtree + child siblings), keep track of unresolved
-
-		' TODO: SyntaxPackage?
-			keyvalue?
+		
 
 
 	ParseContext
@@ -188,11 +239,13 @@ Token
 AST
 
 Lexeme
-	line_child_context{parent_ctx is Line.ParseContext} is Line.ParseContext:
+	line_child_context is Line.ParseContext:
 		' TODO:
+			// {parent_ctx is Line.ParseContext} is provided to ParseContext fns when used
 			find lexeme corresponding to last line token,
 				if finished, return parent context,
 				else, if open, (eg. string not closed, return string parse context with parent context)
+	--
 	Space
 	Id
 		Strip
@@ -203,17 +256,40 @@ Lexeme
 		Line
 		Block
 	Group
-		Paren
-		Brace
-		Bracket
+		Paren // ()
+		Brace // {}
+		Bracket // []
+	--
+	many as Node with {ctx is Node.Context}:
+		ctx.parse: self.line_child_context
+		be node: groupify it
+
+		... go through node and add identifier (resolved + unresoved) to ctx?
+			+ find child_line_ctx
+			+ groupify should attach lexeme info
+			+ new Line.Computed:
+				+ line.lexeme should be computed from node
+				+ line.token should be computed from line.lexeme
+				+ line.raw should be computed from line.token
+
+	groupify many self: | or as (a b ...c): // see lpasm
+		- a is Group:
+			- b is Space: Bind(a, ...groupify c)
+			- else: groupify Group(a){attachment: b} ...c
+		// - a b ...c -> a b ...(...c) if a is group
+		- a b ...c -> b a ...(...c)
+		SyntaxPackage?
+
 
 Node
-	line is Line
-	line_child_context is Line.ParseContext
 	subnode is many Node
 	cache ...
-	identifier is many (name: Identifier)
+	// identifier is many (name: Identifier)
 	--
+	Line is Self
+		line is Line
+		line_child_context is Line.ParseContext:
+			... // ... self.lexeme.line_child_context
 	Loadable is Self // Loadable{inherit: Node} ie. // Self = Node
 		loaded is Boolean: false
 		on load{ctx is Context}: ...
@@ -223,8 +299,7 @@ Node
 				do subnode = directory.list |> as Node with ctx
 		File is Self
 			file is use.file.File
-			line: Line{nr: 0, file, raw: Empty}
-			line_child_context: Line.ParseContext.FileRoot
+			line_child_context is Line.ParseContext: Line.ParseContext.FileRoot
 			on load{ctx is Context}:
 				line: file as many Line
 				topline: Line.resolve_child line
