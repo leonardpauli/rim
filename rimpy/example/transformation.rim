@@ -279,6 +279,79 @@ Lexeme
 		// - a b ...c -> a b ...(...c) if a is group
 		- a b ...c -> b a ...(...c)
 		SyntaxPackage?
+		note
+			i: id/id.strip
+			s: string
+			g: group
+			_: space
+			c: comment
+			v: or(i, s, g)
+			--
+			i g g _ i
+			v _ v -> Bind(v, v)
+			v _ v _ v _ v -> Bind(v, v)
+			--
+			a b c -> a(b c) -> a(b(c))
+			a b + c -> a(b + c) -> a((+)(b, c))
+			a b | c -> (|)((a b), (c)) -> (|)((a(b)), (c))
+			a + b | c -> (|)((a + b), (c)) -> (|)((+(a, b)), (c))
+			a + b c -> (+)((a), (b c)) -> (+)((a), (b(c)))
+			--
+			' a b ...c
+				- b is special: (b)((a), (...c))
+				- else: a(b ...c)
+			a b c -> a(b c) -> a(b(c))
+			a b + c -> a(b + c) -> a((+)(b, c))
+			a b | c -> a(b | c) -> a((|)(b, c))
+			a + b | c ->
+			a + b c ->
+			--
+			a | b: c | d
+			(a | b): (c | d)
+			a | (b: c) | d
+			a: b | c
+			a: (b | c)
+			a: b: c
+			a: (b: c)
+			a: d | b: c | e
+			a: ((d | b): (c | e))
+			a | b: c | d: e
+			a | b |> c | d |> e
+			(((a | b) |> c) | d) |> e
+			a + b < c, d -> ((a + b) < c), d
+			a b + c d -> a(b + c d) -> a(b + (c d))
+			1 < a = b + 3 < 4 -> 1 < a = (b + 3) < 4
+			a, b < 2 -> a, (b < 2)
+			(a, b) < 2 // ~> (a < 2), (b < 2) ~> and((a < 2), (b < 2))
+			raining and outside or walking -> raining and (outside or walking)
+			--
+			associative.left // a/b/c -> (a/b)/c // (left)/right
+			associative.right // a/b/c -> a/(b/c) // left/(right)
+			operator.splitting{ordered}: // from SyntaxPackage
+				identifier{default{left: 0, right}}
+				// TODO: sometimes I've written eg. {left} instead of {left: infinity, right: 1} and vice-verse
+				- break: ";"
+				- listitem: and("-", space){start_of_line}
+				- keyvalue: and(":", space){right}
+				- pipe: or("|", "|>"){left}
+				- comma: ","
+				- boolean{identifier{and{left: 1, right}, or{left: 1, right}, not}}
+				- compare.basic: ("=", "<", ">", "<=", ">=", "!="){sequense}
+				- bind.0: space{left{1, not id.special}, right}
+				- bind.1: space{left{1, id.special, start_of_expression}, right}
+				- math.bitwise
+					(and, or, not).bitwise{left: 1, right}
+					identifier
+						xor, xor.bitwise{left: 1, right}
+				- math.basic: ("+", "-"){left}, ("*", "/"){left}
+				- math.extended: ("**", "√"){right}
+				' todo
+					- label: ":"{unary.prefix}
+					- .., ..<, <..
+					- ... // matters if suffix/prefix or other
+
+
+			
 
 
 Node
