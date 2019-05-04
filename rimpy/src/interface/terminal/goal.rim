@@ -1,0 +1,24 @@
+# interface/terminal/goal
+' created by Leonard Pauli, 19 apr 2019
+
+outline											+--------------------------
+v computer									|     . . ooo                     
+	> key.{fix}								|     .                    
+		clean										|       .                  
+		backup									|         ooo                 
+
+// "o" for time fixed, "." for time resolved/suggested
+// 	one for each time-slot it will take
+// 	green faded if completed, yellow if past but not selected
+// "shadow" is faded (eg. green.dark, assumes dark bg)
+// arrowkeys up/down to select row (selected has gray bg?)
+// arrowkeys left/right to expand/collapse selected
+// 	alt: use vim style hjkl + support for 10j, G/gg, /search-w-autosuggestion.and.matches.count
+// time for selected shown in footer
+// a/d to scroll timeline
+// enter to open line+col in sourcefile in text-editor for selected row
+// auto-redraws on sourcefile change
+// q for quit
+
+
+alt: rimpy --package=timeflow --out=json plan.rim | rimpy.interface.terminal --subtree=school.course.datasys.test.3 --interactive=false > scd.out
