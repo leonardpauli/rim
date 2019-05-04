@@ -1,5 +1,6 @@
 import sys
 from . import option
+from math import inf
 
 class Cli:
 	def __init__(self, argv):
@@ -28,12 +29,16 @@ class Cli:
 
 	class Config:
 		_fields = {} # {k: {'type': str, 'desc': '...'} for k in 'a,b'.split(',')}
+		# optional: {'default': True, 'from_str': lambda val: int(val)}
 		_list_min = 0
+		_list_max = inf
 
 		def __init__(self, *v, **kv):
 			self._list = v # todo: expose through https://codereview.stackexchange.com/questions/33060/subscriptable-indexable-generator?
 			if len(v) < self._list_min:
 				raise ValueError(f'expected at least {self._list_min} input value(s), got {len(v)}')
+			if len(v) > self._list_max:
+				raise ValueError(f'expected at max {self._list_max} input value(s), got {len(v)}')
 			self._restarg = []
 			if '_restarg' in kv:
 				self._restarg = kv['_restarg']
@@ -47,8 +52,14 @@ class Cli:
 			for k, v in kv.items():
 				if k not in self._fields.keys():
 					raise ValueError(f'unknown flag {k}')
+				t = self._fields[k]
 				# TODO: validate type + parsing
-				setattr(self, k, v)
+				try:
+					parsed = t['from_str'](v) if 'from_str' in t else v
+				except Exception as e:
+					print(f'Failed to parse value for flag {repr(k)}:\n')
+					raise e
+				setattr(self, k, parsed)
 
 		@classmethod
 		def usage(cls):

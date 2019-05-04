@@ -41,6 +41,35 @@ do root.load with ctx
 do log ctx as Normalized as Json
 
 
+' goal
+	in: sample.rim
+		# comment.top
+		' comment.block
+			text
+		a
+			aa
+			ab
+				aba
+		b
+		c
+	out: Node
+		is File
+		file: File{name: "sample.rim"}
+		child:
+			- Node
+				lexeme:
+					- Comment.Top "comment.top"
+						line{nr: 1}
+						
+			- Node "comment.block\ntext"
+			- Node a
+			- Node b
+			- Node c
+
+
+
+
+
 ' Todo: outline: (OUTDATED, see groupify)
 	- identifier register step 1, Lexeme type id only
 	- tokenizing

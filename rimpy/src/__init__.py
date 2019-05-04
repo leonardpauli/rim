@@ -1,79 +1,22 @@
-# main
-# rimpy
-# created by Leonard Pauli, apr 2019
-
 import os
-import re
-import json
 
-from .Line import file_to_node, LineJSONEncoder, text_lines_to_node
+from .lib.terminal.cli import Cli as CliBase
+from .lib.filesystem import File, Directory
 
-def cli(args):
-
-	# config
-
-	verbose = 2 if '-vv' in args else 1 if '-v' in args else 0
-	args.remove('-v') if '-v' in args else None
-	args.remove('-vv') if '-vv' in args else None
-
-	dflags = [a for a in args if a.startswith('--')]
-	for a in dflags: args.remove(a)
-	dflags = {k: v for k, v in [a[2:].split('=') for a in dflags]}
-
-	out_formats = dflags.pop('out').split(',') if 'out' in dflags else []
-	sourcepath = args.pop() if len(args) == 1 else None
-
-	out_formats_valid = ['gantt-json']
-
-	if len(args) or len(dflags.keys()) or not len(out_formats):
-		print(f"usage: rimpy [-v|-vv] --out={','.join(out_formats_valid)} rel-or-abs/path/to/file.rim")
-		return
-	out_formats_invalid = [f for f in out_formats if f not in out_formats_valid]
-	if len(out_formats_invalid):
-		print(f'out formats {out_formats_invalid} not valid, try {out_formats_valid}')
-
-	pathv = lambda p: os.path.realpath(p) if verbose > 1 else p
-
-
-	if not sourcepath:
-		return repl()
-
-	# read
+class Cli(CliBase):
+	"""usage: rimpy [options...] in/file.rim
+	- will parse infile and write output (?) to in/file.out
+	"""
+	class Config(CliBase.Config):
+		_fields = {
+			'v': {'type': int, 'desc': 'level of verbosity (0, 1, 2)', 'default': 0, 'from_str': lambda s: int(s)},
+		}
+		_list_min = 1
+		_list_max = 1
 	
-	with open(sourcepath, 'r') as f:
-		text = f.read()
+	def start(self):
+		infile = File.or_directory_from_path(self.config._list[0])
+		infilep = os.path.realpath(infile.path())
+		outpath = os.path.splitext(infilep)[0]+os.path.extsep+'out'
+		print(f'will write to {outpath} from {infilep}')
 
-
-	# parse
-
-	(node, all_lines, all_nodes) = file_to_node(sourcepath)
-
-
-	# process + write
-
-	if 'gantt-json' in out_formats:
-		outpath = re.sub(r'\.\w+$', '.json', sourcepath)
-		obj = {'root': {'id': node.id}, 'lines': [node.line, *all_lines], 'nodes': [node, *all_nodes]}
-		outtext = json.dumps(obj, sort_keys=False, cls=LineJSONEncoder, indent=2)
-		print(outtext)
-		return
-		if verbose:
-			print(f'compiles {pathv(sourcepath)} -> {pathv(outpath)}')
-
-
-def repl():
-	try:
-		while True:
-			val = input('> ')
-			# todo: use stream mode, eg. each new line is delta parsed
-			(node, all_lines, all_nodes) = text_lines_to_node(val.replace('\\t', '\t').split('\\n'))
-			print(node)
-			print(all_lines)
-			print(all_nodes)
-			obj = {'root': {'id': node.id}, 'lines': [node.line, *all_lines], 'nodes': [node, *all_nodes]}
-			outtext = json.dumps(obj, sort_keys=False, cls=LineJSONEncoder, indent=2)
-			print(outtext)
-	except EOFError:
-		print("bye")
-	except KeyboardInterrupt:
-		print(" bye")

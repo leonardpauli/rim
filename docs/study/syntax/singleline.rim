@@ -115,7 +115,7 @@ a.1.2 // [a, listitem 1, listitem 2], dot is dot notation, not decimal point her
 a.01 // lint `a.1` (overidable if wanted for lineup, autofixable)
 a.(1).b // [a, listitem 1, b]; see "paren" and "paren list uses"
 a."b".c // [a, b, c]
-a.{} // what?
+a.{} // what? // see query
 a.(+ 3) // partially applied function
 a.(+ 3) 4 // [a, 7] (?)
 

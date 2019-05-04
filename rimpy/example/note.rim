@@ -1,0 +1,24 @@
+# note
+' rimpy
+	created by Leonard Pauli, apr/may 2019
+
+
+rimpy.cli is Cli
+	Config:
+		v is Int{0..2}: "level of verbosity"
+		list is many{1} (Directory or File)
+		restarg is Empty
+	usage: "
+		\(Cli.usage)
+			- will parse infile and write output (?) to in/file.out
+	on start:
+		infile: config.list.0
+		outfile: infile with {ext: 'out'}
+		if config.v: do print "Will write {outfile} from {infile}"
+
+
+
+# other
+' see vmpy for outline of
+	- Cli
+	- Terminal.Options

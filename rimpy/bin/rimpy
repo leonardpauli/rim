@@ -5,6 +5,10 @@ import sys
 repopath = os.path.realpath(os.path.join(__file__, '../..'))
 sys.path.append(repopath)
 
-from src import cli
+from src import Cli
+from src.lib.terminal.cli import Exit
 
-cli(sys.argv[1:])
+try:
+	cli = Cli(sys.argv)
+except Exit:
+	sys.exit()
