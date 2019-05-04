@@ -11,11 +11,7 @@ class File:
 	def from_path(cls, p):
 		dp, name = os.path.split(p)
 		d = Directory.Absolute(dp)
-		return cls(name, d)
-
-	@staticmethod
-	def or_directory_from_path(p):
-		return Directory.from_path(p) if os.path.isdir(p) else File.from_path(p)
+		return Directory(name, d) if os.path.isdir(p) else cls(name, d)
 
 	def path(self):
 		return os.path.join(self.directory.path(), self.name) if self.directory else self.name

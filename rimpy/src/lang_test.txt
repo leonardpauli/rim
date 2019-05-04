@@ -1,0 +1,146 @@
+# lang_test.txt
+' This file is imported by lang_test.py
+	see https://docs.python.org/3/library/doctest.html#module-doctest
+	tests are writting like python repl
+
+// import first
+>>> from src.lang_test import fn, onlya
+>>> fn(3)
+6
+
+
+# multiline is possible
+
+>>> onlya("""aba""")
+'aa'
+
+>>> onlya("""a
+... ba""")
+'aa'
+
+
+
+# tokenization
+
+
+>>> from src.lang_test import tokenize_line as tl
+// empty
+>>> tl('')
+[]
+>>> tl('\t  \t ')
+[Indent{3}, Space]
+>>> tl('// lal')
+[CommentLine"lal"]
+>>> tl('//lal')
+[CommentLine{padding_space}"lal"]
+>>> tl('\t  \t  \t //lal')
+[Indent{5}, CommentLine{margin_space, no padding_space}"lal"]
+
+// comment
+'# top-comment'
+'#!/usr/bin/env rim -v' // hashbang
+'\t #lal' // whaat
+'# top-comment // line-comment // 2'
+'\' block comment...'
+'\' block comment... // line-comment'
+'\'"block comment string // not a line-comment...'
+
+// other
+'"hello"' // string
+'hello' // identifier
+'+' // identifier.special
+'()' // group.paren
+'a."b"{d: x+y*3-1}.c(e) f g' // id.strip(identifier, string, group.brace(identifier, identifier.special, space, ,,,)...)...
+
+
+
+# astify
+
+>>> from src.lang_test import astify_line as al
+// -
+... use most examples from tokenization ...
+>>> al('')
+Node{is Line}
+>>> al('\t #lal')
+Node{is Line, indent{1}}(Node{is Comment.Top, margin: " ", no padding}(Node{is String, value: "lal"}))
+>>> al('// hello')
+Node{is Line}(Node{is Comment.Line}(Node{is String, value: "hello"}))
+
+>>> al('a.b')
+Node{is Line}(Node{is Identifier}(Node{is String, value: "a"}, Node{is String, value: "b"}))
+// store resolved ref in Node.cache....
+
+'b f g'
+Line
+	- Bind
+		- Id "b"
+		- Bind
+			- Id "f"
+			- Id "g"
+
+'b(a, c)'
+Line
+	- Bind.Paren
+		- Id "b"
+		- Group.Paren
+			- List
+				- Id "a"
+				- Id "c"
+
+'b(a) c'
+Line
+	- Bind
+		- Bind.Paren
+			- Id "b"
+			- Group.Paren
+				- Id "a"
+		- Id "c"
+
+'b{c: v}'
+Line
+	- Attach
+		- Id "b"
+		- Group.Brace
+			- KeyValue
+				- Id "c"
+				- Id "v"
+
+'x+y'
+Line: Bind{infix}
+	- Id "+"
+	- Id "x"
+	- Id "y"
+
+'x +y* (3-1)'
+Line: Bind{infix, no margin.right}
+	- Id "+"
+	- Id "x"
+	- Bind{infix, no margin.left}
+		- Id "*"
+		- Id "y"
+		- Group.Paren
+			- Bind{infix, no margin}
+				- Id "-"
+				- Number 3
+				- Number 1
+
+'a."b".k{d: x+y*(3-1); some}.c(e) f g'
+Line
+	- Bind
+		- Id.Strip
+			- Id "a"
+			- String "b"
+			- Attach
+				- Id "k"
+				- Group.Brace
+					- KeyValue
+						- Id "d"
+						- Bind: ...
+					- Id "some"
+			- Bind.Paren
+				- Id "c"
+				- Group.Paren
+					- Id "e"
+		- Bind
+			- Id "f"
+			- Id "g"

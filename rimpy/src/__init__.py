@@ -15,7 +15,7 @@ class Cli(CliBase):
 		_list_max = 1
 	
 	def start(self):
-		infile = File.or_directory_from_path(self.config._list[0])
+		infile = File.from_path(self.config._list[0])
 		infilep = os.path.realpath(infile.path())
 		outpath = os.path.splitext(infilep)[0]+os.path.extsep+'out'
 		print(f'will write to {outpath} from {infilep}')

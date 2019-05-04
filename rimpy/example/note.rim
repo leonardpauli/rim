@@ -17,6 +17,37 @@ rimpy.cli is Cli
 		if config.v: do print "Will write {outfile} from {infile}"
 
 
+# sub
+
+Node from {file, ctx}: ...
+Node from {directory, ctx}: ...
+
+Context
+
+Node
+
+
+# sub
+
+Directory is Repository
+
+
+# sub
+
+Directory is File
+	to many File: ...
+	to many String.Line: ...
+	Absolute: ...
+
+File
+	with {name is String, directory is Directory or Empty}
+	from (path is Path is String):
+		parent, name: Directory.Absolute(path.(..-1)), path.(-1)
+		be Directory(parent, name) if os.path.isdir path else Self(parent, name)
+	path is String: ...
+	ext is extension is String: ...
+	to many String.Line: ...
+
 
 # other
 ' see vmpy for outline of
