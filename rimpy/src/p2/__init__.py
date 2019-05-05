@@ -5,6 +5,7 @@ idea: create through many iterations of unstructured files parts that later on c
 """
 
 from src.lib.match import match, And, Or, Option, Many
+import re
 
 
 
@@ -36,7 +37,7 @@ class Node:
 		kvs, xs = self.repr_data()
 		kvsstr = ", "+", ".join([f'{k}: {repr(v)}' for k, v in kvs.items()]) if len(kvs.items()) else ""
 		xsstr = '('+", ".join([repr(x) for x in xs])+')'if len(xs) else ""
-		return f'Node\{is {self.__class__.__name__}{kvsstr}\}{xsstr}'
+		return f'Node{{is {self.__class__.__name__}{kvsstr}}}{xsstr}'
 
 
 class NodeQuery(Node):
@@ -61,9 +62,13 @@ class NodeNumber(Node):
 		self.binaryValue = value
 
 
+
 # lexemes
 
 class Lexeme:
+	def __init__(self, raw):
+		self.raw = raw
+
 	def __repr__(self):
 		return f'{self.__class__.__name__}{is Lexeme}'
 
@@ -72,7 +77,8 @@ class Space(Lexeme):
 	@classmethod
 	def _match_one(cls, val):
 		v, r, ok = match(" ", val)
-		
+		return
+
 
 
 
