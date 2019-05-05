@@ -24,19 +24,19 @@ class Matchable:
 	// alt:
 	pattern = MyCustomMatchType(42) // use instance method
 	m, rs, ok = match(pattern, someValue)
-	if ok: someParsedValue = m // depending on what MyConstomMatchType._match does
+	if ok: someParsedValue = m // depending on what MyConstomMatchType._match_one does
 
 	@classmethod
-	def _match(cls, val):
-		raise ValueError(f'_match not implemented in {__cls__.__name__}')
+	def _match_one(cls, val):
+		raise ValueError(f'_match_one not implemented in {__cls__.__name__}')
 		ok = False
 		if ...:
 			return cls(...), None, True
 		return None, val, False
 
 	@classmethod
-	def _match_many(cls, vals):
-		v, r, ok = cls._match(vals[0])
+	def _match(cls, vals):
+		v, r, ok = cls._match_one(vals[0])
 		if ok: return v, ([] if r is None else [r]) + vals[1:], ok
 		...
 		return None, vals, False
@@ -47,7 +47,7 @@ class Matchable:
 class Option(Matchable):
 	def __init__(self, val):
 		self.val = val
-	def _match_many(self, val):
+	def _match(self, val):
 		pattern = self.val
 		v, r, ok = match(pattern, val)
 		return v if ok else None, r, True
@@ -55,7 +55,7 @@ class Option(Matchable):
 class And(Matchable):
 	def __init__(self, *xs):
 		self.xs = xs
-	def _match_many(self, rs):
+	def _match(self, rs):
 		vs, r = [], rs
 		for pattern in self.xs:
 			v, r, ok = match(pattern, r)
@@ -67,7 +67,7 @@ class Or(Matchable):
 	def __init__(self, *xs, all=False):
 		self.xs = xs
 		self.all = all
-	def _match_many(self, rs):
+	def _match(self, rs):
 		vs, r, ok = [None for _ in self.xs] if self.all else None, rs, False
 		for i, pattern in enumerate(self.xs):
 			v, r, ok = match(pattern, r)
@@ -86,7 +86,7 @@ class Many(Matchable):
 		self.max = max
 		if self.max < 1: raise ValueError(f'max has to be >= 1, was {self.max}')
 		if self.max < self.min: raise ValueError(f'max has to be >= min, was {self.max} (min was {self.min})')
-	def _match_many(self, rs):
+	def _match(self, rs):
 		vs, r = [], rs
 		pattern = self.x
 		while len(vs) < self.max:
@@ -113,7 +113,7 @@ def match(pattern, val):
 		matcher = None
 
 		try:
-			matcher = pattern._match_many
+			matcher = pattern._match
 		except AttributeError:
 			pass
 		if matcher: return matcher(val)
@@ -122,16 +122,16 @@ def match(pattern, val):
 			return None, [], False
 
 		try:
-			matcher = pattern._match
+			matcher = pattern._match_one
 		except AttributeError:
 			pass
 		if matcher:
-			# if TypeError, was @classmethod before _match forgetten?
+			# if TypeError, was @classmethod before _match_one forgetten?
 			# if "TypeError: cannot unpack non-iterable ... object", was "return value, rest, ok" and not just "return value"?
 			v, r, ok = matcher(val[0])
 			return v, (r if r else []) + val[1:], ok
 
-		raise ValueError(f'pattern {repr(pattern)} has no _match or _match_many')
+		raise ValueError(f'pattern {repr(pattern)} has no _match_one or _match')
 	else:
 
 		if pattern is None:
@@ -155,18 +155,18 @@ def match(pattern, val):
 
 		matcher = None
 		try:
-			matcher = pattern._match
+			matcher = pattern._match_one
 		except AttributeError:
 			pass
 		if matcher: return matcher(val)
 
 		try:
-			matcher = pattern._match_many
+			matcher = pattern._match
 		except AttributeError:
 			pass
 		if matcher: return matcher([val])
 
-		raise ValueError(f'pattern {repr(pattern)} has no _match or _match_many')
+		raise ValueError(f'pattern {repr(pattern)} has no _match_one or _match')
 
 
 
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 		def __repr__(self):
 			return f'<{__self__.__class__.__name__} {repr(self.raw)}>'
 		@classmethod
-		def _match(cls, val):
+		def _match_one(cls, val):
 			v, rs, ok = match(Or("\t", "  "), val)
 			if not ok: return v, rs, ok
 			return cls(v), rs, ok
@@ -220,7 +220,7 @@ if __name__ == '__main__':
 		def __init__(self, indents):
 			self.xs = indents
 		@classmethod
-		def _match(cls, val):
+		def _match_one(cls, val):
 			vs, rs, ok = match(Many(Indent), val)
 			if not ok: return vs, rs, ok
 			return cls(vs), rs, ok

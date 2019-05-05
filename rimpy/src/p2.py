@@ -4,6 +4,9 @@ created by Leonard Pauli, 5 may 2019
 idea: create through many iterations of unstructured files parts that later on can be assembled into the final rimpy structure
 """
 
+from src.lib.match import match, And, Or, Option, Many
+
+
 
 # node base
 
@@ -58,7 +61,19 @@ class NodeNumber(Node):
 		self.binaryValue = value
 
 
-# next
+# lexemes
+
+class Lexeme:
+	def __repr__(self):
+		return f'{self.__class__.__name__}{is Lexeme}'
+
+class Space(Lexeme):
+
+	@classmethod
+	def _match_one(cls, val):
+		v, r, ok = match(" ", val)
+		
+
 
 
 
