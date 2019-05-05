@@ -1,0 +1,79 @@
+# tokenizer.grammar.notes
+' rimpy.p2
+	created by Leonard Pauli, 5 may 2019
+
+
+char // one char
+str: many char // all char until end
+
+indent.tab: "\t"
+indent.space2: "  "
+indent: option many or(tab, space2)
+
+space: " "
+space.white: many or: " ", "\t"
+
+comment.top.start: "#"
+comment.top.hashbang.start: "!"
+comment.top.hashbang.body: str
+comment.top.hashbang: start, body
+comment.top: start, or(hashbang, body)
+comment.top.body: option space, option many or (space.white, comment.line, string, char)
+comment.line.start: "//"
+comment.line: start, option or (expression, (space, option str))
+comment.block.start: "'"
+comment.block: start, option or (expression, (space, option str))
+
+line: indent, option whitespace, or (comment.top, comment.block, (expression, option whitespace, option comment.line))
+file: option many line
+
+expression.operand: element
+expression: many or: space.white, id.special, element
+// a + e.b d * (c+1); + k
+
+string.start: '"'
+string.end: '"'
+string.escape.start: '\\'
+string.escape: start, option or(escape.start, string.end, expression) 
+// use eg. u2333 -> String{is Unicode, value: ...}; "u2333: \u2333" or "u2333: \\(u2333)5"
+string: start, option many or(escape, char), option end
+
+number.digit: or: "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+number.spacing: "_"
+number.leadingzeros: "0", option many or("0", spacing)
+number.whole: or(leadingzeros, digit), option many or(digit, spacing)
+number.decimal: dot, many or(digit, spacing)
+number.decimal.dot: "."
+number: whole, option decimal
+// 000 52_300 . 322_000
+
+group.paren.start: "("
+group.paren.end: ")"
+group.paren: start, option space.white, option or (expression, id.strip), option space.white, option end
+group.brace.start: "{"
+group.brace.end: "}"
+group.brace: start, option space.white, option expression, option space.white, option end
+group.bracket.start: "["
+group.bracket.start: "]"
+group.bracket: start, option space.white, option expression, option space.white, option end
+
+ref: or: id.strip, id.special
+
+element.part: string, group, number, id
+element: many part
+
+id.strip.dot: "."
+id.strip.item: element
+id.strip: option dot, item, option many (dot, item)
+
+id.special:
+	- c < 0xC0: not in ('_$ "(){}[]', 0x30..0x39, 0x41..0x5A, 0x61..0x7A, 'ŠŒŽšœžŸ')
+	- c in 0x2000..<0x2800: not in ("⌚⌛", "⏩⏪⏫⏬⏭⏮⏯⏰⏱⏲⏳⏴⏵⏶⏷⏸⏹⏺", "☄☔☕☘☝☠☢☣☦☪☮☯☸♈♉♊♋♌♍♎♏♐♑♒♓♿⚒⚓⚔⚕⚖⚗⚙⚛⚜⚡⚪⚫⚰⚱⚽⚾⛄⛅⛈⛎⛏⛑⛓⛔⛩⛪⛰⛱⛲⛳⛴⛵⛷⛸⛹⛺⛽✅✊✋✌✍✨❌❎❓❔❕❗➕➖➗➰➿") // symbols
+	- c in 0x2900..<0x2c00: not in ("⬛⭐⭕")
+	- c in 0x3000..<0x3040
+
+id.base: or("_", "$", not or(space.white, string.start, id.special))
+id.start: or("_", "$", not or(space.white, string.start, id.special, digit))
+id.middle: or("-", id.base)
+id.tail: or: (middle, id.tail), base
+id: start, option id.tail

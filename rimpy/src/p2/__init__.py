@@ -1,4 +1,5 @@
-# p2.p
+# __init__.py
+# rimpy/p2
 """
 created by Leonard Pauli, 5 may 2019
 idea: create through many iterations of unstructured files parts that later on can be assembled into the final rimpy structure

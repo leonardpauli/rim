@@ -91,6 +91,10 @@ a.(@) // possibly same as a.@ or not? or should `a.('@)` for passing a token be 
 b2`0101` // custom nr formats (0[identifier sans nr])
 b16`FF02c3`.mm
 b16'FF02c3.mm
+b2"101"mm // -> mm(b2("101")) -> 7{is Number, is Base2 is Binary, is mm is Length{is Unit}}
+5.2+8.1i // -> Number.Imaginary{real: 8.1, imaginary: 5.2}
+	// nope: 5.2i8.1 // -> (i(5))(8)
+a"1"b"2"c // ??
 
 
 # identifier.type // TODO
