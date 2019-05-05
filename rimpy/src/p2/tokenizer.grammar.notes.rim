@@ -6,12 +6,12 @@
 char // one char
 str: many char // all char until end
 
+space: " "
+space.white: many or: " ", "\t"
+
 indent.tab: "\t"
 indent.space2: "  "
 indent: option many or(tab, space2)
-
-space: " "
-space.white: many or: " ", "\t"
 
 comment.top.start: "#"
 comment.top.hashbang.start: "!"

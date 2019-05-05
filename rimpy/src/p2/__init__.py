@@ -59,7 +59,7 @@ class NodeList(Node):
 
 class NodeNumber(Node):
 	def __init__(self, value):
-		assert type(value) == float || type(value) == int
+		assert (type(value) == float or type(value) == int)
 		self.binaryValue = value
 
 
@@ -71,7 +71,7 @@ class Lexeme:
 		self.raw = raw
 
 	def __repr__(self):
-		return f'{self.__class__.__name__}{is Lexeme}'
+		return f'{self.__class__.__name__}{{is Lexeme}}'
 
 class Space(Lexeme):
 
