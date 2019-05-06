@@ -72,10 +72,10 @@ id.special:
 	- c < 0xC0: not in ('_$ "(){}[]', 0x30..0x39, 0x41..0x5A, 0x61..0x7A, 'ŠŒŽšœžŸ')
 	- c in 0x2000..<0x2800: not in ("⌚⌛", "⏩⏪⏫⏬⏭⏮⏯⏰⏱⏲⏳⏴⏵⏶⏷⏸⏹⏺", "☄☔☕☘☝☠☢☣☦☪☮☯☸♈♉♊♋♌♍♎♏♐♑♒♓♿⚒⚓⚔⚕⚖⚗⚙⚛⚜⚡⚪⚫⚰⚱⚽⚾⛄⛅⛈⛎⛏⛑⛓⛔⛩⛪⛰⛱⛲⛳⛴⛵⛷⛸⛹⛺⛽✅✊✋✌✍✨❌❎❓❔❕❗➕➖➗➰➿") // symbols
 	- c in 0x2900..<0x2c00: not in ("⬛⭐⭕")
-	- c in 0x3000..<0x3040
+	- c in 0x3000..<0x3040: true
 
 id.base: or("_", "$", not or(space.white, string.start, id.special))
 id.start: or("_", "$", not or(space.white, string.start, id.special, digit))
-id.middle: or("-", id.base)
+id.middle: or("-", "_", "$", not or(space.white, string.start, id.special))
 id.tail: or: (middle, id.tail), base
 id: start, option id.tail

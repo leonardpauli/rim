@@ -126,24 +126,72 @@ class Id(TokenizeContext):
 	class Special(TokenizeContext):
 		class Char(Token):
 			@classmethod
+			def is_special_symbol_char(cls, l):
+				"""
+				TODO: might not be precise, not so black n white
+				goal: a special symbol may act as a word separator,
+					thus, should not be a "letter", though seemed easier to define it as all
+					unicode chars in "unicode symbol blocks" except eg. emojis and some
+					letters that happend to be there?
+				"""
+				c = ord(l)
+				if c < 0xC0:
+					for r in ('_$ "(){}[]', 'ŠŒŽšœžŸ'):
+						if l in r: return False
+					for r in (range(0x30, 0x39+1), range(0x41, 0x5A+1), range(0x61, 0x7A+1)):
+						if c in r: return False
+					return True
+				# symbols
+				if c in range(0x2000, 0x2800):
+					for r in ("⌚⌛", "⏩⏪⏫⏬⏭⏮⏯⏰⏱⏲⏳⏴⏵⏶⏷⏸⏹⏺", "☄☔☕☘☝☠☢☣☦☪☮☯☸♈♉♊♋♌♍♎♏♐♑♒♓♿⚒⚓⚔⚕⚖⚗⚙⚛⚜⚡⚪⚫⚰⚱⚽⚾⛄⛅⛈⛎⛏⛑⛓⛔⛩⛪⛰⛱⛲⛳⛴⛵⛷⛸⛹⛺⛽✅✊✋✌✍✨❌❎❓❔❕❗➕➖➗➰➿"):
+						if l in r: return False
+					return True
+				if c in range(0x2900, 0x2c00):
+					for r in ("⬛⭐⭕"):
+						if l in r: return False
+					return True
+				if c in range(0x3000, 0x3040): True
+				return False
+
+			@classmethod
 			def match(cls, linestr, start=0):
 				if start >= len(linestr): return None
 				l = linestr[start:1]
-				c = ord(l)
-				# if c < 0xC0
+				return cls(start, start+1) if cls.is_special_symbol_char(l) else None
 
-				if linestr.startswith(p, start):
-					end = start + len(p)
-					return cls(start, end)
-				return None
 		pattern = Many(Char)
 
 
+	class Base(Token):
+		allowed_chars = '_$'
+		disallowedTokens = [Space.White, String.Start, Id.Special]
+
+		@classmethod
+		def match(cls, linestr, start=0):
+			if start >= len(linestr): return None
+			l = linestr[start:1]
+			if l in cls.allowed_chars:
+				pass
+			else:
+				v, r, ok = match(Or(*cls.disallowedTokens), (linestr, start))
+				if ok: return None
+			return cls(start, start+1)
+
+	class Start(Base):
+		disallowedTokens = Base.disallowedTokens+[Digit]
+
+	class Middle(Base):
+		allowed_chars = Base.allowed_chars+'-'
+
+	class Tail(TokenizeContext):
+		pattern = Or(And(Middle, Tail), Base)
+
+	pattern = And(Start, Option(Tail))
 
 
 
 
-
+# test
 
 if __name__ == '__main__':
 	# import doctest
