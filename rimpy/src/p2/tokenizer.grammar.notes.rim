@@ -79,3 +79,108 @@ id.start: or("_", "$", not or(space.white, string.start, id.special, digit))
 id.middle: or("-", "_", "$", not or(space.white, string.start, id.special))
 id.tail: or: (middle, id.tail), base
 id: start, option id.tail
+
+
+
+# map
+
+'
+	stack.char.org -> stack.char --(stack.ctx)--> stack.token
+	stack.push
+	stack.pop
+	--
+	token{n: 1} t:
+		- 0..<n |>: stack.char.pop | stack.token.push t(it)
+		- shift
+	push c: stack.ctx.push c
+	pop: stack.ctx.pop
+	unshift n: 0..<n |>: stack.char.pop | stack.char.org.push
+	shift: stack.char.org.pop | stack.char.push
+	done
+	--
+	Context:
+		with many Context:| reverse |> push
+		is many (char: many operation)
+		else: pop // default
+	
+char:
+	"\n": done
+	else: token char, pop
+
+str:
+	else: char
+
+space:
+	" ": token space, pop
+	else: pop
+	
+space.white
+	" ": space.white
+	"\t": space.white
+
+
+
+line: indent, space.white, line.content, space.white, comment.line
+	content:
+		"#": push comment.top
+		"'": push comment.block
+		else: push expression
+
+indent:
+	"\t": token indent.tab
+	" ": push:
+		" ": token{2} indent.space2, pop
+		"\t": unshift 2, push space.white
+
+comment:
+	top:
+		"#": token comment.top.start, push top.first
+		first:
+			"!": token comment.top.hashbang.start, push str
+			else: top.inner
+		inner:
+			" ": push space
+			else: push str
+
+# --
+
+invalid_rest: -> str
+
+space: " "
+	white:
+		" " -> white
+		"\t" -> white
+
+line:
+	-> indent, space.white, line.content, space.white, comment.line, invalid_rest // pushed to stack
+	content:
+		"#" -> comment.top
+		"'" -> comment.block
+		else -> expression
+
+indent:
+	"\t" -> indent
+	"  " -> indent
+
+comment
+	top:
+		"#!..."
+		"# ..."
+		"#..."
+	block:
+		"' ..."
+		"'..."
+	line:
+		"// ..."
+		"//..."
+
+expression: ...
+
+id:
+	("_", "$"): ok
+	(id.special, space.white, group, string).startset: pop
+	else: ok
+
+	special: ---
+
+# verdict: use existing grammar -> tokenizer FSM tool when redoing tokenizer next time

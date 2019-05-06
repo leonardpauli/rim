@@ -3,6 +3,7 @@
 # created by Leonard Pauli, 5 may 2019
 
 import re
+import sys
 
 from src.lib.match import match, And, Or, Option, Many
 from .tokenize_base import *
@@ -223,7 +224,7 @@ Id.Tail.pattern = Or(And(Id.Middle, Id.Tail), Id.Base)
 Comment.Top.Body.pattern = And(Option(Space), Option(Many(Or(Space.White, Comment.Line, String, Char))))
 Expression.pattern = Many(Or(Space.White, Id.Special, Element))
 Element.Part.pattern = Or(String, Group, Number, Id.Strip)
-Id.Strip.Item.pattern = Or(String, Group, Number, Id)
+Id.Strip.Item.pattern = Many(Or(String, Group, Number, Id))
 Element.pattern = Element.Part.pattern
 
 Group.setPattern(Group.Paren)
@@ -233,7 +234,7 @@ Group.setPattern(Group.Bracket)
 
 # test
 
-if __name__ == '__main__':
+def test():
 	# import doctest
 	# doctest.testmod()
 
@@ -277,6 +278,11 @@ if __name__ == '__main__':
 	a = Id.Strip.match(s)
 	assert a is not None
 	# print(a.repr_unfolded(s))
+
+	s = r'a().b{c.d}() ()'
+	a = Id.Strip.match(s)
+	assert a is not None
+	# print(a.repr_unfolded(s))
 	
 	s = r'(a)'
 	a = Expression.match(s)
@@ -304,3 +310,30 @@ if __name__ == '__main__':
 	# print(a.repr_unfolded(s))
 
 	print('success')
+
+
+
+# repl
+
+def repl():
+	print('Welcome to tokenize repl; enter a line and hit enter to show tokenization')
+	while True:
+		inp = input('> ')
+		r = Line.match(inp)
+		if r:
+			print(r.repr_unfolded(inp))
+			if len(inp)>r.end:
+				print(f'rest: {repr(inp[r.end:])}')
+		else:
+			print('No match')
+
+if __name__ == '__main__':
+	args = sys.argv[1:]
+	if len(args) == 1 and args[0]=='--test':
+		test()
+		exit()
+	print('to test, run again with --test')
+	if len(args) != 0:
+		print('faulty args')
+		exit()
+	repl()
