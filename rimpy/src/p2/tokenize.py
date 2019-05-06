@@ -8,7 +8,9 @@ from src.lib.match import match, And, Or, Option, Many
 from .tokenize_base import *
 
 
+
 # tokens
+
 
 class Indent(TokenizeContext):
 	class Tab(Token):
@@ -18,6 +20,15 @@ class Indent(TokenizeContext):
 	pattern = Option(Many(Or(Tab, Space2)))
 
 
+
+# declare
+
+class Expression(TokenizeContext): pass
+
+
+
+# comment
+
 class Comment:
 	class Top(TokenizeContext):
 		class Start(Token):
@@ -26,8 +37,7 @@ class Comment:
 			class Start(Token):
 				pattern = "!"
 			pattern = And(Start, Str)
-		class Body(TokenizeContext):
-			pattern = And(Option(Space), Option(Many(Or(Space.White, Comment.Line, String, Char))))
+		class Body(TokenizeContext): pass
 		pattern = And(Start, Or(Hashbang, Body))
 
 	class Line(TokenizeContext):
@@ -41,6 +51,9 @@ class Comment:
 		pattern = And(Start, Option(Or(And(Space, Option(Str)), Expression)))
 
 
+
+# file/line
+
 class Line(TokenizeContext):
 	pattern = And(Indent, Option(Space.White), Or(Comment.Top, Comment.Block, Expression), Option(Space.White), Option(Comment.Line))
 
@@ -48,11 +61,8 @@ class File(TokenizeContext):
 	pattern = Option(Many(Line))
 
 
-class Expression(TokenizeContext):
-	class Operant(TokenizeContext):
-		pattern = Element
-	pattern = Many(Or(Space.White, Id.Special, Element))
 
+# primitives
 
 class String(TokenizeContext):
 	class Start(Token):
@@ -62,58 +72,66 @@ class String(TokenizeContext):
 	class Escape(TokenizeContext):
 		class Start(Token):
 			pattern = '\\'
-		pattern = And(Start, Option(Or(Start, End, Expression)))
 	pattern = And(Start, Option(Many(Or(Escape, Char))), Option(End))
+
+String.Escape.pattern = And(String.Escape.Start, Option(Or(String.Escape.Start, String.End, Expression)))
 
 
 class Number(TokenizeContext):
 	class Spacing(Token):
 		pattern = "_"
-	class LeadingZeros(TokenizeContext):
-		pattern = And(Digit.Zero, Option(Many(Or(Digit.Zero, Spacing))))
-	class Whole(TokenizeContext):
-		pattern = And(Or(LeadingZeros, Digit), Option(Many(Or(Digit, Spacing))))
+	class LeadingZeros(TokenizeContext): pass
+	class Whole(TokenizeContext): pass
 	class Decimal(TokenizeContext):
 		class Dot(Token):
 			pattern = "."
-		pattern = And(Dot, Many(Or(Digit, Spacing)))
 
 	# 000 52_300 . 322_000
 	pattern = And(Whole, Option(Decimal))
 
+Number.LeadingZeros.pattern = And(Digit.Zero, Option(Many(Or(Digit.Zero, Number.Spacing))))
+Number.Whole.pattern = And(Or(Number.LeadingZeros, Digit), Option(Many(Or(Digit, Number.Spacing))))
+Number.Decimal.pattern = And(Number.Decimal.Dot, Many(Or(Digit, Number.Spacing)))
+
+
+
+# group
+
 
 class Group(TokenizeContext):
 	@staticmethod
-	def patternForEndTokens(Start, End):
-		return And(Start, Option(Space.White), Option(Or(Expression, Id.Strip)), Option(Space.White), Option(End))
-	
+	def setPattern(cls):
+		cls.pattern = And(cls.Start, Option(Space.White), Option(Or(Expression, Id.Strip)), Option(Space.White), Option(cls.End))
+
 	class Paren(TokenizeContext):
 		class Start(Token):
 			pattern = "("
 		class End(Token):
 			pattern = ")"
-		pattern = Group.patternForEndTokens(Start, End)
 
 	class Brace(TokenizeContext):
 		class Start(Token):
 			pattern = "{"
 		class End(Token):
 			pattern = "}"
-		pattern = Group.patternForEndTokens(Start, End)
 
 	class Bracket(TokenizeContext):
 		class Start(Token):
 			pattern = "["
 		class End(Token):
 			pattern = "]"
-		pattern = Group.patternForEndTokens(Start, End)
 
 
+
+# element
 
 class Element(TokenizeContext):
-	class Part(TokenizeContext):
-		pattern = Or(String, Group, Number, Id)
+	class Part(TokenizeContext): pass
 	pattern = Many(Part)
+
+
+
+# id
 
 class Id(TokenizeContext):
 	class Strip(TokenizeContext):
@@ -164,7 +182,7 @@ class Id(TokenizeContext):
 
 	class Base(Token):
 		allowed_chars = '_$'
-		disallowedTokens = [Space.White, String.Start, Id.Special]
+		disallowedTokens = [] # see below
 
 		@classmethod
 		def match(cls, linestr, start=0):
@@ -173,22 +191,32 @@ class Id(TokenizeContext):
 			if l in cls.allowed_chars:
 				pass
 			else:
-				v, r, ok = match(Or(*cls.disallowedTokens), (linestr, start))
+				v, r, ok = match(Or(*cls.disallowedTokens, (linestr, start)))
 				if ok: return None
 			return cls(start, start+1)
 
-	class Start(Base):
-		disallowedTokens = Base.disallowedTokens+[Digit]
-
-	class Middle(Base):
-		allowed_chars = Base.allowed_chars+'-'
-
-	class Tail(TokenizeContext):
-		pattern = Or(And(Middle, Tail), Base)
+	class Start(Base): pass
+	class Middle(Base): pass
+	class Tail(TokenizeContext): pass
 
 	pattern = And(Start, Option(Tail))
 
+Id.Base.disallowedTokens = [Space.White, Id.Start, Id.Special]
+Id.Start.disallowedTokens = Id.Base.disallowedTokens+[Digit]
+Id.Middle.allowed_chars = Id.Base.allowed_chars+'-'
+Id.Tail.pattern = Or(And(Id.Middle, Id.Tail), Id.Base)
 
+
+
+# bind declared
+
+Comment.Top.Body.pattern = And(Option(Space), Option(Many(Or(Space.White, Comment.Line, String, Char))))
+Expression.pattern = Many(Or(Space.White, Id.Special, Element))
+Element.Part.pattern = Or(String, Group, Number, Id)
+
+Group.setPattern(Group.Paren)
+Group.setPattern(Group.Brace)
+Group.setPattern(Group.Bracket)
 
 
 # test
