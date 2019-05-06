@@ -9,6 +9,8 @@ str: many char // all char until end
 space: " "
 space.white: many or: " ", "\t"
 
+digit: or: "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+
 indent.tab: "\t"
 indent.space2: "  "
 indent: option many or(tab, space2)
@@ -20,11 +22,11 @@ comment.top.hashbang: start, body
 comment.top: start, or(hashbang, body)
 comment.top.body: option space, option many or (space.white, comment.line, string, char)
 comment.line.start: "//"
-comment.line: start, option or (expression, (space, option str))
+comment.line: start, option expression, option space.white, option str
 comment.block.start: "'"
-comment.block: start, option or (expression, (space, option str))
+comment.block: start, option or ((space, option str), expression)
 
-line: indent, option whitespace, or (comment.top, comment.block, (expression, option whitespace, option comment.line))
+line: indent, option whitespace, or (comment.top, comment.block, expression), option whitespace, option comment.line
 file: option many line
 
 expression.operand: element
@@ -38,7 +40,6 @@ string.escape: start, option or(escape.start, string.end, expression)
 // use eg. u2333 -> String{is Unicode, value: ...}; "u2333: \u2333" or "u2333: \\(u2333)5"
 string: start, option many or(escape, char), option end
 
-number.digit: or: "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
 number.spacing: "_"
 number.leadingzeros: "0", option many or("0", spacing)
 number.whole: or(leadingzeros, digit), option many or(digit, spacing)
@@ -47,19 +48,20 @@ number.decimal.dot: "."
 number: whole, option decimal
 // 000 52_300 . 322_000
 
+group.patternForEndTokens {start, end}:
+	start, option space.white, option or (expression, id.strip), option space.white, option end
 group.paren.start: "("
 group.paren.end: ")"
-group.paren: start, option space.white, option or (expression, id.strip), option space.white, option end
+group.paren: group.patternForEndTokens{start, end}
 group.brace.start: "{"
 group.brace.end: "}"
-group.brace: start, option space.white, option expression, option space.white, option end
+group.paren: group.patternForEndTokens{start, end}
 group.bracket.start: "["
 group.bracket.start: "]"
-group.bracket: start, option space.white, option expression, option space.white, option end
+group.paren: group.patternForEndTokens{start, end}
 
-ref: or: id.strip, id.special
 
-element.part: string, group, number, id
+element.part: or: string, group, number, id
 element: many part
 
 id.strip.dot: "."
