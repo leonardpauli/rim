@@ -235,6 +235,8 @@ if __name__ == '__main__':
 	assert a.end == 4
 	assert len(a.patternMatch) == 3
 
-
+	s = '33.126_200'
+	a = Number.match(s)
+	print(a.repr_unfolded(s))
 
 	print('success')

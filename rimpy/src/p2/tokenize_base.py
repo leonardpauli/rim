@@ -22,6 +22,13 @@ class Token:
 	def repr_w_linestr(self, linestr):
 		return f'{self.__class__.__name__} {repr(self.raw(linestr))}'
 
+	def repr_unfolded(self, linestr, indent=0):
+		pre = ''.join([' ' for _ in range(0, self.start)])
+		mid = self.raw(linestr)
+		post = ''.join([' ' for _ in range(0, len(linestr)-len(mid)-len(pre))])
+		ind = ''.join(['  ' for _ in range(0, indent)])
+		return pre+mid+post+f' | {ind}{self.__class__.__name__}'
+
 	def next_ctx(self, ctx):
 		return ctx # or TokenizationContext to push
 
@@ -66,6 +73,24 @@ class TokenizeContext(Token): # ie. "non-terminal"
 
 	def __repr__(self):
 		return f'TokenizeContext{{is {self.__class__.__name__}, {self.start}..{self.end}}}'
+
+	def repr_unfolded(self, linestr, indent=0):
+		ls = [Token.repr_unfolded(self, linestr, indent), *[t.repr_unfolded(linestr, indent+1) for t in self.unwrap()]]
+		return '\n'.join(ls)
+
+	def unwrap(self):
+		def unwrap_many(v):
+			for v in v:
+				if v is None:
+					pass
+				elif isinstance(v, Token):
+					yield v
+				elif type(v) is list:
+					yield from unwrap_many(v)
+				else: raise Exception(f'unwrap unhandled patternMatch {repr(v)}')
+		
+		yield from unwrap_many([self.patternMatch])
+		
 
 	@classmethod
 	def match(cls, linestr, start=0):
