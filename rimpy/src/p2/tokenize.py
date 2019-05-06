@@ -7,9 +7,6 @@ import re
 from src.lib.match import match, And, Or, Option, Many
 
 
-class TokenizationContext:
-	prev = None # TokenizationContext
-
 class Token:
 	def __init__(self, start, end):
 		# in the context of the line (a token cannot extend past a line)
@@ -58,13 +55,17 @@ class TokenRegex(Token):
 		return cls(start, m.span()[1]) if m else None
 
 
-class TokenMatch(Token):
+class TokenizeContext(Token):
 	pattern = None # lib.match pattern
 	patternMatch = None # populated with tokens when matched according to pattern
+	parentContext = None # TokenizeContext
 
 	def __init__(self, start, end, patternMatch):
 		super().__init__(start, end)
 		self.patternMatch = patternMatch
+
+	def __repr__(self):
+		return f'TokenizeContext{{is {self.__class__.__name__}, {self.start}..{self.end}}}'
 
 	@classmethod
 	def match(cls, linestr, start=0):
@@ -96,7 +97,7 @@ class Space(Token):
 
 # tokens
 
-class Indent(TokenMatch):
+class Indent(TokenizeContext):
 	class Tab(Token):
 		pattern = "\t"
 	class Space2(Token):
@@ -107,11 +108,15 @@ class Indent(TokenMatch):
 
 
 
+
+
+
+
 if __name__ == '__main__':
 	# import doctest
 	# doctest.testmod()
 	a = Indent.match('\t')
-	assert repr(a) == 'Token{is Indent, 0..1}'
+	assert repr(a) == 'TokenizeContext{is Indent, 0..1}'
 
 	a = Indent.Space2.match('  asdf')
 	assert a is not None
