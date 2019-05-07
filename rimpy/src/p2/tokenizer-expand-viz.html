@@ -1,0 +1,121 @@
+<head>
+  <style>
+    * {margin: 0px;padding:0px;}
+    .w {
+      display: inline-block;
+      width: 100%;
+      height: 15px;
+      position: relative;
+      font-size: 13px;
+    }
+    .bg {
+      height: 13px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      position: absolute;
+      top: 0px;
+    }
+    pre {
+      position: absolute;
+      top: -3px;
+    }
+    span {
+      visibility: hidden;
+    }
+
+    input {
+      width: 100%;
+      outline: none;
+      border: none;
+      background: rgba(0,0,0,0.1);
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    body {
+      margin: 20px;
+      position: relative;
+    }
+
+    .result {
+      position: relative;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<input id="in" placeholder="Write line to tokenize + hit enter and move cursor" />
+<div class="result">
+</div>
+
+<script>
+  const inel = document.getElementById('in')
+  const resel = document.body.querySelector('.result')
+
+  let mouseY = 0
+  let startY = resel.getBoundingClientRect().y+13
+
+  inel.addEventListener('keypress', e=> {
+    if (e.keyCode==13) {
+      e.preventDefault()
+      refix(inel.value)
+    }
+  })
+
+  const refix = s=> {
+    resel.innerHTML = ''
+    updateForY(0)
+    velY = 0
+    fetch('/tokenize', {method: 'POST', body: s}).then(r=> r.text()).then(t=> {
+      reload(t)
+    }).catch(e=> console.error(e) || alert(e))
+  }
+
+  const mheight = 18
+  const reload = s=> {
+    const lines = s.split('\n').slice(1)
+      .map((t, i, all)=> `<div style="z-index: ${all.length-i}; height: ${mheight}px;" class="w">`
+        +`<div class="bg"><span>a</span><pre>${t}</pre></div></div>`)
+
+    resel.innerHTML = lines.join('\n')
+    resel.style.minHeight = (lines.length*mheight)+'px'
+    setTargetY(lines.length*mheight)
+  }
+
+  let currentY = 0
+  let targetY = 0
+  const setTargetY = ty=> {
+    targetY = ty
+    loopty()
+  }
+
+  let velY = 0
+  const loopty = ()=> {
+    const delta = targetY-currentY
+    if (delta == 0) return
+    const dir = delta>0?1:-1
+    const inc = 1+velY
+    velY += 0.9
+    updateForY(currentY+dir*Math.round(Math.min(dir*delta, inc)))
+    if (Math.abs(delta)>1)
+      window.requestAnimationFrame(loopty)
+  }
+
+  const updateForY = y=> {
+    currentY = y
+    ;[].map.call(document.body.querySelectorAll('.result .w'), l=> l)
+      .filter((_, i)=> true).map((l, i)=> {
+        l.style.height = Math.min(Math.max(0, y - i * mheight), mheight)+`px`
+      })
+  }
+  
+  window.onmousemove = e=> {
+    mouseY = e.pageY
+    velY = 2
+    setTargetY(mouseY-startY)
+  }
+
+</script>
+</body>
