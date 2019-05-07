@@ -91,13 +91,16 @@ class TokenizeContext(Token): # ie. "non-terminal"
 		
 		yield from unwrap_many([self.patternMatch])
 		
+	@classmethod
+	def process_patternMatch(cls, patternMatch):
+		return patternMatch
 
 	@classmethod
 	def match(cls, linestr, start=0):
 		v, r, ok = match(cls.pattern, (linestr, start))
 		if not ok: return None
 		_, end = r[0]
-		return cls(start, end, v)
+		return cls(start, end, cls.process_patternMatch(v))
 
 
 # tokens.basic

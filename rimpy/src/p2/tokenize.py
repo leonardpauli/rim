@@ -207,9 +207,20 @@ class Id(TokenizeContext):
 
 	class Start(Base): pass
 	class Middle(Base): pass
-	class Tail(TokenizeContext): pass
+	class Tail(TokenizeContext):
+		@classmethod
+		def process_patternMatch(cls, v):
+			if type(v) is list:
+				middle, *rest = v
+				vs = rest[0].patternMatch if len(rest)==1 and type(rest[0]) is cls else rest
+				return [middle, *vs] if type(vs) is list else [middle, vs]
+			return v
 
 	pattern = And(Start, Option(Tail))
+	@classmethod
+	def process_patternMatch(cls, v):
+		return [v[0]] if not v[1] else [v[0], v[1].patternMatch]
+
 
 Id.Base.disallowedTokens = [Id.Special]
 Id.Start.disallowedTokens = Id.Base.disallowedTokens+[Digit]
@@ -316,9 +327,10 @@ def test():
 # repl
 
 def repl():
-	print('Welcome to tokenize repl; enter a line and hit enter to show tokenization')
+	isa = sys.stdin.isatty()
+	if isa: print('Welcome to tokenize repl; enter a line and hit enter to show tokenization')
 	while True:
-		inp = input('> ')
+		inp = input('> ' if isa else '')
 		r = Line.match(inp)
 		if r:
 			print(r.repr_unfolded(inp))
@@ -329,11 +341,15 @@ def repl():
 
 if __name__ == '__main__':
 	args = sys.argv[1:]
+	isa = sys.stdin.isatty()
 	if len(args) == 1 and args[0]=='--test':
 		test()
 		exit()
-	print('to test, run again with --test')
+	if isa: print('to test, run again with --test, or echo \'some (expr)\' | tokenize')
 	if len(args) != 0:
 		print('faulty args')
 		exit()
-	repl()
+	try:
+		repl()
+	except EOFError:
+		pass
