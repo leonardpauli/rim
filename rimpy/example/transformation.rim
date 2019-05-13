@@ -267,7 +267,47 @@ Token
 
 AST
 
+many Token
+	-> LexemeSource // object of all tokens or nested LexemeSource, able to recreate source code 100%
+	-> Lexeme // parsed meaning, no superfluous spaces etc, able to delta update a corresponding LexemeSource to keep superfluous formatting intact, or generate a new with standard formatting
+	-> Node{is LexemeNode} // semantic expressed as a rim-native graph, on which SyntaxPackage's may operate to modify back source, or to generate/modify other rim-native graphs
+	-> Node // intermediate structure
+	-> Node{is LexemeASMNode}
+	-> LexemeASM
+	-> String // WebASM
+
+Token
+	Number: Whole, Decimal?
+		Whole: Digit, (Digit, or Separator)?
+		Decimal: Dot, Digit+
+LexemeSource
+	from Token: ...
+	to Lexeme: ...
+	delta_update with Lexeme: ...
+	from (Lexeme, start is Index is Int): ...
+	Number
+		whole_part is many Token
+		dot is Token?
+		decimal_part is many Token
 Lexeme
+	Number
+		value is Number
+		positions_decimal is Int // postfix w zeros up to amount
+		separator_pattern is (None, Thousands, Custom{whole is many Int, decimal is many Int})
+LexemeNode is Node
+	with {l is Lexeme}
+	with {l is Lexeme: ls as Lexeme, ls is LexemeSource}
+
+
+Lexeme
+	' note
+		- contains all information necessary to build back source code, disconnected from tokens
+			eg. how many preceeding white spaces (+ their kind), the actual string content or number value, etc
+			(eg. when generating source code from visual graph, no existing tokens exists)
+		- optionally contains refs to the actual corresponding tokens
+			eg. the tokens for the preceeding white spaces, the tokens building up the string or number, etc
+			(eg. when linting, tokens (start, end) are used for delta updates)
+
 	line_child_context is Line.ParseContext:
 		' TODO:
 			// {parent_ctx is Line.ParseContext} is provided to ParseContext fns when used
