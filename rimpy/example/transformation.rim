@@ -268,7 +268,7 @@ Token
 AST
 
 many Token
-	-> LexemeSource // object of all tokens or nested LexemeSource, able to recreate source code 100%
+	-> Lexeme.Source // object of all tokens or nested LexemeSource, able to recreate source code 100%
 	-> Lexeme // parsed meaning, no superfluous spaces etc, able to delta update a corresponding LexemeSource to keep superfluous formatting intact, or generate a new with standard formatting
 	-> Node{is LexemeNode} // semantic expressed as a rim-native graph, on which SyntaxPackage's may operate to modify back source, or to generate/modify other rim-native graphs
 	-> Node // intermediate structure
@@ -276,58 +276,100 @@ many Token
 	-> LexemeASM
 	-> String // WebASM
 
-Token
+' Token
 	Number: Whole, Decimal?
 		Whole: Digit, (Digit, or Separator)?
 		Decimal: Dot, Digit+
-LexemeSource
-	from Token: ...
-	to Lexeme: ...
-	delta_update with Lexeme: ...
-	from (Lexeme, start is Index is Int): ...
-	Number
-		whole_part is many Token
-		dot is Token?
-		decimal_part is many Token
-Lexeme
-	Number
-		value is Number
-		positions_decimal is Int // postfix w zeros up to amount
-		separator_pattern is (None, Thousands, Custom{whole is many Int, decimal is many Int})
-LexemeNode is Node
-	with {l is Lexeme}
-	with {l is Lexeme: ls as Lexeme, ls is LexemeSource}
-
 
 Lexeme
-	' note
-		- contains all information necessary to build back source code, disconnected from tokens
-			eg. how many preceeding white spaces (+ their kind), the actual string content or number value, etc
-			(eg. when generating source code from visual graph, no existing tokens exists)
-		- optionally contains refs to the actual corresponding tokens
-			eg. the tokens for the preceeding white spaces, the tokens building up the string or number, etc
-			(eg. when linting, tokens (start, end) are used for delta updates)
-
-	line_child_context is Line.ParseContext:
+	Source
+		from Token: ...
+		to Lexeme: ...
+		token_delta_update with Lexeme: ...
+		from (Lexeme, start is Index is Int): ...
+		
+		line_child_context is Line.ParseContext:
 		' TODO:
 			// {parent_ctx is Line.ParseContext} is provided to ParseContext fns when used
 			find lexeme corresponding to last line token,
 				if finished, return parent context,
 				else, if open, (eg. string not closed, return string parse context with parent context)
+
+	Number is Self
+		value is Number
+		positions_decimal_min is Int // postfix w zeros up to amount
+		separator_pattern is (None, Thousands, Custom{whole is many Int, decimal is many Int})
+		Source is Lexeme.Source
+			wrapper is Token.Number
+			whole_part is many Token
+			dot is Token?
+			decimal_part is many Token
+
+			from Token.Number:
+				wrapper: it
+				(whole_part, (dot, decimal_part)?): it.patternMatch
+			from (l is Lexeme.Number, start is Index):
+				s: l.value as String with {positions.decimal.min: l.positions_decimal_min, {separator_pattern}: l}
+				self: s | Self
+				do t | flatten |> it.(start, end) += start
+			to Lexeme:
+				value: whole as String as Number
+				positions_decimal_min: decimal_part.count if it and decimal_part.(-1) is "0" else 0
+				separator_pattern: None // TODO
+			delta_update with (l is Lexeme):
+				- Replace{target: whole, source: l to Lexeme.Source | .whole}
+
+	Line is Self
+		indent is Int // TODO: not semantic information, syntactic information determined from block nesting level?
+		content is (Expression or Comment.Block or Comment.Top)?
+		comment is Comment.Line
+		Source:
+			wrapper is Token
+			indent is Token
+			whitespacePre is Token?
+			content is Lexeme.(Expression or Comment.Block or Comment.Top)?
+			whitespacePost is Token?
+			comment is Lexeme.Comment?
+			...
+	Comment.Line
+		content is Expression or String
+		Source
+			start is Token
+			startPostSpace is Token?
+			content is Token.(Expression or String)
+			...
+
 	--
-	Space
-	Id
-		Strip
-		Special
-	String
+	File
+		line is many Line
 	Comment
-		Top
-		Line
-		Block
-	Group
-		Paren // ()
-		Brace // {}
-		Bracket // []
+		// TODO
+		whitespacePre is Token
+		text is Token
+		Top is Self
+			comment is Lexeme.Comment.Line?
+			Hashbang is Self
+				bang is Token
+		Line is Self
+		Block is Self
+	Expression is or:
+		- Id
+			token is Token
+		- Id.Strip
+			token is Token
+		- Id.Special
+			token is Token
+		- Number
+			token is Token
+		- String
+			token is Token
+		- Group
+			token is Token
+			expression is Expression
+			(Paren, Brace, Bracket) is Self // (), {}, []
+		- Bind
+		- Attach
+
 	--
 	many as Node with {ctx is Node.Context}:
 		ctx.parse: self.line_child_context
@@ -420,6 +462,9 @@ Lexeme
 					- ... // matters if suffix/prefix or other
 
 
+LexemeNode is Node
+	with {l is Lexeme}
+	with {l is Lexeme: ls as Lexeme, ls is LexemeSource}
 			
 
 
