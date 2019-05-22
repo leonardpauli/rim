@@ -283,7 +283,7 @@ many Token
 
 Lexeme
 	Source
-		from Token: ...
+		with Token: ...
 		to Lexeme: ...
 		token_delta_update with Lexeme: ...
 		from (Lexeme, start is Index is Int): ...
@@ -305,7 +305,7 @@ Lexeme
 			dot is Token?
 			decimal_part is many Token
 
-			from Token.Number:
+			with Token.Number:
 				wrapper: it
 				(whole_part, (dot, decimal_part)?): it.patternMatch
 			from (l is Lexeme.Number, start is Index):

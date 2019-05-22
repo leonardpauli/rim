@@ -6,6 +6,8 @@ import re
 
 from src.lib.match import match, And, Or, Option, Many
 from .base import *
+from . import base
+Digit = base.Digit
 
 
 
