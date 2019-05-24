@@ -6,8 +6,6 @@ import re
 
 from src.lib.match import match, And, Or, Option, Many
 from .base import *
-from . import base
-Digit = base.Digit
 
 
 
@@ -86,7 +84,7 @@ class String(TokenizeContext):
 			if start >= len(linestr): return None
 			l = linestr[start]
 			if l == String.End.pattern: return None
-			return cls(start, start+1)
+			return cls.with_linestr(start, start+1, linestr)
 
 String.pattern = And(String.Start, Option(Many(Or(String.Escape, String.Char))), Option(String.End))
 String.Escape.pattern = And(String.Escape.Start, Option(Or(String.Escape.Start, String.End, Element)))
@@ -184,7 +182,7 @@ class Id(TokenizeContext):
 				if start >= len(linestr): return None
 				if linestr.startswith('//', start): return None
 				l = linestr[start]
-				return cls(start, start+1) if cls.is_special_symbol_char(l) else None
+				return cls.with_linestr(start, start+1, linestr) if cls.is_special_symbol_char(l) else None
 
 		pattern = Many(Char)
 
@@ -205,7 +203,7 @@ class Id(TokenizeContext):
 			else:
 				v, r, ok = match(Or(*cls.disallowedTokens), (linestr, start))
 				if ok: return None
-			return cls(start, start+1)
+			return cls.with_linestr(start, start+1, linestr)
 
 	class Start(Base): pass
 	class Middle(Base): pass
