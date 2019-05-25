@@ -15,8 +15,19 @@ if __name__ == '__main__':
 	syntaxLexeme = syntax.Number.with_token(token)
 	# print(repr(syntaxLexeme))
 	assert repr(syntaxLexeme) == 'Lexeme.Syntax{is Number, 0..17, spacers_every3, precision_decimal_min: 7, ("036132", "7322230")}'
-	# lexeme = syntaxLexeme.to_semantic()
-	# print(lexeme.value) # 36132.732223
-	# lexeme.value += 5
+	lexeme = syntaxLexeme.to_semantic()
+	# print(lexeme.value)
+	assert lexeme.value==36132.732223
+	lexeme.value += 1111.22
+	syntaxLexeme2 = syntaxLexeme.copy_with_semantic(lexeme)
+	# print(repr(syntaxLexeme2))
+	# print(syntaxLexeme2)
+	assert str(syntaxLexeme2) == '037_243.952_223_0'
+	syntaxLexeme2.positions_whole_min = 0
+	syntaxLexeme2.precision_decimal_min = 0
+	syntaxLexeme2.spacers_every3 = False
+	assert str(syntaxLexeme2) == '37243.952223'
 	# # lexeme.dirty()
 	# syntaxLexeme.delta_update_get()
+	# 
+	print('success')

@@ -19,6 +19,11 @@ Base = LexemeSemantic
 # items
 
 class Number(Base):
+	class BasicFloat(Base):
+		value = 0
+		
+
+	"""
 	# todo: value (non-lossy, eg. by storing n sections of values up to 10**Int_max.digits.count-1 / some big int impl. + infinite decimal impl.)
 	value_lossy = 0
 	whole_min_positions = 0
@@ -58,7 +63,7 @@ class Number(Base):
 		else:
 			decimal_s = decimal_ss[0]
 			return whole_s+'.'+decimal_s
-
+	"""
 
 
 
