@@ -30,7 +30,9 @@ class Token:
 		
 
 	def __repr__(self):
-		return f'Token{{is {self.__class__.__name__}, {self.start}..{self.end}}}'
+		parts = [f'is {self.__class__.__name__}', f'{self.start}..{self.end}']
+		if self._raw is not None: parts += [f'{repr(self._raw)}']
+		return f'Token{{{", ".join(parts)}}}'
 
 	def repr_w_linestr(self, linestr):
 		return f'{self.__class__.__name__} {repr(self.raw(linestr))}'

@@ -281,6 +281,53 @@ many Token
 		Whole: Digit, (Digit, or Separator)?
 		Decimal: Dot, Digit+
 
+
+'
+	2+3 | Line
+	    |   Indent
+	2+3 |   Expression
+	2   |     Element
+	2   |       Number
+	2   |         Whole
+	2   |           Digit
+	 +  |     Special
+	 +  |       Char
+	  3 |     Element
+	  3 |       Number
+	  3 |         Whole
+	  3 |           Digit
+	----
+	Line
+	Expression{cache{pure, value}}
+	Number.BasicFloat{value}
+	Id.Special{text}
+	Bind{operator, operand.(left is one?, right is many)}
+
+	source -> chars -> tokens in higher order tokens -> lexeme.syntax -> grouping -> lexeme.semantic
+
+	lexeme.semantic:
+		a+2+3
+		Expression(Bind(Id.Special,
+			- Id is Expression,
+			- Expression(Bind(Id.Special,
+				- Number is Expression,
+				- Number is Expression))))
+		expression.dependencies = [a]
+		expression.computed_value = None
+		expression_inner.dependencies = []
+		expression_inner.computed_value = 5
+		expression.processed -> lexeme.semantic
+			a+5
+			Expression(Bind(Id.Special,
+				- Id is Expression,
+				- Number is Expression))
+		-> ungrouping -> lexeme.syntax -> tokens -> chars -> source
+
+
+
+	lexeme.semantic -> un
+
+
 Lexeme
 	Source
 		with Token: ...
