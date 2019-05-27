@@ -1,58 +1,16 @@
-# lexemize/syntax.py
+# lexemize/syntax/number
 # rimpy/p2
 # created by Leonard Pauli, 21 may 2019
 
 from itertools import count
 from math import floor
 
-from .. import tokenize
-from ..tokenize import base as tokenizeBase
-from . import semantic
+from ... import tokenize
+from ...tokenize import base as tokenizeBase
+from .. import semantic
 
+from .base import Base
 
-# base
-
-class LexemeSyntax():
-
-	# token
-	wrapper = None
-
-	def _repr_extra(self):
-		"""returns list of strings to be comma-joined added to __repr__"""
-		return []
-	def __repr__(self):
-		inner_a = [f'is {self.__class__.__name__}']
-		if self.wrapper is not None: inner_a.append(f'{self.wrapper.start}..{self.wrapper.end}')
-		inner_a += self._repr_extra()
-		inner = ", ".join(inner_a)
-		return f'Lexeme.Syntax{{{inner}}}'
-
-	@classmethod
-	def with_token(cls, token):
-		s = cls()
-		s.wrapper = token
-		return s
-
-	def to_semantic(self):
-		pass
-
-	def copy_with_semantic(self, semantic):
-		pass
-
-	# @classmethod
-	# def from_semantic(self, line_start):
-	# 	pass
-
-	def token_delta_update(self, semantic):
-		# next = self.__class__.from_semantic(semantic, self.wrapper.start)
-		# return TokenDeltaUpdate.Replace(source=self.wrapper, target=next.wrapper)
-		pass
-
-
-Base = LexemeSyntax
-
-
-# items
 
 class Number(Base):
 
@@ -192,64 +150,3 @@ class Number(Base):
 		s.precision_decimal_min = self.precision_decimal_min
 		s.positions_whole_min = self.positions_whole_min
 		return s
-
-	"""
-	whole_part = [] # whole_part is many Token
-	dot = None # dot is Token?
-	decimal_part = [] # decimal_part is many Token
-	
-	def _repr_extra(self):
-		return []
-
-	def to_semantic(self, linestr):
-		s = semantic.Number()
-
-		# value
-		s.value_lossy = float(linestr[self.wrapper.start:self.wrapper.end].replace('_', ''))
-		whole_wrapper, decimal_wrapper = self.wrapper.patternMatch
-
-		# whole
-		
-		leading_zeros_wrapper_or_digit, nrs_wrapper = whole_wrapper.patternMatch
-		if isinstance(leading_zeros_wrapper_or_digit, tokenize.Number.LeadingZeros):
-			s.whole_min_positions = len(whole_wrapper.raw(linestr).replace('_', ''))
-
-			zero_fst, nrs_wrapper1 = leading_zeros_wrapper_or_digit.patternMatch
-			whole_content = [zero_fst]
-			if nrs_wrapper1: whole_content += nrs_wrapper1
-		else:
-			whole_content = [leading_zeros_wrapper_or_digit]
-		
-		if nrs_wrapper: whole_content += nrs_wrapper
-		
-		# spacers
-		i = 0
-		whole_content_r = whole_content.copy()
-		whole_content_r.reverse()
-		for t in whole_content_r:
-			if isinstance(t, tokenize.Number.Spacing):
-				s.whole_spacer_locations.append(i)
-			else:
-				i += 1
-
-		# if len(decimal_wrapper)>0 && decimal_wrapper[1]:
-		# 	s.whole_min_positions = whole_wrapper.end-whole_wrapper.start
-		return s
-
-	# @classmethod
-	# def from_semantic(cls, sem, line_start):
-	# 	pre = "".join(["#" for _ in range(0, line_start)])
-	# 	t = tokenize.Number.match(pre+str(sem.value_lossy), line_start)
-	# 	return cls.with_token(t)
-
-	def token_delta_update(self, semantic):
-		# next = self.__class__.from_semantic(semantic, self.wrapper.start)
-		# return TokenDeltaUpdate.Replace(source=self.wrapper, target=next.wrapper)
-		pass
-	"""
-
-
-
-if __name__ == '__main__':
-	# test
-	pass
