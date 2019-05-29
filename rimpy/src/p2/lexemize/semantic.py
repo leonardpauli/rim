@@ -6,6 +6,7 @@
 # base
 
 class LexemeSemantic():
+	syntax = None # optional ref
 	def _repr_extra(self):
 		return []
 	def __repr__(self):

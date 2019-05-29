@@ -110,6 +110,7 @@ class Number(Base):
 
 	def to_semantic(self):
 		s = semantic.Number.BasicFloat()
+		s.syntax = self
 		s.value = float(self.digits_whole+'.'+self.digits_decimal)
 		return s
 

@@ -2,7 +2,7 @@
 # rimpy/p2
 # created by Leonard Pauli, 21 may 2019
 
-from . import syntax
+from . import syntax as Syntax
 from . import semantic
 
 
@@ -17,49 +17,49 @@ if __name__ == '__main__':
 	linestr = '036_132.732_223_0'
 	token = tokenize.Number.match(linestr)
 	# [print(t) for t in token.endterminals()]
-	lexemeSyntax = syntax.Number.with_token(token)
-	# print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Number, 0..17, spacers_every3, precision_decimal_min: 7, ("036132", "7322230")}'
-	lexeme = lexemeSyntax.to_semantic()
+	syntax = Syntax.Number.with_token(token)
+	# print(repr(syntax))
+	assert repr(syntax) == 'Lexeme.Syntax{is Number, 0..17, spacers_every3, precision_decimal_min: 7, ("036132", "7322230")}'
+	lexeme = syntax.to_semantic()
 	# print(lexeme.value)
 	assert lexeme.value==36132.732223
 	lexeme.value += 1111.22
-	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
-	# print(repr(lexemeSyntax2))
-	# print(lexemeSyntax2)
-	assert str(lexemeSyntax2) == '037_243.952_223_0'
-	lexemeSyntax2.positions_whole_min = 0
-	lexemeSyntax2.precision_decimal_min = 0
-	lexemeSyntax2.spacers_every3 = False
-	assert str(lexemeSyntax2) == '37243.952223'
+	syntax = lexeme.syntax.copy_with_semantic(lexeme)
+	# print(repr(syntax))
+	# print(syntax)
+	assert str(syntax) == '037_243.952_223_0'
+	syntax.positions_whole_min = 0
+	syntax.precision_decimal_min = 0
+	syntax.spacers_every3 = False
+	assert str(syntax) == '37243.952223'
 	# # lexeme.dirty()
-	# lexemeSyntax.delta_update_get()
+	# syntax.delta_update_get()
 
 
 	# id.special
 
 	linestr = '+'
 	token = tokenize.Id.Special.match(linestr)
-	lexemeSyntax = syntax.Id.with_token(token)
-	# print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Id, 0..1, special, text: "+"}'
-	lexeme = lexemeSyntax.to_semantic()
+	syntax = Syntax.Id.with_token(token)
+	# print(repr(syntax))
+	assert repr(syntax) == 'Lexeme.Syntax{is Id, 0..1, special, text: "+"}'
+	lexeme = syntax.to_semantic()
 	# print(repr(lexeme))
 	assert repr(lexeme) == 'Lexeme.Semantic{is Id, text: "+"}' # special
 	assert lexeme.text == '+' # and lexeme.special
 	lexeme.text = '*'
-	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
-	assert str(lexemeSyntax2) == '*'
+	syntax = lexeme.syntax.copy_with_semantic(lexeme)
+	assert str(syntax) == '*'
 
 	
 	# id.strip WIP
 
 	linestr = 'a.b.1'
 	token = tokenize.Id.Strip.match(linestr)
-	lexemeSyntax = syntax.Id.Strip.with_token(token)
-	print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == r'Lexeme.Syntax{is Strip, 0..5, (Lexeme.Syntax{is Id, 0..1, text: "a"}, Lexeme.Syntax{is Id, 2..3, text: "b"}, Lexeme.Syntax{is Number, 4..5, ("1", "")})}'
-	lexeme = lexemeSyntax.to_semantic()
+	syntax = Syntax.Id.Strip.with_token(token)
+	print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Strip, 0..5, (Lexeme.Syntax{is Id, 0..1, text: "a"}, Lexeme.Syntax{is Id, 2..3, text: "b"}, Lexeme.Syntax{is Number, 4..5, ("1", "")})}'
+	lexeme = syntax.to_semantic()
 	print(repr(lexeme))
 	assert repr(lexeme)==r'Lexeme.Semantic{is Strip, (Lexeme.Semantic{is Id, text: "a"}, Lexeme.Semantic{is Id, text: "b"}, Lexeme.Semantic{is BasicFloat})}'
 	assert lexeme.parts[0].text == "a"
@@ -67,9 +67,9 @@ if __name__ == '__main__':
 	lexeme.parts.append(semantic.Id.with_text("d"))
 	lexeme.parts.append(semantic.Id.with_text("c"))
 	"""
-	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
-	print(str(lexemeSyntax2))
-	assert str(lexemeSyntax2)=='a.b.d.c'
+	syntax = lexeme.syntax.copy_with_semantic(lexeme)
+	print(str(syntax))
+	assert str(syntax)=='a.b.d.c'
 
 
 	# str WIP
@@ -82,11 +82,11 @@ if __name__ == '__main__':
 
 	linestr = '3+ 2'
 	token = tokenzie.Expression.match(linestr)
-	lexemeSyntax = syntax.Expression.with_token(token, skip_grouping=True)
-	print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == r'Lexeme.Syntax{is Expression, 0..4, ("3", "+", " ", "2")}' # though with many Lexeme.Syntax
+	syntax = Syntax.Expression.with_token(token, skip_grouping=True)
+	print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Expression, 0..4, ("3", "+", " ", "2")}' # though with many Lexeme.Syntax
 	
-	# lexeme = lexemeSyntax.to_semantic(skip_grouping=True)
+	# lexeme = syntax.to_semantic(skip_grouping=True)
 	# print(repr(lexeme))
 	# assert repr(lexeme) == r'Lexeme.Semantic{is Expression, ("3", "+", " ", "2")}' # though with many Lexeme.Semantic
 	pass
@@ -109,10 +109,10 @@ if __name__ == '__main__':
 
 	def reduced_syntax_test(what, linestr, target):
 		token = tokenize.Expression.match(linestr)
-		lexemeSyntax = syntax.Expression.with_token(token)
-		lexeme = lexemeSyntax.to_semantic()
+		syntax = Syntax.Expression.with_token(token)
+		lexeme = syntax.to_semantic()
 		lexeme.reduced_calc()
-		reduced = syntax.from_semantic(lexeme.reduced)
+		reduced = Syntax.from_semantic(lexeme.reduced)
 		if str(reduced)!=target:
 			raise ValueError(f'{what}: \n\t{str(reduced)}!={target}; \n\t{repr(reduced)}') 
 

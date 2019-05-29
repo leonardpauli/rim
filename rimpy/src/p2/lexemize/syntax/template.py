@@ -43,6 +43,7 @@ class Id(Base):
 
 	def to_semantic(self):
 		s = semantic.Id()
+		s.syntax = self
 		s.value = some
 		return s
 

@@ -37,6 +37,7 @@ class Id(Base):
 
 	def to_semantic(self):
 		s = semantic.Id()
+		s.syntax = self
 		s.text = self.text
 		# todo: do initial special infix groping at syntax level?
 		return s
@@ -85,6 +86,7 @@ class Strip(Base):
 
 	def to_semantic(self):
 		s = semantic.Id.Strip()
+		s.syntax = self
 		s.parts = [p.to_semantic() for p in self.parts]
 		return s
 
