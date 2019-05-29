@@ -35,22 +35,23 @@ if __name__ == '__main__':
 	# # lexeme.dirty()
 	# lexemeSyntax.delta_update_get()
 
-	"""
+
 	# id.special
 
 	linestr = '+'
 	token = tokenize.Id.Special.match(linestr)
 	lexemeSyntax = syntax.Id.with_token(token)
-	print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Id, 0..1, is special, ("+")}'
+	# print(repr(lexemeSyntax))
+	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Id, 0..1, special, ("+")}'
 	lexeme = lexemeSyntax.to_semantic()
-	print(repr(lexeme))
-	assert repr(lexeme) == 'Lexeme.Semantic{is Id, is special, text: "+"}'
-	assert lexeme.name == '+' and lexeme.is_special
+	# print(repr(lexeme))
+	assert repr(lexeme) == 'Lexeme.Semantic{is Id, text: "+"}' # special
+	assert lexeme.text == '+' # and lexeme.special
+	lexeme.text = '*'
 	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
 	assert str(lexemeSyntax2) == '*'
 
-
+	"""
 	# id.strip WIP
 
 	linestr = 'a'

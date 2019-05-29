@@ -4,6 +4,7 @@
 
 from .base import Base
 from .number import Number
+from .id import Id
 
 
 if __name__ == '__main__':

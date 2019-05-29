@@ -27,6 +27,8 @@ class String(Base):
 
 class Id(Base):
 	text = ""
+	def _repr_extra(self):
+		return [f'text: "{repr(self.text)[1:-1]}"']
 
 	class Strip(Base):
 		parts = []
