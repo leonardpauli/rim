@@ -56,6 +56,17 @@ class Id(Base):
 		def _repr_extra(self):
 			return [f'({", ".join([repr(p) for p in self.parts])})']
 
+class Group(Base):
+	kind = None # semantic.GroupKind...
+	value = None # semantic
+	closed = True
+	def _repr_extra(self):
+		return list(filter(lambda x: x is not None, [
+			self.kind and f'kind: {self.kind.name}',
+			f'not closed' if not self.closed else None,
+			self.value and f'({repr(self.value)})'
+		]))
+
 # class Expression(Base):
 
 

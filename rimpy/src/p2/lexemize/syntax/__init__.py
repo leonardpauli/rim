@@ -10,7 +10,7 @@ from .base import Base
 from .number import Number
 from .id import Id
 from .string import String
-from .expression import Expression, Element
+from .expression import Expression, Element, Group
 
 token_to_syntax_mapping = [
 	(tokenize.Number, Number),
@@ -21,7 +21,11 @@ token_to_syntax_mapping = [
 	(tokenize.String, String),
 	(tokenize.String.Escape, String.Escape),
 	(tokenize.Expression, Expression),
-	(tokenize.Element, Element)
+	(tokenize.Element, Element),
+	(tokenize.Group, Group),
+	(tokenize.Group.Paren, Group),
+	(tokenize.Group.Brace, Group),
+	(tokenize.Group.Bracket, Group),
 ]
 
 semantic_to_syntax_mapping = [
@@ -29,9 +33,10 @@ semantic_to_syntax_mapping = [
 	(Semantic.Number.BasicFloat, Number),
 	(Semantic.Id, Id),
 	(Semantic.Id.Strip, Id.Strip),
-	(Semantic.String, String)
+	(Semantic.String, String),
 	# (Semantic.String.Escape, String.Escape)
 	# (Semantic.Expression, Expression)
+	(Semantic.Group, Group),
 ]
 
 def to_syntax_lexeme(token):
