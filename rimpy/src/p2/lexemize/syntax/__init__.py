@@ -10,7 +10,7 @@ from .base import Base
 from .number import Number
 from .id import Id
 from .string import String
-from .expression import Expression
+from .expression import Expression, Element
 
 token_to_syntax_mapping = [
 	(tokenize.Number, Number),
@@ -20,7 +20,8 @@ token_to_syntax_mapping = [
 	(tokenize.Id.Strip.Item, Expression),
 	(tokenize.String, String),
 	(tokenize.String.Escape, String.Escape),
-	(tokenize.Expression, Expression)
+	(tokenize.Expression, Expression),
+	(tokenize.Element, Element)
 ]
 
 semantic_to_syntax_mapping = [

@@ -90,14 +90,14 @@ if __name__ == '__main__':
 	# print(str(syntax))
 	assert str(syntax)==r'"hello\"1\"lal23.7"'
 
-	"""
+	
 	# expression WIP
 
 	linestr = '3+ 2'
-	token = tokenzie.Expression.match(linestr)
+	token = tokenize.Expression.match(linestr)
 	syntax = Syntax.Expression.with_token(token, skip_grouping=True)
-	print(repr(syntax))
-	assert repr(syntax) == r'Lexeme.Syntax{is Expression, 0..4, ("3", "+", " ", "2")}' # though with many Lexeme.Syntax
+	# print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Expression, 0..4, (Lexeme.Syntax{is Number, 0..1, ("3", "")}, Lexeme.Syntax{is Id, 1..2, special, space.after: " ", text: "+"}, Lexeme.Syntax{is Number, 3..4, ("2", "")})}'
 	
 	# lexeme = syntax.to_semantic(skip_grouping=True)
 	# print(repr(lexeme))
@@ -105,6 +105,15 @@ if __name__ == '__main__':
 	pass
 
 
+	# binding wip
+
+	# linestr = 'add(4)(5)'
+	# token = tokenize.Expression.match(linestr)
+	# syntax = Syntax.Expression.with_token(token, skip_grouping=True)
+	# print(repr(syntax))
+
+
+	"""
 	# expression grouping
 	
 	linestr = '3+ 2+4'

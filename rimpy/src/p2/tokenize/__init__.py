@@ -234,7 +234,7 @@ Id.Tail.pattern = Or(And(Id.Middle, Id.Tail), Id.Base)
 
 Comment.Top.Body.pattern = And(Option(Space), Option(Many(Or(Space.White, Comment.Line, String, Char))))
 Expression.pattern = Many(Or(Space.White, Id.Special, Element))
-Element.Part.pattern = Or(String, Group, Number, Id.Strip)
+Element.Part.pattern = Id.Strip # Or(String, Group, Number, Id.Strip)
 Id.Strip.Item.pattern = Many(Or(String, Group, Number, Id))
 Element.pattern = Element.Part.pattern
 

@@ -13,10 +13,14 @@ class Id(Base):
 
 	text = None # ""
 	special = False
+	space_before = None # ""
+	space_after = None # ""
 
 	def _repr_extra(self):
 		return filter(lambda x: x, [
 			f'special' if self.special else None,
+			f'space.before: "{repr(self.space_before)[1:-1]}"' if self.space_before else None,
+			f'space.after: "{repr(self.space_after)[1:-1]}"' if self.space_after else None,
 			f'text: "{repr(self.text)[1:-1]}"',
 		])
 
@@ -75,11 +79,14 @@ class Strip(Base):
 	# init
 	@classmethod
 	def with_token(cls, token):
+		from . import to_syntax_lexeme
+		parts = [to_syntax_lexeme(p) for p in token.unwrap() if isinstance(p, tokenize.Id.Strip.Item)]
+		if len(parts)==1: return parts[0]
+
 		s = cls()
 		s.wrapper = token
 
-		from . import to_syntax_lexeme
-		s.parts = [to_syntax_lexeme(p) for p in token.unwrap() if isinstance(p, tokenize.Id.Strip.Item)]
+		s.parts = parts
 
 		return s
 
