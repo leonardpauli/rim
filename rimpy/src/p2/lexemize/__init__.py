@@ -42,7 +42,7 @@ if __name__ == '__main__':
 	token = tokenize.Id.Special.match(linestr)
 	lexemeSyntax = syntax.Id.with_token(token)
 	# print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Id, 0..1, special, ("+")}'
+	assert repr(lexemeSyntax) == 'Lexeme.Syntax{is Id, 0..1, special, text: "+"}'
 	lexeme = lexemeSyntax.to_semantic()
 	# print(repr(lexeme))
 	assert repr(lexeme) == 'Lexeme.Semantic{is Id, text: "+"}' # special
@@ -51,23 +51,25 @@ if __name__ == '__main__':
 	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
 	assert str(lexemeSyntax2) == '*'
 
-	"""
+	
 	# id.strip WIP
 
-	linestr = 'a'
+	linestr = 'a.b.1'
 	token = tokenize.Id.Strip.match(linestr)
 	lexemeSyntax = syntax.Id.Strip.with_token(token)
 	print(repr(lexemeSyntax))
-	assert repr(lexemeSyntax) == r'Lexeme.Syntax{is Id.Strip, 0..1, (Lexeme.Syntax{is Id, 0..1, text: "a"})}'
+	assert repr(lexemeSyntax) == r'Lexeme.Syntax{is Strip, 0..5, (Lexeme.Syntax{is Id, 0..1, text: "a"}, Lexeme.Syntax{is Id, 2..3, text: "b"}, Lexeme.Syntax{is Number, 4..5, ("1", "")})}'
 	lexeme = lexemeSyntax.to_semantic()
 	print(repr(lexeme))
-	assert repr(lexeme)==r'Lexme.Semantic{is Id.Strip, (Lexeme.Semantic{is Id, text: "a"})}'
+	assert repr(lexeme)==r'Lexeme.Semantic{is Strip, (Lexeme.Semantic{is Id, text: "a"}, Lexeme.Semantic{is Id, text: "b"}, Lexeme.Semantic{is BasicFloat})}'
 	assert lexeme.parts[0].text == "a"
-	lexeme.parts.append(semantic.Id.with_text("b"))
+	lexeme.parts.pop()
+	lexeme.parts.append(semantic.Id.with_text("d"))
 	lexeme.parts.append(semantic.Id.with_text("c"))
+	"""
 	lexemeSyntax2 = lexemeSyntax.copy_with_semantic(lexeme)
 	print(str(lexemeSyntax2))
-	assert str(lexemeSyntax2)=='a.b.c'
+	assert str(lexemeSyntax2)=='a.b.d.c'
 
 
 	# str WIP

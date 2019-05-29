@@ -14,9 +14,13 @@ from .base import Base
 
 class Number(Base):
 
+	def __init__(self):
+		self.digits_whole = ""
+		self.digits_decimal = ""
+		self.spacers_whole = []
+		self.spacers_decimal = []
+
 	# without spacers
-	digits_whole = ""
-	digits_decimal = ""
 
 	@property
 	def precision_decimal_min(self):
@@ -45,8 +49,6 @@ class Number(Base):
 
 
 	# insertion positions from decimal point
-	spacers_whole = []
-	spacers_decimal = []
 
 	@property
 	def uses_spacers(self):
@@ -54,6 +56,7 @@ class Number(Base):
 	@property
 	def spacers_every3(self):
 		# ...6---3---.---3---6...
+		if not self.uses_spacers: return False
 		sp_whole_ev3 = [v for i, v in enumerate(self.spacers_whole) if v==(i+1)*3]
 		sp_decim_ev3 = [v for i, v in enumerate(self.spacers_decimal) if v==(i+1)*3]
 		whole_ok = len(sp_whole_ev3)==len(self.spacers_whole) >= (len(self.digits_whole)/3-1)

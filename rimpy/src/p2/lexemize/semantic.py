@@ -11,8 +11,8 @@ class LexemeSemantic():
 	def __repr__(self):
 		inner = ", ".join([f'is {self.__class__.__name__}']+self._repr_extra())
 		return f'Lexeme.Semantic{{{inner}}}'
-	def __str__(self):
-		pass
+	# def __str__(self):
+	# 	pass
 Base = LexemeSemantic
 
 
@@ -23,15 +23,22 @@ class Number(Base):
 		value = 0
 
 class String(Base):
-	parts = []
+	parts = None # []
 
 class Id(Base):
-	text = ""
+	text = None # ""
 	def _repr_extra(self):
 		return [f'text: "{repr(self.text)[1:-1]}"']
+	@classmethod
+	def with_text(cls, text):
+		s = cls()
+		s.text = text
+		return s
 
 	class Strip(Base):
-		parts = []
+		parts = None # []
+		def _repr_extra(self):
+			return [f'({", ".join([repr(p) for p in self.parts])})']
 
 
 

@@ -11,7 +11,7 @@ from .base import Base
 
 class Id(Base):
 
-	some = ""
+	some = None # ""
 
 	@property
 	def thing(self):

@@ -14,10 +14,12 @@ import re
 
 class Node:
 	binaryValue = None
-	listItem = []
-	keyValue = {}
+	listItem = None # []
+	keyValue = None # {}
 
 	def __init__(self):
+		self.listItem = []
+		self.keyValue = {}
 		pass
 
 	def value(self):
