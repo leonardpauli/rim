@@ -22,9 +22,24 @@ Base = LexemeSemantic
 class Number(Base):
 	class BasicFloat(Base):
 		value = 0
+		@classmethod
+		def with_value(cls, val):
+			s = cls()
+			s.value = val
+			return s
+
 
 class String(Base):
 	parts = None # []
+	def _repr_extra(self):
+		content = [(f'"{p}"' if type(p) is str else repr(p)) for p in self.parts]
+		return [f'({", ".join(content)})']
+	@classmethod
+	def with_string(cls, val):
+		s = cls()
+		s.parts = [val]
+		return s
+
 
 class Id(Base):
 	text = None # ""

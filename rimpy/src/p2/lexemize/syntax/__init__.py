@@ -9,6 +9,7 @@ from .. import semantic as Semantic
 from .base import Base
 from .number import Number
 from .id import Id
+from .string import String
 from .expression import Expression
 
 token_to_syntax_mapping = [
@@ -17,6 +18,8 @@ token_to_syntax_mapping = [
 	(tokenize.Id.Special, Id),
 	(tokenize.Id.Strip, Id.Strip),
 	(tokenize.Id.Strip.Item, Expression),
+	(tokenize.String, String),
+	(tokenize.String.Escape, String.Escape),
 	(tokenize.Expression, Expression)
 ]
 
@@ -25,6 +28,8 @@ semantic_to_syntax_mapping = [
 	(Semantic.Number.BasicFloat, Number),
 	(Semantic.Id, Id),
 	(Semantic.Id.Strip, Id.Strip),
+	(Semantic.String, String)
+	# (Semantic.String.Escape, String.Escape)
 	# (Semantic.Expression, Expression)
 ]
 

@@ -52,7 +52,7 @@ if __name__ == '__main__':
 	assert str(syntax) == '*'
 
 	
-	# id.strip WIP
+	# id.strip MVP
 
 	linestr = 'a.b.1'
 	token = tokenize.Id.Strip.match(linestr)
@@ -72,12 +72,25 @@ if __name__ == '__main__':
 	assert str(syntax)=='a.b.c.d'
 
 
-	# str WIP
+	# str MVP
+	
+	linestr = r'"hello\"1"'
+	token = tokenize.String.match(linestr)
+	syntax = Syntax.String.with_token(token)
+	# print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is String, 0..10, ("hello", Lexeme.Syntax{is Escape, 6..8, ('"'\"'"')}, "1")}'
+	lexeme = syntax.to_semantic()
+	# print(repr(lexeme))
+	assert repr(lexeme) == r'Lexeme.Semantic{is String, ("hello"1")}'
+	assert lexeme.parts[0] == 'hello"1'
+	lexeme.parts[0] += '"lal'
+	lexeme.parts.append('2')
+	lexeme.parts.append(semantic.Number.BasicFloat.with_value(3.7))
+	syntax = Syntax.from_semantic(lexeme)
+	# print(str(syntax))
+	assert str(syntax)==r'"hello\"1\"lal23.7"'
+
 	"""
-	linestr = '"hello"'
-	pass
-
-
 	# expression WIP
 
 	linestr = '3+ 2'

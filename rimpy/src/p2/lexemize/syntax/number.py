@@ -155,4 +155,9 @@ class Number(Base):
 			s.spacers_decimal = semantic.syntax.spacers_decimal.copy()
 			s.precision_decimal_min = semantic.syntax.precision_decimal_min
 			s.positions_whole_min = semantic.syntax.positions_whole_min
+		else:
+			s.spacers_whole = []
+			s.spacers_decimal = []
+			s.precision_decimal_min = 0
+			s.positions_whole_min = 1
 		return s
