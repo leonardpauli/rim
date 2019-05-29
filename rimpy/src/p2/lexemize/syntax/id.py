@@ -45,15 +45,17 @@ class Id(Base):
 	def __str__(self):
 		return self.text
 
-	def copy_with_semantic(self, semantic):
+	@classmethod
+	def from_semantic(cls, semantic):
+		# use semantic.syntax?
 		linestr = semantic.text
+		# todo: handle if it's special correctly?
 		token = tokenize.Id.Special.match(linestr)
 		# special = True
 		if not token:
 			# special = False
 			token = tokenize.Id.match(linestr)
-		s = self.__class__.with_token(token)
-		return s
+		return cls.with_token(token)
 
 
 
@@ -91,14 +93,13 @@ class Strip(Base):
 		return s
 
 	def __str__(self):
-		return ".".join([str(p) for p in self.parts]) # todo: use syntax
+		return ".".join([str(p) for p in self.parts])
 
-	# TODO: attach syntax to semantic and reconstruct recursively using that, instead of trying to match afterwards
-	def copy_with_semantic(self, semantic):
-		linestr = ".".join([str(p) for p in semantic.parts]) # todo: use syntax
-		print(linestr)
-		token = tokenize.Id.Strip.match(linestr)
-		s = self.__class__.with_token(token)
+	@classmethod
+	def from_semantic(cls, semantic):
+		s = cls()
+		from . import from_semantic
+		s.parts = [from_semantic(p) for p in semantic.parts]
 		return s
 
 

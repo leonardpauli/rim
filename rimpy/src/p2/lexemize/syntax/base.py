@@ -25,9 +25,12 @@ class LexemeSyntax():
 		return s
 
 	def to_semantic(self):
+		# semantic.syntax = self
 		pass
 
-	def copy_with_semantic(self, semantic):
+	@classmethod
+	def from_semantic(cls, semantic):
+		# use semantic.syntax?
 		pass
 
 	# @classmethod

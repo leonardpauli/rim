@@ -146,11 +146,13 @@ class Number(Base):
 
 		return r
 
-	def copy_with_semantic(self, semantic):
+	@classmethod
+	def from_semantic(cls, semantic):
 		token = tokenize.Number.match(format(semantic.value, 'f'))
-		s = self.__class__.with_token(token)
-		s.spacers_whole = self.spacers_whole.copy()
-		s.spacers_decimal = self.spacers_decimal.copy()
-		s.precision_decimal_min = self.precision_decimal_min
-		s.positions_whole_min = self.positions_whole_min
+		s = cls.with_token(token)
+		if semantic.syntax:
+			s.spacers_whole = semantic.syntax.spacers_whole.copy()
+			s.spacers_decimal = semantic.syntax.spacers_decimal.copy()
+			s.precision_decimal_min = semantic.syntax.precision_decimal_min
+			s.positions_whole_min = semantic.syntax.positions_whole_min
 		return s

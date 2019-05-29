@@ -51,10 +51,18 @@ class Id(Base):
 		r = ""
 		return r
 
-	def copy_with_semantic(self, semantic):
+	@classmethod
+	def from_semantic(cls, semantic):
+		s = cls()
+		s.thing = semantic.thing
+		return s
+		
+		# or
+
 		linestr = some
 		token = tokenize.Id.match(linestr)
-		s = self.__class__.with_token(token)
-		s.thing = self.thing
+		s = cls.with_token(token)
+		if semantic.syntax:
+			s.thing = semantic.syntax.thing
 		return s
 """

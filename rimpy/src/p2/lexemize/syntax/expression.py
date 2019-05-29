@@ -25,3 +25,7 @@ class Expression(Base):
 		if isinstance(token, tokenize.Element):
 			pass
 		raise Exception('todo')
+
+	@classmethod
+	def from_semantic(cls, semantic):
+		raise Exception('todo')
