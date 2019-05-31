@@ -13,14 +13,14 @@ class Id(Base):
 
 	text = None # ""
 	special = False
-	space_before = None # ""
-	space_after = None # ""
+	# space_before = None # ""
+	# space_after = None # ""
 
 	def _repr_extra(self):
 		return filter(lambda x: x, [
 			f'special' if self.special else None,
-			f'space.before: "{repr(self.space_before)[1:-1]}"' if self.space_before else None,
-			f'space.after: "{repr(self.space_after)[1:-1]}"' if self.space_after else None,
+			# f'space.before: "{repr(self.space_before)[1:-1]}"' if self.space_before else None,
+			# f'space.after: "{repr(self.space_after)[1:-1]}"' if self.space_after else None,
 			f'text: "{repr(self.text)[1:-1]}"',
 		])
 

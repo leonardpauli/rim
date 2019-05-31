@@ -2,6 +2,8 @@
 # rimpy/p2
 # created by Leonard Pauli, 21 may 2019
 
+from .syntax.bind import BindKind
+
 
 # base
 
@@ -55,6 +57,11 @@ class Id(Base):
 		parts = None # []
 		def _repr_extra(self):
 			return [f'({", ".join([repr(p) for p in self.parts])})']
+		@classmethod
+		def with_parts(cls, parts):
+			s = cls()
+			s.parts = parts
+			return s
 
 class Group(Base):
 	kind = None # semantic.GroupKind...
@@ -66,6 +73,41 @@ class Group(Base):
 			f'not closed' if not self.closed else None,
 			self.value and f'({repr(self.value)})'
 		]))
+
+
+class Bind(Base):
+	target = None
+	values = None # []
+	kind = None # BindKind
+	def _repr_extra(self):
+		return [
+			f'kind: {self.kind.name}',
+			f'target: {repr(self.target)}',
+			f'({", ".join([repr(v) for v in self.values])})',
+		]
+	@classmethod
+	def with_value(cls, target, value, kind=BindKind.Prefix):
+		s = cls()
+		s.target = target
+		s.values = [value]
+		s.kind = kind
+		return s
+
+class Attach(Base):
+	target = None
+	value = None
+	def _repr_extra(self):
+		return [
+			f'target: {repr(self.target)}',
+			f'({repr(self.value)})',
+		]
+	@classmethod
+	def with_value(cls, target, value):
+		s = cls()
+		s.target = target
+		s.value = value
+		return s
+
 
 # class Expression(Base):
 

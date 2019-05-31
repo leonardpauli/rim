@@ -150,6 +150,10 @@ class Number(Base):
 	def from_semantic(cls, semantic):
 		token = tokenize.Number.match(format(semantic.value, 'f'))
 		s = cls.with_token(token)
+		while s.digits_decimal.endswith('0'):
+			s.digits_decimal = s.digits_decimal[:-1]
+		if len(s.digits_decimal)==1 and s.digits_decimal[0] == "0":
+			s.precision_decimal_min = 0
 		if semantic.syntax:
 			s.spacers_whole = semantic.syntax.spacers_whole.copy()
 			s.spacers_decimal = semantic.syntax.spacers_decimal.copy()

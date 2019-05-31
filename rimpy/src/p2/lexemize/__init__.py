@@ -10,7 +10,7 @@ from . import semantic
 if __name__ == '__main__':
 	from .. import tokenize
 
-
+	
 	# Number
 
 	# syntax -> semantic + change -> back
@@ -32,10 +32,19 @@ if __name__ == '__main__':
 	syntax.precision_decimal_min = 0
 	syntax.spacers_every3 = False
 	assert str(syntax) == '37243.952223'
+
+	linestr = '7342'
+	token = tokenize.Number.match(linestr)
+	syntax = Syntax.Number.with_token(token)
+	lexeme = syntax.to_semantic()
+	assert lexeme.value==7342
+	syntax = Syntax.from_semantic(lexeme)
+	assert str(syntax) == '7342'
+
 	# # lexeme.dirty()
 	# syntax.delta_update_get()
 
-
+	
 	# id.special
 
 	linestr = '+'
@@ -71,7 +80,7 @@ if __name__ == '__main__':
 	# print(str(syntax))
 	assert str(syntax)=='a.b.c.d'
 
-
+	
 	# str MVP
 	
 	linestr = r'"hello\"1"'
@@ -89,27 +98,78 @@ if __name__ == '__main__':
 	syntax = Syntax.from_semantic(lexeme)
 	# print(str(syntax))
 	assert str(syntax)==r'"hello\"1\"lal23.7"'
-
+	
 
 	# group MVP
 	
 	linestr = r'( {[ b} )'
 	token = tokenize.Group.match(linestr)
 	syntax = Syntax.Group.with_token(token)
-	print(repr(syntax))
-	# assert repr(syntax) == r'Lexeme.Syntax{is String, 0..10, ("hello", Lexeme.Syntax{is Escape, 6..8, ('"'\"'"')}, "1")}'
+	# print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Group, 0..9, kind: paren, space.start: " ", space.end: " ", (Lexeme.Syntax{is Group, 2..7, kind: brace, (Lexeme.Syntax{is Group, 3..6, kind: bracket, not closed, space.start: " ", (Lexeme.Syntax{is Id, 5..6, text: "b"})})})}'
 	lexeme = syntax.to_semantic()
-	print(repr(lexeme))
-	#assert repr(lexeme) == r'Lexeme.Semantic{is String, ("hello"1")}'
-	#assert lexeme.parts[0] == 'hello"1'
-	#lexeme.parts[0] += '"lal'
-	#lexeme.parts.append('2')
-	#lexeme.parts.append(semantic.Number.BasicFloat.with_value(3.7))
+	# print(repr(lexeme))
+	assert repr(lexeme) == r'Lexeme.Semantic{is Group, kind: paren, (Lexeme.Semantic{is Group, kind: brace, (Lexeme.Semantic{is Group, kind: bracket, not closed, (Lexeme.Semantic{is Id, text: "b"})})})}'
+	assert lexeme.kind.name == "paren"
+	# lexeme.some = changed
 	syntax = Syntax.from_semantic(lexeme)
-	print(str(syntax))
-	# assert str(syntax)==r'"hello\"1\"lal23.7"'
-	"""
+	# print(str(syntax))
+	assert str(syntax)==r'( {[ b} )'
+	lexeme.value.value.closed = True
+	# print(repr(lexeme))
+	syntax = Syntax.from_semantic(lexeme)
+	syntax.value.value.space_start = None
+	# print(repr(syntax))
+	# print(str(syntax))
+	assert str(syntax)==r'( {[b]} )'
 	
+	
+	# attach MVP
+	
+	linestr = r'a{b}'
+	token = tokenize.Expression.match(linestr)
+	syntax = Syntax.Expression.with_token(token)
+	# print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Attach, target: Lexeme.Syntax{is Id, 0..1, text: "a"}, (Lexeme.Syntax{is Group, 1..4, kind: brace, (Lexeme.Syntax{is Id, 2..3, text: "b"})})}'
+	lexeme = syntax.to_semantic()
+	# print(repr(lexeme))
+	assert repr(lexeme) == r'Lexeme.Semantic{is Attach, target: Lexeme.Semantic{is Id, text: "a"}, (Lexeme.Semantic{is Group, kind: brace, (Lexeme.Semantic{is Id, text: "b"})})}'
+	assert lexeme.target.text == 'a'
+	
+	syntax = Syntax.from_semantic(lexeme)
+	# print(str(syntax))
+	assert str(syntax)==r'a{b}'
+
+	lexeme.target = semantic.Id.Strip.with_parts([lexeme.target, semantic.Id.with_text('c')])
+	syntax = Syntax.from_semantic(lexeme)
+	# print(str(syntax))
+	assert str(syntax)==r'(a.c){b}'
+	
+	
+	# bind MVP
+	
+	# add 3 4 -> add (3 4) -> add ((,)(3)(4)) -> add((,)(3)(4))
+	# -> add(3)(4) -> (add(3))(4)
+	linestr = r'add(3 )(4)'
+	token = tokenize.Expression.match(linestr)
+	syntax = Syntax.Expression.with_token(token)
+	# print(repr(syntax))
+	assert repr(syntax) == r'Lexeme.Syntax{is Bind, kind: prefix, target: Lexeme.Syntax{is Bind, kind: prefix, target: Lexeme.Syntax{is Id, 0..3, text: "add"}, (Lexeme.Syntax{is Group, 3..7, kind: paren, space.end: " ", (Lexeme.Syntax{is Number, 4..5, ("3", "")})})}, (Lexeme.Syntax{is Group, 7..10, kind: paren, (Lexeme.Syntax{is Number, 8..9, ("4", "")})})}'	
+	lexeme = syntax.to_semantic()
+	# print(repr(lexeme))
+	assert repr(lexeme) == r'Lexeme.Semantic{is Bind, kind: prefix, target: Lexeme.Semantic{is Bind, kind: prefix, target: Lexeme.Semantic{is Id, text: "add"}, (Lexeme.Semantic{is Group, kind: paren, (Lexeme.Semantic{is BasicFloat})})}, (Lexeme.Semantic{is Group, kind: paren, (Lexeme.Semantic{is BasicFloat})})}'
+	assert lexeme.values[0].value.value == 4
+
+	syntax = Syntax.from_semantic(lexeme)
+	# print(str(syntax))
+	assert str(syntax)==r'add(3 )(4)'
+
+	syntax = Syntax.from_semantic(lexeme)
+	syntax.target.values[0].space_end = None
+	# print(str(syntax))
+	assert str(syntax)==r'add(3)(4)'
+
+	"""
 	# expression WIP
 
 	linestr = '3+ 2'

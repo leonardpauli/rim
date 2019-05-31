@@ -10,34 +10,58 @@ from .base import Base
 from .number import Number
 from .id import Id
 from .string import String
-from .expression import Expression, Element, Group
+from .expression import Expression, Element
+from .group import Group
+from .bind import Bind, Attach
+from .space import Space
+
 
 token_to_syntax_mapping = [
 	(tokenize.Number, Number),
+	
 	(tokenize.Id, Id),
 	(tokenize.Id.Special, Id),
 	(tokenize.Id.Strip, Id.Strip),
 	(tokenize.Id.Strip.Item, Expression),
+	
 	(tokenize.String, String),
 	(tokenize.String.Escape, String.Escape),
+	
 	(tokenize.Expression, Expression),
 	(tokenize.Element, Element),
+
 	(tokenize.Group, Group),
 	(tokenize.Group.Paren, Group),
 	(tokenize.Group.Brace, Group),
 	(tokenize.Group.Bracket, Group),
+
+	# bind, attach
+
+	(tokenizeBase.Space, Space),
+	(tokenizeBase.Space.White, Space),
 ]
+
 
 semantic_to_syntax_mapping = [
 	(Semantic.Number, Number),
 	(Semantic.Number.BasicFloat, Number),
+	
 	(Semantic.Id, Id),
 	(Semantic.Id.Strip, Id.Strip),
+	
 	(Semantic.String, String),
 	# (Semantic.String.Escape, String.Escape)
+	
 	# (Semantic.Expression, Expression)
+	
 	(Semantic.Group, Group),
+
+	(Semantic.Bind, Bind),
+	(Semantic.Attach, Attach),
+
+	# space
 ]
+
 
 def to_syntax_lexeme(token):
 	if token is None: return None
