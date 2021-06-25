@@ -9,44 +9,117 @@ first_line_match: ^(#!/.*\b(rim)|')$\n?
 scope: source.rim
 variables:
   identifier: '[_$[:alpha:]][_$[:alnum:]-]*'
+  idr: '[a-c]'
+  idg: '[d-z]'
+
+
+
+# add to sublime-color-scheme:
+# {
+#     "name": "rim.id",
+#     "scope": "rim.id",
+#     // "foreground": ["hsl(150, 100%, 40%)"
+#     "foreground": ["hsl(320, 100%, 35%)", "hsl(355, 100%, 60%)"],
+#     // "font_style": "italic",
+# },
+# { "scope": "rim.id.1.g", "foreground": "hsl(250, 40%, 60%)", },
+# { "scope": "rim.id.2.g", "foreground": "hsl(240, 40%, 60%)", },
+# { "scope": "rim.id.3.g", "foreground": "hsl(230, 40%, 60%)", },
+# { "scope": "rim.id.4.g", "foreground": "hsl(220, 40%, 60%)", },
+# { "scope": "rim.id.5.g", "foreground": "hsl(210, 40%, 60%)", },
+# { "scope": "rim.id.6.g", "foreground": "hsl(200, 40%, 60%)", },
+# { "scope": "rim.id.7.g", "foreground": "hsl(190, 40%, 60%)", },
+# { "scope": "rim.id.8.g", "foreground": "hsl(180, 40%, 60%)", },
+# { "scope": "rim.id.9.g", "foreground": "hsl(170, 40%, 60%)", },
+# { "scope":"rim.id.10.g", "foreground": "hsl(160, 40%, 60%)", },
+# { "scope":"rim.id.11.g", "foreground": "hsl(150, 40%, 60%)", },
+# { "scope":"rim.id.12.g", "foreground": "hsl(140, 40%, 60%)", },
+
+# { "scope": "rim.id.1.r", "foreground": "hsl(350, 20%, 70%)", },
+# { "scope": "rim.id.2.r", "foreground": "hsl(340, 20%, 70%)", },
+# { "scope": "rim.id.3.r", "foreground": "hsl(330, 20%, 70%)", },
+# { "scope": "rim.id.4.r", "foreground": "hsl(320, 20%, 70%)", },
+# { "scope": "rim.id.5.r", "foreground": "hsl(310, 20%, 70%)", },
+# { "scope": "rim.id.6.r", "foreground": "hsl(300, 20%, 70%)", },
+# { "scope": "rim.id.7.r", "foreground": "hsl( 90, 20%, 70%)", },
+# { "scope": "rim.id.8.r", "foreground": "hsl( 80, 20%, 70%)", },
+# { "scope": "rim.id.9.r", "foreground": "hsl( 70, 20%, 70%)", },
+# { "scope":"rim.id.10.r", "foreground": "hsl( 60, 20%, 70%)", },
+# { "scope":"rim.id.11.r", "foreground": "hsl( 50, 20%, 70%)", },
+# { "scope":"rim.id.12.r", "foreground": "hsl( 40, 20%, 70%)", },
+
+# // {
+# //     "name": "rim.kv.overlay",
+# //     "scope": "rim.kv.overlay",
+# //     "foreground": "hsl(350, 100%, 40%)",
+# //     // "font_style": "italic",
+# // },
+
+# {
+#     "name": "rim.id_strip.separator",
+#     "scope": "rim.id_strip.separator",
+#     "foreground": "hsl(250, 10%, 80%)",
+# },
+# {
+#     "name": "rim.separator",
+#     "scope": "keyword.control.rim, meta.separator, punctuation.definition.group.rim",
+#     "foreground": "hsl(250, 10%, 60%)",
+# },
+# {
+#     "name": "rim.separator",
+#     "scope": "punctuation.separator.key-value.rim",
+#     // "foreground": "hsl(250, 10%, 60%)",
+#     "foreground": "hsl(60, 40%, 50%)",
+#     // "foreground": "hsl(350, 50%, 40%)",
+#     "font_style": "bold",
+# },
+# {
+#     "name": "rim.separator",
+#     "scope": "keyword.rim, punctuation.separator.parameter.rim",
+#     "foreground": "hsl(290, 41%, 67%)",
+# },
+# {
+#     "name": "rim.keyword.active",
+#     "scope": "keyword.active.rim",
+#     "foreground": "hsl(170, 91%, 57%)",
+# },
+# {
+#     "name": "rim.keyword.active.on",
+#     "scope": "keyword.active.on.rim",
+#     "foreground": "hsl(190, 91%, 57%)",
+# },
+# {
+#     "name": "rim.list-item.indicator",
+#     "scope": "punctuation.definition.block.sequence.item",
+#     "foreground": "hsl(190, 21%, 37%)",
+#     "font_style": "bold"
+# },
 
 contexts:
   main:
     - match: \b(iterate|initially|yield|done)\b
       scope: keyword.control.flow.rim
-    - match: \b(if|else|for|with|at|from|iteration|not|doesn't|isn't|do|disable|enable|be|after|not|in|to|is|as|returns|return|takes|and)\b
-      push: keyword
-    - match: \b(block|self|super|it)\b
-      captures:
-        1: variable.language.this
-    - match: ^\t*(- ?\d+)
+    - match: \b(or|if|else|for|with|at|from|iteration|not|doesn't|isn't|disable|enable|be|after|not|in|to|is|as|returns|return|takes|and)\b
+      scope: keyword.rim
+    - match: \b(do)\b
+      scope: keyword.active.rim
+    - match: \b(on)\b
+      scope: keyword.active.on.rim
+
+    - match: ^\t*(-+ ?)
       scope: punctuation.definition.block.sequence.item
-    - match: (-\d+)
-      scope: punctuation.definition.block.sequence.item
-    - match: "(\b|.)(-{{identifier}})"
-      scope: punctuation.definition.block.sequence.item
-    - match: ^(\t*)"
-      push: string-block
-    - match: ^(\t*)'"
-      push: string-block-single
-    - match: '^(\t*)(- )?({{identifier}}: ?)?"'
-      captures:
-        2: punctuation.definition.block.sequence.item
-        3: entity.name.tag.yaml
-      push: string-block
+    # - match: '^\t*[^:"{(]+:'
+    #   scope: rim.kv.overlay
+
     - match: '"'
       push: string
+
     - match: '//'
       push: comment
-    # - match: "^(\t*)' " #(?!")
-    #   scope: text.html.markdown punctuation.definition
-    #   push: comment-single-quote
     - match: ^# # ^\t*#
       #scope: markup.quote punctuation.definition.blockquote.markdown
       push: comment-mark
-    # - match: '^\t*([_$[:alnum:]\.]+)\b:?'
-    #   captures:
-    #     1: comment.rim
+
     - match: \(
       scope: punctuation.definition.group.rim
       push: brackets
@@ -62,42 +135,105 @@ contexts:
       push: brackets-square
     - match: \]
       scope: invalid.illegal.square-bracket-end
-    - match: '\d*\.?\d+'
+
+    - match: '\d*\.?\d+({{identifier}})?'
       scope: constant.numeric.rim
     # - match: '[+\-*/=]'
     #   scope: keyword.operator.arithmetic.rim
     - match: '\b(true|yeah|yes|false|nope|no)\b'
       scope: constant.numeric.rim
+
     - match: ':'
       scope: punctuation.separator.key-value.rim
     - match: ','
       scope: punctuation.separator.parameter.rim
     - match: '\b(of|in|one|many|on|none)\b'
       scope: punctuation.separator.parameter.rim
-    - match: "{{identifier}}('s)"
-      captures:
-        1: punctuation.separator.parameter.rim
-    - match: '{{identifier}}(\.)'
-      scope: entity.name.tag.yaml
-      captures:
-        1: punctuation.definition.group.rim
+
+    # - match: "{{identifier}}('s)"
+    #   captures:
+    #     1: punctuation.separator.parameter.rim
+
+    # - match: '{{identifier}}(\.)'
+    #   scope: entity.name.tag.yaml
+    #   captures:
+    #     1: punctuation.definition.group.rim
+
     - match: ' \.\.\.'
       scope: punctuation.separator.parameter.rim
     - match: '\.\.'
       scope: support.class.builtin.rim
-    - match: '\b[A-Z][_$[:alnum:]]*\b'
-      scope: support.class.rim
+    
+
+    # - match: '\b[A-Z][_$[:alnum:]]*\b'
+    #   scope: support.class.rim
+
     - match: '\b(Node|reference|primitive|same)\b'
       scope: support.class.builtin.rim
     - match: '\^'
       scope: support.class.builtin.rim
     - include: binary-operators
-    - match: \b({{identifier}})\b
-      scope: entity.name.tag.yaml
+
     - match: "^(\t*)' " #(?!")
       push: comment-single-quote
     - match: "^(\t*)' ?$"
       push: comment-single-quote
+
+
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{12})\b'
+    #   scope: rim.id.12.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{11})\b'
+    #   scope: rim.id.11.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{10})\b'
+    #   scope: rim.id.10.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{9})\b'
+    #   scope: rim.id.9.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{8})\b'
+    #   scope: rim.id.8.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{7})\b'
+    #   scope: rim.id.7.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{6})\b'
+    #   scope: rim.id.6.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{5})\b'
+    #   scope: rim.id.5.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{4})\b'
+    #   scope: rim.id.4.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{3})\b'
+    #   scope: rim.id.3.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{2})\b'
+    #   scope: rim.id.2.r
+    # - match: '\b({{idr}}[_$[:alpha:]][_$[:alnum:]-]{1})\b'
+    #   scope: rim.id.1.r
+
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{12})\b'
+    #   scope: rim.id.12.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{11})\b'
+    #   scope: rim.id.11.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{10})\b'
+    #   scope: rim.id.10.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{9})\b'
+    #   scope: rim.id.9.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{8})\b'
+    #   scope: rim.id.8.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{7})\b'
+    #   scope: rim.id.7.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{6})\b'
+    #   scope: rim.id.6.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{5})\b'
+    #   scope: rim.id.5.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{4})\b'
+    #   scope: rim.id.4.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{3})\b'
+    #   scope: rim.id.3.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{2})\b'
+    #   scope: rim.id.2.g
+    # - match: '\b({{idg}}[_$[:alpha:]][_$[:alnum:]-]{1})\b'
+    #   scope: rim.id.1.g
+    - match: '\b({{identifier}})\b'
+      scope: rim.id
+
+    - match: '.'
+      scope: rim.id_strip.separator
 
 
   brackets:
